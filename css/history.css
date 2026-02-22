@@ -1,0 +1,96 @@
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.history-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.history-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--duration-fast);
+}
+.history-card-header:hover {
+    background: var(--bg-elevated);
+}
+.history-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.history-card-date {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.history-card-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.history-card-toggle {
+    color: var(--text-muted);
+    transition: transform var(--duration-normal) var(--ease-out);
+}
+.history-card.expanded .history-card-toggle {
+    transform: rotate(180deg);
+}
+.history-card-body {
+    display: none;
+    padding: var(--space-md);
+}
+.history-card.expanded .history-card-body {
+    display: block;
+}
+.history-round {
+    margin-bottom: var(--space-md);
+}
+.history-round:last-child {
+    margin-bottom: 0;
+}
+.history-round-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border);
+}
+.history-round-teams {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+.history-team {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+}
+.history-team-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.history-team-players {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+.history-delete {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border);
+    margin-top: var(--space-md);
+}

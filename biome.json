@@ -1,0 +1,80 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git"
+    },
+    "files": {
+        "ignoreUnknown": false,
+        "includes": ["**", "!session-cache.json"]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 120,
+        "lineEnding": "lf"
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "a11y": "on",
+            "complexity": "on",
+            "correctness": "on",
+            "nursery": "on",
+            "performance": "on",
+            "security": "on",
+            "style": "on",
+            "suspicious": "on"
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "double",
+            "semicolons": "asNeeded"
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "overrides": [
+        {
+            "includes": ["**"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noNodejsModules": "off",
+                        "noUnresolvedImports": "off",
+                        "useQwikValidLexicalScope": "off"
+                    },
+                    "nursery": {
+                        "noContinue": "off",
+                        "noTernary": "off",
+                        "noHexColors": "off"
+                    },
+                    "security": {
+                        "noSecrets": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["**/*.html"],
+            "linter": {
+                "rules": {
+                    "nursery": {
+                        "useVueHyphenatedAttributes": "off"
+                    },
+                    "a11y": {
+                        "noSvgWithoutTitle": "off"
+                    }
+                }
+            }
+        }
+    ]
+}

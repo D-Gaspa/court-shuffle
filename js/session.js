@@ -1,0 +1,177 @@
+import { getAvatarClass, getInitials } from "./roster.js"
+
+const TEAM_COLOR_COUNT = 8
+const CARD_STAGGER_SECONDS = 0.06
+const AVATAR_OFFSET_MULTIPLIER = 3
+
+function buildPlayerDot(cssClass) {
+    const dot = document.createElement("span")
+    dot.className = `dot ${cssClass}`
+    return dot
+}
+
+function buildMatchTeamSide(team, label, teamClass) {
+    const wrapper = document.createElement("div")
+    wrapper.className = `match-team ${teamClass}`
+
+    const labelEl = document.createElement("div")
+    labelEl.className = "match-team-label"
+    labelEl.textContent = label
+
+    const list = document.createElement("div")
+    list.className = "match-team-players"
+
+    for (const p of team) {
+        const row = document.createElement("div")
+        row.className = "match-player"
+        row.appendChild(buildPlayerDot(""))
+        const nameNode = document.createTextNode(p)
+        row.appendChild(nameNode)
+        list.appendChild(row)
+    }
+
+    wrapper.appendChild(labelEl)
+    wrapper.appendChild(list)
+    return wrapper
+}
+
+function renderVersusMatch(teams, matchNum, container) {
+    const card = document.createElement("div")
+    card.className = "match-card"
+    card.style.animationDelay = "0.05s"
+
+    const header = document.createElement("div")
+    header.className = "match-card-header"
+    const headerSpan = document.createElement("span")
+    headerSpan.textContent = `Match ${matchNum}`
+    header.appendChild(headerSpan)
+
+    const versus = document.createElement("div")
+    versus.className = "match-versus"
+
+    versus.appendChild(buildMatchTeamSide(teams[0], "Team 1", "team-a"))
+
+    const divider = document.createElement("div")
+    divider.className = "match-vs-divider"
+    const badge = document.createElement("div")
+    badge.className = "vs-badge"
+    badge.textContent = "VS"
+    divider.appendChild(badge)
+    versus.appendChild(divider)
+
+    versus.appendChild(buildMatchTeamSide(teams[1], "Team 2", "team-b"))
+
+    card.appendChild(header)
+    card.appendChild(versus)
+    container.appendChild(card)
+}
+
+function renderTeamCards(teams, container) {
+    let i = 0
+    while (i < teams.length) {
+        const card = document.createElement("div")
+        card.className = `team-card team-color-${i % TEAM_COLOR_COUNT}`
+        card.style.animationDelay = `${i * CARD_STAGGER_SECONDS}s`
+
+        const team = teams[i]
+
+        const cardHeader = document.createElement("div")
+        cardHeader.className = "team-card-header"
+
+        const title = document.createElement("span")
+        title.className = "team-card-title"
+        title.textContent = `Team ${i + 1}`
+
+        const count = document.createElement("span")
+        count.className = "team-card-count"
+        count.textContent = `${team.length} player${team.length !== 1 ? "s" : ""}`
+
+        cardHeader.appendChild(title)
+        cardHeader.appendChild(count)
+
+        const playersList = document.createElement("div")
+        playersList.className = "team-card-players"
+
+        let pi = 0
+        while (pi < team.length) {
+            const avatarIdx = pi + i * AVATAR_OFFSET_MULTIPLIER
+            const row = document.createElement("div")
+            row.className = "team-card-player"
+
+            const miniAvatar = document.createElement("div")
+            miniAvatar.className = `mini-avatar ${getAvatarClass(avatarIdx)}`
+            miniAvatar.textContent = getInitials(team[pi])
+
+            const nameSpan = document.createElement("span")
+            nameSpan.textContent = team[pi]
+
+            row.appendChild(miniAvatar)
+            row.appendChild(nameSpan)
+            playersList.appendChild(row)
+            pi += 1
+        }
+
+        card.appendChild(cardHeader)
+        card.appendChild(playersList)
+        container.appendChild(card)
+        i += 1
+    }
+}
+
+export function renderBracket(teams, container) {
+    container.textContent = ""
+    if (teams.length === 2) {
+        renderVersusMatch(teams, 1, container)
+    } else {
+        renderTeamCards(teams, container)
+    }
+}
+
+export function updateTeamSizeHint(selectedCount, teamCount, hintEl) {
+    if (selectedCount < 2) {
+        hintEl.textContent = ""
+        return
+    }
+    const base = Math.floor(selectedCount / teamCount)
+    const remainder = selectedCount % teamCount
+    if (remainder === 0) {
+        hintEl.textContent = `${base} players per team`
+    } else {
+        const bigger = remainder
+        const smaller = teamCount - remainder
+        hintEl.textContent = `${bigger} team${bigger > 1 ? "s" : ""} of ${base + 1}, ${smaller} team${smaller > 1 ? "s" : ""} of ${base}`
+    }
+}
+
+export function renderPlayerSelection(roster, selectedSet, container, onChange) {
+    container.textContent = ""
+
+    for (const player of roster) {
+        const chip = document.createElement("button")
+        chip.type = "button"
+        chip.className = `player-chip${selectedSet.has(player) ? " selected" : ""}`
+
+        const check = document.createElement("span")
+        check.className = "chip-check"
+        check.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+
+        const nameSpan = document.createElement("span")
+        nameSpan.className = "chip-name"
+        nameSpan.textContent = player
+
+        chip.appendChild(check)
+        chip.appendChild(nameSpan)
+
+        chip.addEventListener("click", () => {
+            if (selectedSet.has(player)) {
+                selectedSet.delete(player)
+            } else {
+                selectedSet.add(player)
+            }
+            chip.classList.toggle("selected")
+            onChange()
+        })
+        container.appendChild(chip)
+    }
+}

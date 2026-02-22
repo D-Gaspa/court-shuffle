@@ -1,0 +1,136 @@
+.session-topbar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+.session-topbar h1 {
+    font-size: 1.5rem;
+}
+.session-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.session-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.session-config {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+.section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+/* Player Selection */
+.select-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: calc(-1 * var(--space-sm));
+}
+.player-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: var(--space-sm);
+}
+.player-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+    font-family: "Outfit", system-ui, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    -webkit-tap-highlight-color: transparent;
+}
+.player-chip:hover {
+    border-color: var(--border-light);
+    background: var(--bg-elevated);
+}
+.player-chip.selected {
+    border-color: var(--court);
+    background: var(--court-glow);
+    color: var(--text);
+}
+.player-chip .chip-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+.player-chip.selected .chip-check {
+    background: var(--court);
+    border-color: var(--court);
+}
+.player-chip .chip-check svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    color: #fff;
+    transition: opacity var(--duration-fast);
+}
+.player-chip.selected .chip-check svg {
+    opacity: 1;
+}
+.chip-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Configuration Controls */
+.config-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.team-count-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+}
+.team-count-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+}
+.team-count-display span {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text);
+}
+.team-count-display small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+.hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
