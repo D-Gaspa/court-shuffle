@@ -1,0 +1,134 @@
+.team-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    animation: cardIn 0.4s var(--ease-out) backwards;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.team-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+
+.team-card-title {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.team-card-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-elevated);
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+}
+
+.team-card-players {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.team-card-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+}
+
+.team-card-player .mini-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* Team Specific Colors */
+.team-color-0::before {
+    background: var(--clay);
+}
+
+.team-color-0 .team-card-title {
+    color: var(--clay-light);
+}
+
+.team-color-1::before {
+    background: var(--court-light);
+}
+
+.team-color-1 .team-card-title {
+    color: var(--court-light);
+}
+
+.team-color-2::before {
+    background: var(--ball);
+}
+
+.team-color-2 .team-card-title {
+    color: var(--ball);
+}
+
+.team-color-3::before {
+    background: #9b5fc7;
+}
+
+.team-color-3 .team-card-title {
+    color: #c48dea;
+}
+
+.team-color-4::before {
+    background: #3a6ea5;
+}
+
+.team-color-4 .team-card-title {
+    color: #6da3d4;
+}
+
+.team-color-5::before {
+    background: #d94f78;
+}
+
+.team-color-5 .team-card-title {
+    color: #f07a9e;
+}
+
+.team-color-6::before {
+    background: #c78848;
+}
+
+.team-color-6 .team-card-title {
+    color: #e0a96a;
+}
+
+.team-color-7::before {
+    background: #4fc4c9;
+}
+
+.team-color-7 .team-card-title {
+    color: #7eded2;
+}

@@ -6,8 +6,14 @@
  * teammates are placed on the same team again.
  */
 
-const DEFAULT_MAX_ATTEMPTS = 200
-const QUICK_CHECK_ATTEMPTS = 50
+const DEFAULT_MAX_ATTEMPTS = 100
+const SEQUENCE_MAX_ITER = 50
+const SEQUENCE_NO_IMPROVE_LIMIT = 15
+const DOUBLES_TEAM_SIZE = 2
+const STRUCTURED_MAX_DOUBLES = 50
+const STRUCTURED_MIN_ROUNDS = 10
+const STRUCTURED_FAIL_LIMIT = 3
+const RANDOM_MIDPOINT = 0.5
 
 /**
  * Fisher-Yates shuffle (in-place).
@@ -141,10 +147,205 @@ function generateRound(players, teamCount, usedPairs, maxAttempts = DEFAULT_MAX_
 }
 
 /**
- * Check if at least one more valid round is possible.
+ * Build one complete sequence of rounds (greedy, randomized).
  */
-function canGenerateMore(players, teamCount, usedPairs) {
-    return generateRound(players, teamCount, usedPairs, QUICK_CHECK_ATTEMPTS) !== null
+function buildSequence(players, teamCount, initialUsedPairs = null) {
+    const sequence = []
+    const usedPairs = new Set(initialUsedPairs)
+    let round = generateRound(players, teamCount, usedPairs, DEFAULT_MAX_ATTEMPTS)
+    while (round !== null) {
+        sequence.push(round)
+        for (const p of extractPairs(round)) {
+            usedPairs.add(p)
+        }
+        round = generateRound(players, teamCount, usedPairs, DEFAULT_MAX_ATTEMPTS)
+    }
+    return sequence
 }
 
-export { pairKey, extractPairs, generateRound, canGenerateMore }
+/**
+ * Generate the optimal (maximum-length) sequence of rounds by running multiple
+ * randomised greedy attempts and keeping the best.
+ *
+ * Stops early once SEQUENCE_NO_IMPROVE_LIMIT consecutive iterations produce no
+ * improvement, which in practice means the theoretical maximum has been reached.
+ *
+ * @param {string[]} players
+ * @param {number} teamCount
+ * @returns {string[][][]} Array of rounds (each round is an array of teams).
+ */
+function generateOptimalRoundSequence(players, teamCount, initialUsedPairs = null) {
+    let best = []
+    let noImprove = 0
+    for (let i = 0; i < SEQUENCE_MAX_ITER; i += 1) {
+        const seq = buildSequence(players, teamCount, initialUsedPairs)
+        if (seq.length > best.length) {
+            best = seq
+            noImprove = 0
+        } else {
+            noImprove += 1
+            if (noImprove >= SEQUENCE_NO_IMPROVE_LIMIT) {
+                break
+            }
+        }
+    }
+    return best
+}
+
+/**
+ * Select active players for a round using fair sit-out rotation.
+ * Players who have sat out the most get priority to play.
+ */
+function selectActivePlayers(players, activeCount, sitOutCounts) {
+    const sorted = [...players].sort((a, b) => {
+        const diff = sitOutCounts.get(b) - sitOutCounts.get(a)
+        if (diff !== 0) {
+            return diff
+        }
+        return Math.random() - RANDOM_MIDPOINT
+    })
+    const active = sorted.slice(0, activeCount)
+    const sitOuts = sorted.slice(activeCount)
+    for (const p of sitOuts) {
+        sitOutCounts.set(p, sitOutCounts.get(p) + 1)
+    }
+    return { active, sitOuts }
+}
+
+/**
+ * Build a matchup key for deduplication.
+ */
+function matchupKey(teams, mode) {
+    if (mode === "singles") {
+        return pairKey(teams[0][0], teams[1][0])
+    }
+    return [[...teams[0]].sort().join(","), [...teams[1]].sort().join(",")].sort().join("||")
+}
+
+/**
+ * Attempt to assign players to courts, checking matchup uniqueness.
+ * Returns a matches array for one shuffle attempt, or null on conflict.
+ */
+function assignCourts(shuffled, ctx) {
+    const matches = []
+    for (let c = 0; c < ctx.courtCount; c += 1) {
+        const courtPlayers = shuffled.slice(c * ctx.playersPerCourt, (c + 1) * ctx.playersPerCourt)
+        if (courtPlayers.length < ctx.playersPerCourt) {
+            return null
+        }
+        const team1 = courtPlayers.slice(0, ctx.teamSize)
+        const team2 = courtPlayers.slice(ctx.teamSize)
+        const key = matchupKey([team1, team2], ctx.mode)
+        if (ctx.usedMatchups.has(key)) {
+            return null
+        }
+        matches.push({ court: c + 1, teams: [team1, team2] })
+    }
+    return matches
+}
+
+/**
+ * Try to build valid matches from a set of active players.
+ * Returns matches array or null if no valid assignment found.
+ */
+function tryBuildMatches(active, ctx) {
+    for (let attempt = 0; attempt < DEFAULT_MAX_ATTEMPTS; attempt += 1) {
+        const shuffled = shuffleArray([...active])
+        const matches = assignCourts(shuffled, ctx)
+        if (matches) {
+            return matches
+        }
+    }
+    return null
+}
+
+/**
+ * Compute the maximum number of rounds for structured modes.
+ */
+function computeMaxStructuredRounds(players, mode) {
+    const n = players.length
+    if (mode === "singles") {
+        return (n * (n - 1)) / 2
+    }
+    return Math.min(STRUCTURED_MAX_DOUBLES, n * (n - 1))
+}
+
+/**
+ * Generate structured rounds for singles/doubles modes with sit-out rotation.
+ *
+ * @param {string[]} players
+ * @param {"singles"|"doubles"} mode
+ * @param {number} courtCount - Number of courts (matches per round)
+ * @returns {{ matches: { court: number, teams: string[][] }[], sitOuts: string[] }[]}
+ */
+function generateStructuredRounds(players, mode, courtCount, initialUsedMatchups = null) {
+    const teamSize = mode === "singles" ? 1 : DOUBLES_TEAM_SIZE
+    const playersPerCourt = teamSize * 2
+    const activeCount = Math.min(playersPerCourt * courtCount, players.length)
+    const sitOutCounts = new Map(players.map((p) => [p, 0]))
+    const usedMatchups = new Set(initialUsedMatchups)
+    const rounds = []
+    const maxRounds = Math.max(computeMaxStructuredRounds(players, mode), STRUCTURED_MIN_ROUNDS)
+    const ctx = { teamSize, playersPerCourt, courtCount, mode, usedMatchups }
+    let consecutiveFails = 0
+
+    for (let r = 0; r < maxRounds; r += 1) {
+        const result = tryStructuredRound(players, activeCount, sitOutCounts, ctx)
+
+        if (result) {
+            rounds.push(result)
+            consecutiveFails = 0
+        } else {
+            consecutiveFails += 1
+            if (consecutiveFails >= STRUCTURED_FAIL_LIMIT) {
+                break
+            }
+        }
+    }
+
+    return rounds
+}
+
+/**
+ * Attempt to generate a single structured round with sit-out selection.
+ */
+function tryStructuredRound(players, activeCount, sitOutCounts, ctx) {
+    for (let sel = 0; sel < DEFAULT_MAX_ATTEMPTS; sel += 1) {
+        const { active, sitOuts } = selectActivePlayers(players, activeCount, sitOutCounts)
+        const matches = tryBuildMatches(active, ctx)
+
+        if (matches) {
+            for (const match of matches) {
+                ctx.usedMatchups.add(matchupKey(match.teams, ctx.mode))
+            }
+            return { matches, sitOuts, scores: null }
+        }
+
+        // Undo sit-out counts for this failed selection
+        for (const p of sitOuts) {
+            sitOutCounts.set(p, sitOutCounts.get(p) - 1)
+        }
+    }
+    return null
+}
+
+/**
+ * Wrap the output of generateOptimalRoundSequence into the Round[] format.
+ */
+function wrapFreeRounds(rawRounds) {
+    return rawRounds.map((teams) => ({
+        matches: [{ court: 1, teams }],
+        sitOuts: [],
+        scores: null,
+    }))
+}
+
+export {
+    pairKey,
+    extractPairs,
+    matchupKey,
+    generateRound,
+    generateOptimalRoundSequence,
+    generateStructuredRounds,
+    wrapFreeRounds,
+}

@@ -224,6 +224,18 @@
         var(--shadow-lg),
         0 0 0 1px #ffffff08;
 }
+.modal-content-lg {
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+}
+.modal-content-lg .player-selection-grid {
+    margin-top: var(--space-md);
+}
+.modal-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
 .modal-content h2 {
     font-size: 1.15rem;
     margin-bottom: var(--space-sm);

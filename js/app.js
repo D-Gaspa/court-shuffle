@@ -4,6 +4,7 @@ import { initSession, refreshSessionView } from "./session-controller.js"
 import { loadState, saveState } from "./storage.js"
 
 const state = loadState()
+state.roster.sort((a, b) => a.localeCompare(b))
 
 const tabs = document.querySelectorAll(".tab")
 const views = {

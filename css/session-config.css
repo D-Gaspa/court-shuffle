@@ -7,6 +7,12 @@
 .session-topbar h1 {
     font-size: 1.5rem;
 }
+.round-of {
+    font-size: 0.6em;
+    font-weight: 500;
+    color: var(--text-muted);
+    vertical-align: middle;
+}
 .session-subtitle {
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -133,4 +139,34 @@
     text-align: center;
     font-size: 0.8rem;
     color: var(--text-muted);
+}
+
+/* Mode Selector */
+.mode-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+}
+.mode-btn {
+    padding: 10px 8px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+    font-family: "Outfit", system-ui, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    -webkit-tap-highlight-color: transparent;
+    text-align: center;
+}
+.mode-btn:hover {
+    border-color: var(--border-light);
+    background: var(--bg-elevated);
+}
+.mode-btn.selected {
+    border-color: var(--clay);
+    background: var(--clay-glow);
+    color: var(--text);
 }

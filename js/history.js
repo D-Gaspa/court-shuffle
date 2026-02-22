@@ -1,3 +1,5 @@
+import { getModeLabel } from "./utils.js"
+
 function formatDate(isoString) {
     try {
         const d = new Date(isoString)
@@ -42,7 +44,8 @@ function buildHistoryCardHeader(session, dateStr) {
     const meta = document.createElement("span")
     meta.className = "history-card-meta"
     const roundCount = session.rounds.length
-    meta.textContent = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${session.teamCount} teams`
+    const modeLabel = getModeLabel(session)
+    meta.textContent = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
 
     info.appendChild(dateSpan)
     info.appendChild(meta)
@@ -52,46 +55,117 @@ function buildHistoryCardHeader(session, dateStr) {
     return headerEl
 }
 
+function renderTeamsToGrid(teams, grid) {
+    let ti = 0
+    while (ti < teams.length) {
+        const teamDiv = document.createElement("div")
+        teamDiv.className = "history-team"
+
+        const teamName = document.createElement("div")
+        teamName.className = "history-team-name"
+        teamName.textContent = `Team ${ti + 1}`
+
+        const teamPlayers = document.createElement("div")
+        teamPlayers.className = "history-team-players"
+        teamPlayers.textContent = teams[ti].join(", ")
+
+        teamDiv.appendChild(teamName)
+        teamDiv.appendChild(teamPlayers)
+        grid.appendChild(teamDiv)
+        ti += 1
+    }
+}
+
+function getScoreForMatch(round, matchIndex, court) {
+    if (!round.scores) {
+        return null
+    }
+
+    const direct = round.scores[matchIndex]
+    if (direct?.score) {
+        return direct.score
+    }
+
+    for (const entry of round.scores) {
+        if (entry && entry.court === court) {
+            return entry.score
+        }
+    }
+
+    return null
+}
+
+function appendHistoryScore(teamsGrid, score) {
+    const el = document.createElement("div")
+    el.className = "history-score"
+    el.textContent = `Score: ${score[0]} - ${score[1]}`
+    teamsGrid.appendChild(el)
+}
+
+function renderStructuredRound(round, teamsGrid) {
+    for (let i = 0; i < round.matches.length; i += 1) {
+        const match = round.matches[i]
+
+        if (round.matches.length > 1) {
+            const courtLabel = document.createElement("div")
+            courtLabel.className = "history-team-name"
+            courtLabel.textContent = `Court ${match.court}`
+            courtLabel.style.gridColumn = "1 / -1"
+            teamsGrid.appendChild(courtLabel)
+        }
+
+        renderTeamsToGrid(match.teams, teamsGrid)
+
+        const score = getScoreForMatch(round, i, match.court)
+        if (score) {
+            appendHistoryScore(teamsGrid, score)
+        }
+    }
+
+    if (round.sitOuts && round.sitOuts.length > 0) {
+        const sitOutDiv = document.createElement("div")
+        sitOutDiv.className = "history-team"
+        const sitOutLabel = document.createElement("div")
+        sitOutLabel.className = "history-team-name"
+        sitOutLabel.style.color = "var(--text-muted)"
+        sitOutLabel.textContent = "Sat out"
+        const sitOutPlayers = document.createElement("div")
+        sitOutPlayers.className = "history-team-players"
+        sitOutPlayers.textContent = round.sitOuts.join(", ")
+        sitOutDiv.appendChild(sitOutLabel)
+        sitOutDiv.appendChild(sitOutPlayers)
+        teamsGrid.appendChild(sitOutDiv)
+    }
+}
+
+function buildHistoryRound(round, index) {
+    const roundDiv = document.createElement("div")
+    roundDiv.className = "history-round"
+
+    const roundLabel = document.createElement("div")
+    roundLabel.className = "history-round-label"
+    roundLabel.textContent = `Round ${index + 1}`
+
+    const teamsGrid = document.createElement("div")
+    teamsGrid.className = "history-round-teams"
+
+    if (round.matches) {
+        renderStructuredRound(round, teamsGrid)
+    } else {
+        renderTeamsToGrid(round, teamsGrid)
+    }
+
+    roundDiv.appendChild(roundLabel)
+    roundDiv.appendChild(teamsGrid)
+    return roundDiv
+}
+
 function buildHistoryCardBody(session, onDelete) {
     const body = document.createElement("div")
     body.className = "history-card-body"
 
-    let r = 0
-    while (r < session.rounds.length) {
-        const round = session.rounds[r]
-        const roundDiv = document.createElement("div")
-        roundDiv.className = "history-round"
-
-        const roundLabel = document.createElement("div")
-        roundLabel.className = "history-round-label"
-        roundLabel.textContent = `Round ${r + 1}`
-
-        const teamsGrid = document.createElement("div")
-        teamsGrid.className = "history-round-teams"
-
-        let ti = 0
-        while (ti < round.length) {
-            const teamDiv = document.createElement("div")
-            teamDiv.className = "history-team"
-
-            const teamName = document.createElement("div")
-            teamName.className = "history-team-name"
-            teamName.textContent = `Team ${ti + 1}`
-
-            const teamPlayers = document.createElement("div")
-            teamPlayers.className = "history-team-players"
-            teamPlayers.textContent = round[ti].join(", ")
-
-            teamDiv.appendChild(teamName)
-            teamDiv.appendChild(teamPlayers)
-            teamsGrid.appendChild(teamDiv)
-            ti += 1
-        }
-
-        roundDiv.appendChild(roundLabel)
-        roundDiv.appendChild(teamsGrid)
-        body.appendChild(roundDiv)
-        r += 1
+    for (let r = 0; r < session.rounds.length; r += 1) {
+        body.appendChild(buildHistoryRound(session.rounds[r], r))
     }
 
     const deleteRow = document.createElement("div")

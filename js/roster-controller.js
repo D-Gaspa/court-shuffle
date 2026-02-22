@@ -19,17 +19,23 @@ let saveState = null
 let askConfirm = null
 let renameIndex = -1
 
+function syncAddButton() {
+    addPlayerBtn.disabled = !playerNameInput.value.trim()
+}
+
 function initRoster(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
     askConfirm = confirmFn
 
     addPlayerBtn.addEventListener("click", addPlayer)
+    playerNameInput.addEventListener("input", syncAddButton)
     playerNameInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             addPlayer()
         }
     })
+    syncAddButton()
 
     renameCancelBtn.addEventListener("click", () => renameDialog.close())
     renameConfirmBtn.addEventListener("click", commitRename)
@@ -60,8 +66,10 @@ function addPlayer() {
     }
 
     globalState.roster.push(name)
+    globalState.roster.sort((a, b) => a.localeCompare(b))
     saveState()
     playerNameInput.value = ""
+    syncAddButton()
     playerNameInput.focus()
     hideFieldError(playerError)
     refreshRoster()
@@ -95,6 +103,7 @@ function commitRename() {
     }
 
     globalState.roster[renameIndex] = newName
+    globalState.roster.sort((a, b) => a.localeCompare(b))
     updateSessionsWithNewName(oldName, newName)
 
     saveState()

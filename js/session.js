@@ -1,4 +1,5 @@
 import { getAvatarClass, getInitials } from "./roster.js"
+import { buildMatchResultSection } from "./score-editor.js"
 
 const TEAM_COLOR_COUNT = 8
 const CARD_STAGGER_SECONDS = 0.06
@@ -25,8 +26,12 @@ function buildMatchTeamSide(team, label, teamClass) {
         const row = document.createElement("div")
         row.className = "match-player"
         row.appendChild(buildPlayerDot(""))
-        const nameNode = document.createTextNode(p)
-        row.appendChild(nameNode)
+
+        const nameSpan = document.createElement("span")
+        nameSpan.className = "match-player-name"
+        nameSpan.textContent = p
+
+        row.appendChild(nameSpan)
         list.appendChild(row)
     }
 
@@ -35,7 +40,7 @@ function buildMatchTeamSide(team, label, teamClass) {
     return wrapper
 }
 
-function renderVersusMatch(teams, matchNum, container) {
+function renderVersusMatch(teams, matchNum, container, opts) {
     const card = document.createElement("div")
     card.className = "match-card"
     card.style.animationDelay = "0.05s"
@@ -43,7 +48,7 @@ function renderVersusMatch(teams, matchNum, container) {
     const header = document.createElement("div")
     header.className = "match-card-header"
     const headerSpan = document.createElement("span")
-    headerSpan.textContent = `Match ${matchNum}`
+    headerSpan.textContent = `Court ${matchNum}`
     header.appendChild(headerSpan)
 
     const versus = document.createElement("div")
@@ -63,6 +68,25 @@ function renderVersusMatch(teams, matchNum, container) {
 
     card.appendChild(header)
     card.appendChild(versus)
+
+    if (opts?.entry) {
+        card.appendChild(
+            buildMatchResultSection({
+                entry: opts.entry,
+                editable: Boolean(opts.editable && opts.onCommit),
+                onCommit: opts.onCommit ?? {},
+            }),
+        )
+    } else {
+        card.appendChild(
+            buildMatchResultSection({
+                entry: null,
+                editable: Boolean(opts?.editable && opts?.onCommit),
+                onCommit: opts?.onCommit ?? {},
+            }),
+        )
+    }
+
     container.appendChild(card)
 }
 
@@ -118,12 +142,60 @@ function renderTeamCards(teams, container) {
     }
 }
 
-export function renderBracket(teams, container) {
+function buildMatchOpts(bracketOpts, matchIndex, scoreEntry) {
+    if (bracketOpts.editable && bracketOpts.onCommit) {
+        return {
+            editable: true,
+            entry: scoreEntry,
+            onCommit: (val) => bracketOpts.onCommit(matchIndex, val),
+        }
+    }
+    if (scoreEntry) {
+        return { entry: scoreEntry }
+    }
+    return null
+}
+
+export function renderBracket(round, container, opts) {
     container.textContent = ""
-    if (teams.length === 2) {
-        renderVersusMatch(teams, 1, container)
+
+    if (round.matches) {
+        for (let i = 0; i < round.matches.length; i += 1) {
+            const match = round.matches[i]
+            const scoreEntry = round.scores ? round.scores[i] : null
+            const matchOpts = opts ? buildMatchOpts(opts, i, scoreEntry) : null
+            if (match.teams.length === 2) {
+                renderVersusMatch(match.teams, match.court, container, matchOpts)
+            } else {
+                renderTeamCards(match.teams, container)
+            }
+        }
+        return
+    }
+
+    if (round.length === 2) {
+        renderVersusMatch(round, 1, container, null)
     } else {
-        renderTeamCards(teams, container)
+        renderTeamCards(round, container)
+    }
+}
+
+export function renderSitOuts(sitOuts, container) {
+    container.textContent = ""
+    for (const player of sitOuts) {
+        const chip = document.createElement("div")
+        chip.className = "sit-out-chip"
+
+        const avatar = document.createElement("div")
+        avatar.className = `mini-avatar ${getAvatarClass(0)}`
+        avatar.textContent = getInitials(player)
+
+        const name = document.createElement("span")
+        name.textContent = player
+
+        chip.appendChild(avatar)
+        chip.appendChild(name)
+        container.appendChild(chip)
     }
 }
 

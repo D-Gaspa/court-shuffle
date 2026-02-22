@@ -1,6 +1,16 @@
 import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "./constants.js"
-import { renderBracket, renderPlayerSelection, updateTeamSizeHint } from "./session.js"
-import { canGenerateMore, extractPairs, generateRound } from "./shuffle.js"
+import {
+    clampCourtCount,
+    getCourtCount,
+    initCourtConfig,
+    resetCourtCount,
+    setCourtVisibility,
+    updateCourtHint,
+} from "./court-config.js"
+import { initModifyPlayers, openModifyDialog } from "./modify-players.js"
+import { renderPlayerSelection, updateTeamSizeHint } from "./session.js"
+import { endSession, renderActiveSession } from "./session-active.js"
+import { generateOptimalRoundSequence, generateStructuredRounds, wrapFreeRounds } from "./shuffle.js"
 
 const sessionSetup = document.getElementById("session-setup")
 const sessionActive = document.getElementById("session-active")
@@ -9,23 +19,40 @@ const sessionConfig = document.getElementById("session-config")
 const playerSelection = document.getElementById("player-selection")
 const selectAllBtn = document.getElementById("select-all-btn")
 const deselectAllBtn = document.getElementById("deselect-all-btn")
+const modeSelector = document.getElementById("mode-selector")
+const modeHint = document.getElementById("mode-hint")
+const teamsConfig = document.getElementById("teams-config")
 const teamsDecBtn = document.getElementById("teams-dec")
 const teamsIncBtn = document.getElementById("teams-inc")
 const teamCountValue = document.getElementById("team-count-value")
 const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
-const roundNumber = document.getElementById("round-number")
-const roundInfo = document.getElementById("round-info")
-const nextRoundBtn = document.getElementById("next-round-btn")
+const modifyPlayersBtn = document.getElementById("modify-players-btn")
+
+const uiState = {
+    roundNumber: document.getElementById("round-number"),
+    roundTotal: document.getElementById("round-total"),
+    roundInfo: document.getElementById("round-info"),
+    prevRoundBtn: document.getElementById("prev-round-btn"),
+    nextRoundBtn: document.getElementById("next-round-btn"),
+    bracketContainer: document.getElementById("bracket-container"),
+    sitOutContainer: document.getElementById("sit-out-container"),
+    sitOutList: document.getElementById("sit-out-list"),
+    noMoreRounds: document.getElementById("no-more-rounds"),
+}
+
 const endSessionBtn = document.getElementById("end-session-btn")
-const bracketContainer = document.getElementById("bracket-container")
-const noMoreRounds = document.getElementById("no-more-rounds")
 
 let selectedPlayers = new Set()
 let teamCount = 2
+let gameMode = "free"
 let globalState = null
 let saveState = null
 let askConfirm = null
+
+function renderActiveSessionState() {
+    renderActiveSession(globalState, saveState, uiState)
+}
 
 function initSession(state, persistFn, confirmFn) {
     globalState = state
@@ -37,8 +64,35 @@ function initSession(state, persistFn, confirmFn) {
     selectAllBtn.addEventListener("click", onSelectAllClick)
     deselectAllBtn.addEventListener("click", onDeselectAllClick)
     startSessionBtn.addEventListener("click", onStartSessionClick)
-    nextRoundBtn.addEventListener("click", onNextRoundClick)
+    uiState.prevRoundBtn.addEventListener("click", onPrevRoundClick)
+    uiState.nextRoundBtn.addEventListener("click", onNextRoundClick)
     endSessionBtn.addEventListener("click", onEndSessionClick)
+    modifyPlayersBtn.addEventListener("click", openModifyDialog)
+
+    initModifyPlayers(state, persistFn, renderActiveSessionState)
+    initCourtConfig(onSelectionChange)
+
+    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
+        btn.addEventListener("click", () => onModeChange(btn.dataset.mode))
+    }
+}
+
+function onModeChange(mode) {
+    gameMode = mode
+    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
+        btn.classList.toggle("selected", btn.dataset.mode === mode)
+    }
+
+    if (mode === "free") {
+        teamsConfig.hidden = false
+        modeHint.textContent = ""
+    } else {
+        teamsConfig.hidden = true
+        teamCount = 2
+        resetCourtCount()
+    }
+    setCourtVisibility(mode)
+    onSelectionChange()
 }
 
 function onTeamsDecClick() {
@@ -73,72 +127,53 @@ function onStartSessionClick() {
         return
     }
 
-    const usedPairs = new Set()
-    const firstRound = generateRound(players, teamCount, usedPairs)
-    if (!firstRound) {
-        return
-    }
-
-    const pairs = extractPairs(firstRound)
-    for (const p of pairs) {
-        usedPairs.add(p)
+    let rounds
+    if (gameMode === "free") {
+        const raw = generateOptimalRoundSequence(players, teamCount)
+        if (raw.length === 0) {
+            return
+        }
+        rounds = wrapFreeRounds(raw)
+    } else {
+        rounds = generateStructuredRounds(players, gameMode, getCourtCount())
+        if (rounds.length === 0) {
+            return
+        }
     }
 
     globalState.activeSession = {
         id: Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END),
         date: new Date().toISOString(),
         players,
-        teamCount,
-        rounds: [firstRound],
-        usedPairs: [...usedPairs],
+        teamCount: gameMode === "free" ? teamCount : 2,
+        mode: gameMode,
+        courtCount: gameMode === "free" ? 1 : getCourtCount(),
+        rounds,
+        currentRound: 0,
     }
 
     saveState()
     refreshSessionView()
+}
+
+function onPrevRoundClick() {
+    const session = globalState.activeSession
+    if (!session || session.currentRound <= 0) {
+        return
+    }
+    session.currentRound -= 1
+    saveState()
+    renderActiveSessionState()
 }
 
 function onNextRoundClick() {
     const session = globalState.activeSession
-    if (!session) {
+    if (!session || session.currentRound >= session.rounds.length - 1) {
         return
     }
-
-    const usedPairs = new Set(session.usedPairs)
-    const newRound = generateRound(session.players, session.teamCount, usedPairs)
-
-    if (!newRound) {
-        nextRoundBtn.disabled = true
-        noMoreRounds.hidden = false
-        return
-    }
-
-    const pairs = extractPairs(newRound)
-    for (const p of pairs) {
-        usedPairs.add(p)
-    }
-
-    session.rounds.push(newRound)
-    session.usedPairs = [...usedPairs]
+    session.currentRound += 1
     saveState()
-    renderActiveSession()
-}
-
-function endSession(save) {
-    if (save) {
-        const session = globalState.activeSession
-        if (session) {
-            globalState.history.push({
-                id: session.id,
-                date: session.date,
-                players: session.players,
-                teamCount: session.teamCount,
-                rounds: session.rounds,
-            })
-        }
-    }
-    globalState.activeSession = null
-    saveState()
-    refreshSessionView()
+    renderActiveSessionState()
 }
 
 function onEndSessionClick() {
@@ -146,16 +181,37 @@ function onEndSessionClick() {
         okLabel: "Save & End",
         okClass: "btn-primary",
         extraLabel: "Discard",
-        onExtra: () => endSession(false),
+        onExtra: () => {
+            endSession(globalState, saveState, false)
+            refreshSessionView()
+        },
     }
-    askConfirm("End Session", "Save this session to history, or discard it?", () => endSession(true), opts)
+    askConfirm(
+        "End Session",
+        "Save this session to history, or discard it?",
+        () => {
+            endSession(globalState, saveState, true)
+            refreshSessionView()
+        },
+        opts,
+    )
 }
 
 function onSelectionChange() {
     const count = selectedPlayers.size
     clampTeamCount()
+    clampCourtCount(count, gameMode)
     teamCountValue.textContent = teamCount
-    updateTeamSizeHint(count, teamCount, teamSizeHint)
+
+    if (gameMode === "free") {
+        updateTeamSizeHint(count, teamCount, teamSizeHint)
+        modeHint.textContent = ""
+    } else {
+        teamSizeHint.textContent = ""
+        const label = gameMode === "singles" ? "1v1" : "2v2"
+        modeHint.textContent = count >= 2 ? `${label} matches` : ""
+    }
+    updateCourtHint(count, gameMode)
     startSessionBtn.disabled = count < 2
 }
 
@@ -167,36 +223,17 @@ function clampTeamCount() {
     if (teamCount < 2) {
         teamCount = 2
     }
+
     teamCountValue.textContent = teamCount
     teamsDecBtn.disabled = teamCount <= 2
     teamsIncBtn.disabled = teamCount >= selectedPlayers.size || selectedPlayers.size < 2
-}
-
-function renderActiveSession() {
-    const session = globalState.activeSession
-    if (!session) {
-        return
-    }
-
-    const currentRound = session.rounds.length
-    roundNumber.textContent = currentRound
-    roundInfo.textContent = `${session.players.length} players · ${session.teamCount} teams`
-
-    const latestTeams = session.rounds[currentRound - 1]
-    renderBracket(latestTeams, bracketContainer)
-
-    const usedPairs = new Set(session.usedPairs)
-    const moreRoundsPossible = canGenerateMore(session.players, session.teamCount, usedPairs)
-
-    nextRoundBtn.disabled = !moreRoundsPossible
-    noMoreRounds.hidden = moreRoundsPossible
 }
 
 function refreshSessionView() {
     if (globalState.activeSession) {
         sessionSetup.hidden = true
         sessionActive.hidden = false
-        renderActiveSession()
+        renderActiveSessionState()
         return
     }
 
@@ -221,6 +258,13 @@ function refreshSessionView() {
     selectedPlayers = validSelected
 
     renderPlayerSelection(globalState.roster, selectedPlayers, playerSelection, onSelectionChange)
+
+    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
+        btn.classList.toggle("selected", btn.dataset.mode === gameMode)
+    }
+    teamsConfig.hidden = gameMode !== "free"
+    setCourtVisibility(gameMode)
+
     clampTeamCount()
     onSelectionChange()
 }
