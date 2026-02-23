@@ -1,4 +1,6 @@
-import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "./constants.js"
+import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../constants.js"
+import { generateOptimalRoundSequence, generateStructuredRounds, wrapFreeRounds } from "../shuffle.js"
+import { endSession, renderActiveSession } from "./active.js"
 import {
     clampCourtCount,
     getCourtCount,
@@ -8,9 +10,7 @@ import {
     updateCourtHint,
 } from "./court-config.js"
 import { initModifyPlayers, openModifyDialog } from "./modify-players.js"
-import { renderPlayerSelection, updateTeamSizeHint } from "./session.js"
-import { endSession, renderActiveSession } from "./session-active.js"
-import { generateOptimalRoundSequence, generateStructuredRounds, wrapFreeRounds } from "./shuffle.js"
+import { renderPlayerSelection, updateTeamSizeHint } from "./render.js"
 
 const sessionSetup = document.getElementById("session-setup")
 const sessionActive = document.getElementById("session-active")

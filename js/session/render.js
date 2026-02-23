@@ -1,5 +1,5 @@
-import { getAvatarClass, getInitials } from "./roster.js"
-import { buildMatchResultSection } from "./score-editor.js"
+import { getAvatarClass, getInitials } from "../roster/render.js"
+import { buildMatchResultSection } from "../score-editor/index.js"
 
 const TEAM_COLOR_COUNT = 8
 const CARD_STAGGER_SECONDS = 0.06

@@ -1,11 +1,11 @@
-import { renderPlayerSelection } from "./session.js"
 import {
     extractPairs,
     generateOptimalRoundSequence,
     generateStructuredRounds,
     matchupKey,
     wrapFreeRounds,
-} from "./shuffle.js"
+} from "../shuffle.js"
+import { renderPlayerSelection } from "./render.js"
 
 const modifyDialog = document.getElementById("modify-players-dialog")
 const modifyGrid = document.getElementById("modify-players-grid")

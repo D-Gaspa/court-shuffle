@@ -1,5 +1,5 @@
-import { renderBracket, renderSitOuts } from "./session.js"
-import { getModeLabel } from "./utils.js"
+import { getModeLabel } from "../utils.js"
+import { renderBracket, renderSitOuts } from "./render.js"
 
 export function renderActiveSession(state, saveState, ui) {
     const session = state.activeSession
@@ -53,6 +53,7 @@ export function endSession(state, saveState, save) {
     if (save) {
         const session = state.activeSession
         if (session) {
+            const playedRounds = session.rounds.filter((round) => round.scores?.some((s) => s !== null) ?? false)
             state.history.push({
                 id: session.id,
                 date: session.date,
@@ -60,7 +61,7 @@ export function endSession(state, saveState, save) {
                 teamCount: session.teamCount,
                 mode: session.mode || "free",
                 courtCount: session.courtCount || 1,
-                rounds: session.rounds,
+                rounds: playedRounds,
             })
         }
     }

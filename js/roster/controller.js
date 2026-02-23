@@ -1,6 +1,6 @@
-import { renderRoster } from "./roster.js"
-import { pairKey } from "./shuffle.js"
-import { hideFieldError, renameInPlayerList, renameInRounds, showFieldError } from "./utils.js"
+import { pairKey } from "../shuffle.js"
+import { hideFieldError, renameInPlayerList, renameInRounds, showFieldError } from "../utils.js"
+import { renderRoster } from "./render.js"
 
 const playerNameInput = document.getElementById("player-name-input")
 const addPlayerBtn = document.getElementById("add-player-btn")

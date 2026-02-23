@@ -1,6 +1,6 @@
-import { renderHistory } from "./history.js"
-import { initRoster, refreshRoster } from "./roster-controller.js"
-import { initSession, refreshSessionView } from "./session-controller.js"
+import { renderHistory } from "./history/render.js"
+import { initRoster, refreshRoster } from "./roster/controller.js"
+import { initSession, refreshSessionView } from "./session/controller.js"
 import { loadState, saveState } from "./storage.js"
 
 const state = loadState()

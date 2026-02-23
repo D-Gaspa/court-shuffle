@@ -1,4 +1,4 @@
-import { getModeLabel } from "./utils.js"
+import { getModeLabel } from "../utils.js"
 
 function formatDate(isoString) {
     try {
@@ -76,29 +76,28 @@ function renderTeamsToGrid(teams, grid) {
     }
 }
 
-function getScoreForMatch(round, matchIndex, court) {
+function getSetsForMatch(round, matchIndex) {
     if (!round.scores) {
         return null
     }
-
-    const direct = round.scores[matchIndex]
-    if (direct?.score) {
-        return direct.score
+    const entry = round.scores[matchIndex]
+    if (!entry) {
+        return null
     }
-
-    for (const entry of round.scores) {
-        if (entry && entry.court === court) {
-            return entry.score
-        }
+    if (entry.sets && entry.sets.length > 0) {
+        return entry.sets
     }
-
+    // backward compatibility: old single-score format [a, b]
+    if (Array.isArray(entry.score) && entry.score.length === 2) {
+        return [entry.score]
+    }
     return null
 }
 
-function appendHistoryScore(teamsGrid, score) {
+function appendHistorySets(teamsGrid, sets) {
     const el = document.createElement("div")
     el.className = "history-score"
-    el.textContent = `Score: ${score[0]} - ${score[1]}`
+    el.textContent = sets.map((s) => `${s[0]}–${s[1]}`).join(", ")
     teamsGrid.appendChild(el)
 }
 
@@ -116,9 +115,9 @@ function renderStructuredRound(round, teamsGrid) {
 
         renderTeamsToGrid(match.teams, teamsGrid)
 
-        const score = getScoreForMatch(round, i, match.court)
-        if (score) {
-            appendHistoryScore(teamsGrid, score)
+        const sets = getSetsForMatch(round, i)
+        if (sets) {
+            appendHistorySets(teamsGrid, sets)
         }
     }
 
