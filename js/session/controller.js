@@ -1,15 +1,5 @@
-import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../constants.js"
-import { generateOptimalRoundSequence, generateStructuredRounds, wrapFreeRounds } from "../shuffle.js"
-import {
-    advanceTournament,
-    allScoresEntered,
-    createInitialBracket,
-    generateBracketFirstRound,
-    generateRoundRobinSchedule,
-} from "../tournament/engine.js"
 import {
     getMinPlayersForTournament,
-    getTournamentConfig,
     hideTournamentConfig,
     initTournamentSetup,
     resetTournamentSetup,
@@ -17,7 +7,7 @@ import {
     updateTournamentHint,
     updateTournamentPlayers,
 } from "../tournament/setup.js"
-import { endSession, renderActiveSession } from "./active.js"
+import { renderActiveSession } from "./active.js"
 import {
     clampCourtCount,
     getCourtCount,
@@ -29,7 +19,9 @@ import {
     updateCourtHint,
 } from "./court-config.js"
 import { initModifyPlayers, openModifyDialog } from "./modify-players.js"
+import { initNavigation, onEndSessionClick, onNextRoundClick, onPrevRoundClick } from "./navigation.js"
 import { renderPlayerSelection, updateTeamSizeHint } from "./render.js"
+import { buildFreeSession, buildTournamentSession } from "./session-start.js"
 
 const sessionSetup = document.getElementById("session-setup")
 const sessionActive = document.getElementById("session-active")
@@ -71,7 +63,6 @@ let teamCount = 2
 let gameMode = "free"
 let globalState = null
 let saveState = null
-let askConfirm = null
 
 function renderActiveSessionState() {
     renderActiveSession(globalState, saveState, uiState)
@@ -80,7 +71,6 @@ function renderActiveSessionState() {
 function initSession(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
-    askConfirm = confirmFn
 
     teamsDecBtn.addEventListener("click", onTeamsDecClick)
     teamsIncBtn.addEventListener("click", onTeamsIncClick)
@@ -95,6 +85,13 @@ function initSession(state, persistFn, confirmFn) {
     initModifyPlayers(state, persistFn, renderActiveSessionState)
     initCourtConfig(onSelectionChange)
     initTournamentSetup(onSelectionChange)
+    initNavigation({
+        state,
+        saveFn: persistFn,
+        confirmFn,
+        renderFn: renderActiveSessionState,
+        refreshFn: refreshSessionView,
+    })
 
     allow2v1Checkbox.addEventListener("change", () => {
         setNotStrictDoubles(allow2v1Checkbox.checked)
@@ -173,152 +170,26 @@ function onStartSessionClick() {
         return
     }
 
+    let session
     if (gameMode === "tournament") {
-        startTournamentSession(players)
-        return
-    }
-
-    let rounds
-    if (gameMode === "free") {
-        const raw = generateOptimalRoundSequence(players, teamCount)
-        if (raw.length === 0) {
-            return
-        }
-        rounds = wrapFreeRounds(raw)
+        session = buildTournamentSession(players, getNotStrictDoubles())
     } else {
-        rounds = generateStructuredRounds(players, gameMode, getCourtCount(), null, getNotStrictDoubles())
-        if (rounds.length === 0) {
-            return
-        }
+        session = buildFreeSession({
+            players,
+            teamCount,
+            gameMode,
+            courtCount: getCourtCount(),
+            allowNotStrict: getNotStrictDoubles(),
+        })
     }
 
-    globalState.activeSession = {
-        id: Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END),
-        date: new Date().toISOString(),
-        players,
-        teamCount: gameMode === "free" ? teamCount : 2,
-        mode: gameMode,
-        courtCount: gameMode === "free" ? 1 : getCourtCount(),
-        rounds,
-        currentRound: 0,
-        allowNotStrictDoubles: gameMode === "doubles" ? getNotStrictDoubles() : false,
-    }
-
-    saveState()
-    refreshSessionView()
-}
-
-function startTournamentSession(players) {
-    const config = getTournamentConfig(players, getNotStrictDoubles())
-    if (config.teams.length < 2) {
-        return
-    }
-
-    let rounds
-    let allRoundsGenerated = false
-
-    if (config.format === "round-robin") {
-        rounds = generateRoundRobinSchedule(config.teams)
-        allRoundsGenerated = true
-    } else {
-        const firstRound = generateBracketFirstRound(config.teams)
-        rounds = [firstRound]
-    }
-
-    if (rounds.length === 0) {
-        return
-    }
-
-    globalState.activeSession = {
-        id: Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END),
-        date: new Date().toISOString(),
-        players,
-        teamCount: 2,
-        mode: "tournament",
-        courtCount: 1,
-        rounds,
-        currentRound: 0,
-        tournamentFormat: config.format,
-        tournamentTeamSize: config.teamSize,
-        teams: config.teams,
-        seeding: config.seeding,
-        bracket: createInitialBracket(config.format),
-        tournamentRound: 0,
-        allRoundsGenerated,
-        allowNotStrictDoubles: config.allowNotStrictDoubles,
-    }
-
-    saveState()
-    refreshSessionView()
-}
-
-function onPrevRoundClick() {
-    const session = globalState.activeSession
-    if (!session || session.currentRound <= 0) {
-        return
-    }
-    session.currentRound -= 1
-    saveState()
-    renderActiveSessionState()
-}
-
-function onNextRoundClick() {
-    const session = globalState.activeSession
     if (!session) {
         return
     }
 
-    // Tournament with score-driven advancement
-    if (session.mode === "tournament" && !session.allRoundsGenerated) {
-        if (session.currentRound < session.rounds.length - 1) {
-            // Navigating to an already-generated round
-            session.currentRound += 1
-        } else {
-            // At the latest round — try to advance
-            const currentRound = session.rounds[session.currentRound]
-            if (!allScoresEntered(currentRound)) {
-                return // UI should show a hint
-            }
-            const nextRound = advanceTournament(session)
-            if (nextRound === null) {
-                // Tournament complete
-                return
-            }
-            session.rounds.push(nextRound)
-            session.currentRound = session.rounds.length - 1
-            session.tournamentRound = (session.tournamentRound || 0) + 1
-        }
-    } else {
-        // Normal pre-generated round navigation
-        if (session.currentRound >= session.rounds.length - 1) {
-            return
-        }
-        session.currentRound += 1
-    }
-
+    globalState.activeSession = session
     saveState()
-    renderActiveSessionState()
-}
-
-function onEndSessionClick() {
-    const opts = {
-        okLabel: "Save & End",
-        okClass: "btn-primary",
-        extraLabel: "Discard",
-        onExtra: () => {
-            endSession(globalState, saveState, false)
-            refreshSessionView()
-        },
-    }
-    askConfirm(
-        "End Session",
-        "Save this session to history, or discard it?",
-        () => {
-            endSession(globalState, saveState, true)
-            refreshSessionView()
-        },
-        opts,
-    )
+    refreshSessionView()
 }
 
 function onSelectionChange() {

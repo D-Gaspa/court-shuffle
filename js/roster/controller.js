@@ -1,4 +1,4 @@
-import { pairKey } from "../shuffle.js"
+import { pairKey } from "../shuffle/core.js"
 import { hideFieldError, renameInPlayerList, renameInRounds, showFieldError } from "../utils.js"
 import { renderRoster } from "./render.js"
 

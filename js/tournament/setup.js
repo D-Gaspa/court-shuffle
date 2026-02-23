@@ -4,6 +4,7 @@
  */
 
 import { autoFormTeams, createTeamsFromPairings } from "./engine.js"
+import { getManualPairings, getManualSeedOrder, renderManualPairing, renderManualSeeding } from "./manual-input.js"
 
 const MIN_DOUBLES_TEAM_PLAYERS = 4
 const MIN_SINGLES_TEAM_PLAYERS = 2
@@ -14,10 +15,8 @@ const teamSizeSelector = document.getElementById("tournament-team-size")
 const pairingConfig = document.getElementById("tournament-pairing-config")
 const pairingSelector = document.getElementById("pairing-selector")
 const manualPairingArea = document.getElementById("manual-pairing-area")
-const manualPairingGrid = document.getElementById("manual-pairing-grid")
 const seedingSelector = document.getElementById("seeding-selector")
 const manualSeedingArea = document.getElementById("manual-seeding-area")
-const manualSeedingList = document.getElementById("manual-seeding-list")
 const tournamentHint = document.getElementById("tournament-hint")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 
@@ -25,13 +24,8 @@ let tournamentFormat = "consolation"
 let tournamentTeamSize = 1
 let pairingMode = "random"
 let seedingMode = "random"
-let manualPairings = []
-let manualSeedOrder = []
-let _onChangeCallback = null
 
 function initTournamentSetup(onChange) {
-    _onChangeCallback = onChange
-
     for (const btn of formatSelector.querySelectorAll(".format-btn")) {
         btn.addEventListener("click", () => {
             tournamentFormat = btn.dataset.format
@@ -96,101 +90,6 @@ function updateTournamentHint() {
     tournamentHint.textContent = formatLabels[tournamentFormat] || ""
 }
 
-/**
- * Render the manual pairing UI for doubles tournament.
- * Players are shown in a list and paired sequentially.
- */
-function renderManualPairing(players) {
-    manualPairingGrid.textContent = ""
-    manualPairings = []
-
-    // Create pairs from the player list order
-    for (let i = 0; i < players.length; i += 2) {
-        const pair = [players[i]]
-        if (i + 1 < players.length) {
-            pair.push(players[i + 1])
-        }
-        manualPairings.push(pair)
-
-        const pairEl = document.createElement("div")
-        pairEl.className = "manual-pair"
-
-        const label = document.createElement("span")
-        label.className = "pair-label"
-        label.textContent = `Team ${manualPairings.length}`
-
-        const names = document.createElement("span")
-        names.className = "pair-names"
-        names.textContent = pair.join(" & ")
-
-        pairEl.appendChild(label)
-        pairEl.appendChild(names)
-        manualPairingGrid.appendChild(pairEl)
-    }
-}
-
-/**
- * Render the manual seeding list.
- * Shows teams/players in bracket order with drag-to-reorder.
- */
-function renderManualSeeding(players) {
-    manualSeedingList.textContent = ""
-    manualSeedOrder = [...players]
-
-    for (let i = 0; i < manualSeedOrder.length; i += 1) {
-        const item = document.createElement("div")
-        item.className = "seeding-item"
-        item.draggable = true
-        item.dataset.index = i
-
-        const seed = document.createElement("span")
-        seed.className = "seed-number"
-        seed.textContent = `#${i + 1}`
-
-        const name = document.createElement("span")
-        name.className = "seed-name"
-        name.textContent = manualSeedOrder[i]
-
-        const grip = document.createElement("span")
-        grip.className = "seed-grip"
-        grip.innerHTML = "&#x2630;"
-
-        item.appendChild(seed)
-        item.appendChild(name)
-        item.appendChild(grip)
-        manualSeedingList.appendChild(item)
-
-        item.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", i.toString())
-            item.classList.add("dragging")
-        })
-        item.addEventListener("dragend", () => {
-            item.classList.remove("dragging")
-        })
-        item.addEventListener("dragover", (e) => {
-            e.preventDefault()
-            item.classList.add("drag-over")
-        })
-        item.addEventListener("dragleave", () => {
-            item.classList.remove("drag-over")
-        })
-        item.addEventListener("drop", (e) => {
-            e.preventDefault()
-            item.classList.remove("drag-over")
-            const fromIdx = Number(e.dataTransfer.getData("text/plain"))
-            const toIdx = Number(item.dataset.index)
-            if (fromIdx !== toIdx) {
-                const [moved] = manualSeedOrder.splice(fromIdx, 1)
-                manualSeedOrder.splice(toIdx, 0, moved)
-                renderManualSeeding(manualSeedOrder)
-            }
-        })
-    }
-}
-
-/**
- * Update the setup UI when players change.
- */
 function updateTournamentPlayers(players) {
     if (tournamentTeamSize === 2 && pairingMode === "manual") {
         renderManualPairing(players)
@@ -212,33 +111,22 @@ function updateTournamentPlayers(players) {
     }
 }
 
-/**
- * Build tournament teams from current configuration.
- */
 function buildTournamentTeams(players, _allowNotStrict) {
     if (tournamentTeamSize === 1) {
-        // Singles: each player is a team
         return players.map((p, i) => ({ id: i, name: p, players: [p] }))
     }
 
-    // Doubles
     if (pairingMode === "manual") {
-        return createTeamsFromPairings(manualPairings)
+        return createTeamsFromPairings(getManualPairings())
     }
 
     return autoFormTeams(players, 2)
 }
 
-/**
- * Get the full tournament configuration.
- */
-function getTournamentConfig(players, allowNotStrict) {
-    const teams = buildTournamentTeams(players, allowNotStrict)
-
-    // Apply seeding
+function applySeedingToTeams(teams) {
+    const manualSeedOrder = getManualSeedOrder()
     let seededTeams
     if (seedingMode === "manual" && manualSeedOrder.length > 0) {
-        // Reorder teams to match manual seed order
         const teamsByName = new Map(teams.map((t) => [t.name, t]))
         seededTeams = []
         for (const name of manualSeedOrder) {
@@ -247,14 +135,12 @@ function getTournamentConfig(players, allowNotStrict) {
                 seededTeams.push(team)
             }
         }
-        // Add any teams not in the manual list
         for (const t of teams) {
             if (!seededTeams.includes(t)) {
                 seededTeams.push(t)
             }
         }
     } else {
-        // Random seeding: shuffle
         seededTeams = [...teams]
         for (let i = seededTeams.length - 1; i > 0; i -= 1) {
             const j = Math.floor(Math.random() * (i + 1))
@@ -264,10 +150,15 @@ function getTournamentConfig(players, allowNotStrict) {
         }
     }
 
-    // Reassign IDs based on seed position
     seededTeams.forEach((t, i) => {
         t.id = i
     })
+    return seededTeams
+}
+
+function getTournamentConfig(players, allowNotStrict) {
+    const teams = buildTournamentTeams(players, allowNotStrict)
+    const seededTeams = applySeedingToTeams(teams)
 
     return {
         format: tournamentFormat,

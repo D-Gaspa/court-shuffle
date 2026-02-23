@@ -1,10 +1,6 @@
-import {
-    extractPairs,
-    generateOptimalRoundSequence,
-    generateStructuredRounds,
-    matchupKey,
-    wrapFreeRounds,
-} from "../shuffle.js"
+import { extractPairs, matchupKey } from "../shuffle/core.js"
+import { generateOptimalRoundSequence, wrapFreeRounds } from "../shuffle/free.js"
+import { generateStructuredRounds } from "../shuffle/structured.js"
 import { renderPlayerSelection } from "./render.js"
 
 const modifyDialog = document.getElementById("modify-players-dialog")

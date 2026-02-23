@@ -1,5 +1,5 @@
-import { allScoresEntered } from "../tournament/engine.js"
 import { renderStandingsTable, renderTournamentOverview } from "../tournament/render.js"
+import { allScoresEntered } from "../tournament/utils.js"
 import { getModeLabel } from "../utils.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 
@@ -23,45 +23,46 @@ function renderActiveSession(state, saveState, ui) {
         ui.modifyPlayersBtn.hidden = session.mode === "tournament"
     }
 
+    const roundInfo = { round, current, total, isLast }
     if (session.mode === "tournament") {
-        renderTournamentActive(session, round, current, total, isLast, saveState, ui)
+        renderTournamentActive(session, roundInfo, saveState, ui)
     } else {
-        renderStandardActive(session, round, current, total, isLast, saveState, ui)
+        renderStandardActive(session, roundInfo, saveState, ui)
     }
 }
 
-function renderStandardActive(_session, round, current, total, isLast, saveState, ui) {
-    ui.roundNumber.textContent = current + 1
-    ui.roundTotal.textContent = total
+function renderStandardActive(_session, roundInfo, saveState, ui) {
+    ui.roundNumber.textContent = roundInfo.current + 1
+    ui.roundTotal.textContent = roundInfo.total
 
-    renderBracket(round, ui.bracketContainer, {
+    renderBracket(roundInfo.round, ui.bracketContainer, {
         editable: true,
         onCommit: (matchIndex, sets) => {
-            commitScore(round, matchIndex, sets, saveState)
+            commitScore(roundInfo.round, matchIndex, sets, saveState)
         },
     })
 
-    renderSitOutsSection(round, ui)
+    renderSitOutsSection(roundInfo.round, ui)
 
-    ui.prevRoundBtn.disabled = current <= 0
-    ui.nextRoundBtn.disabled = isLast
+    ui.prevRoundBtn.disabled = roundInfo.current <= 0
+    ui.nextRoundBtn.disabled = roundInfo.isLast
     ui.nextRoundLabel.textContent = "Next Round"
-    ui.noMoreRounds.hidden = !isLast
+    ui.noMoreRounds.hidden = !roundInfo.isLast
 }
 
-function updateTournamentNavigation(session, current, _total, isLast, scoresComplete, ui) {
+function updateTournamentNavigation(session, navState, ui) {
     const isBracketTournament = !session.allRoundsGenerated
-    const isAtFrontier = current === session.rounds.length - 1
+    const isAtFrontier = navState.current === session.rounds.length - 1
     const isTournamentOver = session.bracket?.champion !== null && session.bracket?.champion !== undefined
 
-    ui.prevRoundBtn.disabled = current <= 0
+    ui.prevRoundBtn.disabled = navState.current <= 0
 
     if (isBracketTournament) {
         if (isTournamentOver) {
             updateTournamentCompleteUi(session, ui)
         } else if (isAtFrontier) {
-            ui.nextRoundBtn.disabled = !scoresComplete
-            ui.nextRoundLabel.textContent = scoresComplete ? "Advance Round" : "Enter all scores"
+            ui.nextRoundBtn.disabled = !navState.scoresComplete
+            ui.nextRoundLabel.textContent = navState.scoresComplete ? "Advance Round" : "Enter all scores"
             ui.noMoreRounds.hidden = true
         } else {
             ui.nextRoundBtn.disabled = false
@@ -69,9 +70,9 @@ function updateTournamentNavigation(session, current, _total, isLast, scoresComp
             ui.noMoreRounds.hidden = true
         }
     } else {
-        ui.nextRoundBtn.disabled = isLast
+        ui.nextRoundBtn.disabled = navState.isLast
         ui.nextRoundLabel.textContent = "Next Round"
-        ui.noMoreRounds.hidden = !isLast
+        ui.noMoreRounds.hidden = !navState.isLast
     }
 }
 
@@ -83,12 +84,12 @@ function updateTournamentCompleteUi(session, ui) {
     bannerEl.textContent = champion ? `Tournament complete! Champion: ${champion.name}` : "Tournament complete!"
 }
 
-function renderTournamentActive(session, round, current, total, isLast, saveState, ui) {
-    const roundLabel = round.tournamentRoundLabel || `Round ${current + 1}`
+function renderTournamentActive(session, roundInfo, saveState, ui) {
+    const roundLabel = roundInfo.round.tournamentRoundLabel || `Round ${roundInfo.current + 1}`
     ui.roundNumber.textContent = roundLabel
-    ui.roundTotal.textContent = total
+    ui.roundTotal.textContent = roundInfo.total
 
-    renderTournamentRound(session, round, current, saveState, ui)
+    renderTournamentRound(session, roundInfo.round, saveState, ui)
 
     if (session.tournamentFormat === "round-robin") {
         renderStandingsTable(session.teams, session.rounds, ui.bracketContainer)
@@ -96,13 +97,14 @@ function renderTournamentActive(session, round, current, total, isLast, saveStat
         renderTournamentOverview(session, ui.bracketContainer)
     }
 
-    renderSitOutsSection(round, ui)
+    renderSitOutsSection(roundInfo.round, ui)
 
-    const scoresComplete = allScoresEntered(round)
-    updateTournamentNavigation(session, current, total, isLast, scoresComplete, ui)
+    const scoresComplete = allScoresEntered(roundInfo.round)
+    const navState = { current: roundInfo.current, isLast: roundInfo.isLast, scoresComplete }
+    updateTournamentNavigation(session, navState, ui)
 }
 
-function renderTournamentRound(session, round, _current, saveState, ui) {
+function renderTournamentRound(session, round, saveState, ui) {
     ui.bracketContainer.textContent = ""
 
     // For consolation, show pool labels above the matches
@@ -128,7 +130,13 @@ function renderTournamentRound(session, round, _current, saveState, ui) {
             label.textContent = session.tournamentFormat === "consolation" ? "Winners Bracket" : "Bracket"
             ui.bracketContainer.appendChild(label)
 
-            renderMatchGroup(winnersMatches, matchIndices.winners, round, saveState, ui.bracketContainer)
+            renderMatchGroup({
+                matches: winnersMatches,
+                indices: matchIndices.winners,
+                round,
+                saveState,
+                container: ui.bracketContainer,
+            })
         }
 
         if (losersMatches.length > 0) {
@@ -137,7 +145,13 @@ function renderTournamentRound(session, round, _current, saveState, ui) {
             label.textContent = "Losers Bracket"
             ui.bracketContainer.appendChild(label)
 
-            renderMatchGroup(losersMatches, matchIndices.losers, round, saveState, ui.bracketContainer)
+            renderMatchGroup({
+                matches: losersMatches,
+                indices: matchIndices.losers,
+                round,
+                saveState,
+                container: ui.bracketContainer,
+            })
         }
 
         // Show byes
@@ -153,21 +167,21 @@ function renderTournamentRound(session, round, _current, saveState, ui) {
     }
 }
 
-function renderMatchGroup(matches, indices, round, saveState, container) {
-    for (let j = 0; j < matches.length; j += 1) {
-        const match = matches[j]
-        const globalIdx = indices[j]
-        const scoreEntry = round.scores ? round.scores[globalIdx] : null
+function renderMatchGroup(opts) {
+    for (let j = 0; j < opts.matches.length; j += 1) {
+        const match = opts.matches[j]
+        const globalIdx = opts.indices[j]
+        const scoreEntry = opts.round.scores ? opts.round.scores[globalIdx] : null
 
         const tempRound = {
             matches: [{ ...match, court: j + 1 }],
             scores: scoreEntry ? [scoreEntry] : null,
         }
 
-        renderBracket(tempRound, container, {
+        renderBracket(tempRound, opts.container, {
             editable: true,
             onCommit: (_, sets) => {
-                commitScore(round, globalIdx, sets, saveState)
+                commitScore(opts.round, globalIdx, sets, opts.saveState)
             },
         })
     }

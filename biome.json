@@ -47,6 +47,10 @@
             "includes": ["**"],
             "linter": {
                 "rules": {
+                    "complexity": {
+                        "noExcessiveLinesPerFunction": "warn",
+                        "noExcessiveCognitiveComplexity": "warn"
+                    },
                     "correctness": {
                         "noNodejsModules": "off",
                         "noUnresolvedImports": "off",
@@ -55,7 +59,8 @@
                     "nursery": {
                         "noContinue": "off",
                         "noTernary": "off",
-                        "noHexColors": "off"
+                        "noHexColors": "off",
+                        "noExcessiveLinesPerFile": "warn"
                     },
                     "security": {
                         "noSecrets": "off"
