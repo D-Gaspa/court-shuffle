@@ -1,5 +1,7 @@
 const SINGLES_PER_COURT = 2
 const DOUBLES_PER_COURT = 4
+const NOT_STRICT_MIN_PER_COURT = 3
+const _DOUBLES_TEAM_SIZE = 2
 
 const courtsConfig = document.getElementById("courts-config")
 const courtsDecBtn = document.getElementById("courts-dec")
@@ -8,19 +10,25 @@ const courtCountValue = document.getElementById("court-count-value")
 const courtHint = document.getElementById("court-hint")
 
 let courtCount = 1
+let notStrictDoubles = false
 
 function getPlayersPerCourt(gameMode) {
     return gameMode === "singles" ? SINGLES_PER_COURT : DOUBLES_PER_COURT
 }
 
+function getMinPerCourt(gameMode) {
+    if (notStrictDoubles && gameMode === "doubles") {
+        return NOT_STRICT_MIN_PER_COURT
+    }
+    return getPlayersPerCourt(gameMode)
+}
+
 function getMaxCourts(playerCount, gameMode) {
-    if (gameMode === "singles") {
-        return Math.max(1, Math.floor(playerCount / SINGLES_PER_COURT))
+    const minPer = getMinPerCourt(gameMode)
+    if (gameMode === "free") {
+        return 1
     }
-    if (gameMode === "doubles") {
-        return Math.max(1, Math.floor(playerCount / DOUBLES_PER_COURT))
-    }
-    return 1
+    return Math.max(1, Math.floor(playerCount / minPer))
 }
 
 function clampCourtCount(playerCount, gameMode) {
@@ -45,14 +53,28 @@ function updateCourtHint(playerCount, gameMode) {
         courtHint.textContent = ""
         return
     }
-    const playersPerCourt = getPlayersPerCourt(gameMode)
-    const activeCount = Math.min(playersPerCourt * courtCount, playerCount)
+    const maxPerCourt = getPlayersPerCourt(gameMode)
+    const minPerCourt = getMinPerCourt(gameMode)
+    const maxActive = maxPerCourt * courtCount
+    const minActive = minPerCourt * courtCount
+    const activeCount = Math.min(Math.max(minActive, Math.min(maxActive, playerCount)), playerCount)
     const sitOuts = Math.max(0, playerCount - activeCount)
     const parts = [`${activeCount} active`]
     if (sitOuts > 0) {
         parts.push(`${sitOuts} sitting out`)
     }
+    if (notStrictDoubles && gameMode === "doubles" && activeCount % DOUBLES_PER_COURT !== 0) {
+        parts.push("some 2v1")
+    }
     courtHint.textContent = parts.join(" · ")
+}
+
+function setNotStrictDoubles(value) {
+    notStrictDoubles = value
+}
+
+function getNotStrictDoubles() {
+    return notStrictDoubles
 }
 
 function setCourtVisibility(gameMode) {
@@ -89,4 +111,6 @@ export {
     resetCourtCount,
     getCourtCount,
     getPlayersPerCourt,
+    setNotStrictDoubles,
+    getNotStrictDoubles,
 }

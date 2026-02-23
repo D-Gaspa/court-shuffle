@@ -30,6 +30,10 @@ function openModifyDialog() {
     if (!session) {
         return
     }
+    // Cannot modify players in tournament mode (would break bracket)
+    if (session.mode === "tournament") {
+        return
+    }
     modifySelected = new Set(session.players)
     renderPlayerSelection(stateRef.roster, modifySelected, modifyGrid, noop)
     modifyDialog.showModal()
@@ -79,7 +83,13 @@ function applyModifyPlayers() {
         const raw = generateOptimalRoundSequence(newPlayers, session.teamCount, usedHistory)
         newRounds = wrapFreeRounds(raw)
     } else {
-        newRounds = generateStructuredRounds(newPlayers, session.mode, session.courtCount, usedHistory)
+        newRounds = generateStructuredRounds(
+            newPlayers,
+            session.mode,
+            session.courtCount,
+            usedHistory,
+            session.allowNotStrictDoubles,
+        )
     }
 
     session.players = newPlayers

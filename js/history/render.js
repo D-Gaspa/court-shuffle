@@ -45,7 +45,19 @@ function buildHistoryCardHeader(session, dateStr) {
     meta.className = "history-card-meta"
     const roundCount = session.rounds.length
     const modeLabel = getModeLabel(session)
-    meta.textContent = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
+    let metaText = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
+
+    if (
+        session.mode === "tournament" &&
+        session.bracket?.champion !== null &&
+        session.bracket?.champion !== undefined
+    ) {
+        const champion = session.teams?.find((t) => t.id === session.bracket.champion)
+        if (champion) {
+            metaText += ` · Champion: ${champion.name}`
+        }
+    }
+    meta.textContent = metaText
 
     info.appendChild(dateSpan)
     info.appendChild(meta)
@@ -143,7 +155,7 @@ function buildHistoryRound(round, index) {
 
     const roundLabel = document.createElement("div")
     roundLabel.className = "history-round-label"
-    roundLabel.textContent = `Round ${index + 1}`
+    roundLabel.textContent = round.tournamentRoundLabel || `Round ${index + 1}`
 
     const teamsGrid = document.createElement("div")
     teamsGrid.className = "history-round-teams"

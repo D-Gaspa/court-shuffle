@@ -1,12 +1,31 @@
 import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../constants.js"
 import { generateOptimalRoundSequence, generateStructuredRounds, wrapFreeRounds } from "../shuffle.js"
+import {
+    advanceTournament,
+    allScoresEntered,
+    createInitialBracket,
+    generateBracketFirstRound,
+    generateRoundRobinSchedule,
+} from "../tournament/engine.js"
+import {
+    getMinPlayersForTournament,
+    getTournamentConfig,
+    hideTournamentConfig,
+    initTournamentSetup,
+    resetTournamentSetup,
+    showTournamentConfig,
+    updateTournamentHint,
+    updateTournamentPlayers,
+} from "../tournament/setup.js"
 import { endSession, renderActiveSession } from "./active.js"
 import {
     clampCourtCount,
     getCourtCount,
+    getNotStrictDoubles,
     initCourtConfig,
     resetCourtCount,
     setCourtVisibility,
+    setNotStrictDoubles,
     updateCourtHint,
 } from "./court-config.js"
 import { initModifyPlayers, openModifyDialog } from "./modify-players.js"
@@ -28,6 +47,8 @@ const teamCountValue = document.getElementById("team-count-value")
 const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
 const modifyPlayersBtn = document.getElementById("modify-players-btn")
+const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
+const allow2v1Checkbox = document.getElementById("allow-2v1")
 
 const uiState = {
     roundNumber: document.getElementById("round-number"),
@@ -35,10 +56,12 @@ const uiState = {
     roundInfo: document.getElementById("round-info"),
     prevRoundBtn: document.getElementById("prev-round-btn"),
     nextRoundBtn: document.getElementById("next-round-btn"),
+    nextRoundLabel: document.getElementById("next-round-label"),
     bracketContainer: document.getElementById("bracket-container"),
     sitOutContainer: document.getElementById("sit-out-container"),
     sitOutList: document.getElementById("sit-out-list"),
     noMoreRounds: document.getElementById("no-more-rounds"),
+    modifyPlayersBtn: document.getElementById("modify-players-btn"),
 }
 
 const endSessionBtn = document.getElementById("end-session-btn")
@@ -71,6 +94,12 @@ function initSession(state, persistFn, confirmFn) {
 
     initModifyPlayers(state, persistFn, renderActiveSessionState)
     initCourtConfig(onSelectionChange)
+    initTournamentSetup(onSelectionChange)
+
+    allow2v1Checkbox.addEventListener("change", () => {
+        setNotStrictDoubles(allow2v1Checkbox.checked)
+        onSelectionChange()
+    })
 
     for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
         btn.addEventListener("click", () => onModeChange(btn.dataset.mode))
@@ -91,7 +120,24 @@ function onModeChange(mode) {
         teamCount = 2
         resetCourtCount()
     }
-    setCourtVisibility(mode)
+
+    // Tournament config visibility
+    if (mode === "tournament") {
+        showTournamentConfig()
+        updateTournamentHint()
+        setCourtVisibility("free") // hide courts for tournament
+    } else {
+        hideTournamentConfig()
+        resetTournamentSetup()
+        setCourtVisibility(mode)
+    }
+
+    // Not-strict doubles: show for doubles mode only (tournament handles its own)
+    notStrictDoublesGroup.hidden = mode !== "doubles"
+    if (mode !== "doubles" && mode !== "tournament") {
+        allow2v1Checkbox.checked = false
+        setNotStrictDoubles(false)
+    }
     onSelectionChange()
 }
 
@@ -127,6 +173,11 @@ function onStartSessionClick() {
         return
     }
 
+    if (gameMode === "tournament") {
+        startTournamentSession(players)
+        return
+    }
+
     let rounds
     if (gameMode === "free") {
         const raw = generateOptimalRoundSequence(players, teamCount)
@@ -135,7 +186,7 @@ function onStartSessionClick() {
         }
         rounds = wrapFreeRounds(raw)
     } else {
-        rounds = generateStructuredRounds(players, gameMode, getCourtCount())
+        rounds = generateStructuredRounds(players, gameMode, getCourtCount(), null, getNotStrictDoubles())
         if (rounds.length === 0) {
             return
         }
@@ -150,6 +201,51 @@ function onStartSessionClick() {
         courtCount: gameMode === "free" ? 1 : getCourtCount(),
         rounds,
         currentRound: 0,
+        allowNotStrictDoubles: gameMode === "doubles" ? getNotStrictDoubles() : false,
+    }
+
+    saveState()
+    refreshSessionView()
+}
+
+function startTournamentSession(players) {
+    const config = getTournamentConfig(players, getNotStrictDoubles())
+    if (config.teams.length < 2) {
+        return
+    }
+
+    let rounds
+    let allRoundsGenerated = false
+
+    if (config.format === "round-robin") {
+        rounds = generateRoundRobinSchedule(config.teams)
+        allRoundsGenerated = true
+    } else {
+        const firstRound = generateBracketFirstRound(config.teams)
+        rounds = [firstRound]
+    }
+
+    if (rounds.length === 0) {
+        return
+    }
+
+    globalState.activeSession = {
+        id: Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END),
+        date: new Date().toISOString(),
+        players,
+        teamCount: 2,
+        mode: "tournament",
+        courtCount: 1,
+        rounds,
+        currentRound: 0,
+        tournamentFormat: config.format,
+        tournamentTeamSize: config.teamSize,
+        teams: config.teams,
+        seeding: config.seeding,
+        bracket: createInitialBracket(config.format),
+        tournamentRound: 0,
+        allRoundsGenerated,
+        allowNotStrictDoubles: config.allowNotStrictDoubles,
     }
 
     saveState()
@@ -168,10 +264,38 @@ function onPrevRoundClick() {
 
 function onNextRoundClick() {
     const session = globalState.activeSession
-    if (!session || session.currentRound >= session.rounds.length - 1) {
+    if (!session) {
         return
     }
-    session.currentRound += 1
+
+    // Tournament with score-driven advancement
+    if (session.mode === "tournament" && !session.allRoundsGenerated) {
+        if (session.currentRound < session.rounds.length - 1) {
+            // Navigating to an already-generated round
+            session.currentRound += 1
+        } else {
+            // At the latest round — try to advance
+            const currentRound = session.rounds[session.currentRound]
+            if (!allScoresEntered(currentRound)) {
+                return // UI should show a hint
+            }
+            const nextRound = advanceTournament(session)
+            if (nextRound === null) {
+                // Tournament complete
+                return
+            }
+            session.rounds.push(nextRound)
+            session.currentRound = session.rounds.length - 1
+            session.tournamentRound = (session.tournamentRound || 0) + 1
+        }
+    } else {
+        // Normal pre-generated round navigation
+        if (session.currentRound >= session.rounds.length - 1) {
+            return
+        }
+        session.currentRound += 1
+    }
+
     saveState()
     renderActiveSessionState()
 }
@@ -200,19 +324,28 @@ function onEndSessionClick() {
 function onSelectionChange() {
     const count = selectedPlayers.size
     clampTeamCount()
-    clampCourtCount(count, gameMode)
     teamCountValue.textContent = teamCount
 
-    if (gameMode === "free") {
+    if (gameMode === "tournament") {
+        teamSizeHint.textContent = ""
+        modeHint.textContent = ""
+        const minPlayers = getMinPlayersForTournament()
+        startSessionBtn.disabled = count < minPlayers
+        updateTournamentPlayers([...selectedPlayers])
+    } else if (gameMode === "free") {
         updateTeamSizeHint(count, teamCount, teamSizeHint)
         modeHint.textContent = ""
+        clampCourtCount(count, gameMode)
+        updateCourtHint(count, gameMode)
+        startSessionBtn.disabled = count < 2
     } else {
         teamSizeHint.textContent = ""
         const label = gameMode === "singles" ? "1v1" : "2v2"
         modeHint.textContent = count >= 2 ? `${label} matches` : ""
+        clampCourtCount(count, gameMode)
+        updateCourtHint(count, gameMode)
+        startSessionBtn.disabled = count < 2
     }
-    updateCourtHint(count, gameMode)
-    startSessionBtn.disabled = count < 2
 }
 
 function clampTeamCount() {
@@ -263,7 +396,14 @@ function refreshSessionView() {
         btn.classList.toggle("selected", btn.dataset.mode === gameMode)
     }
     teamsConfig.hidden = gameMode !== "free"
-    setCourtVisibility(gameMode)
+    if (gameMode === "tournament") {
+        showTournamentConfig()
+        setCourtVisibility("free")
+    } else {
+        hideTournamentConfig()
+        setCourtVisibility(gameMode)
+    }
+    notStrictDoublesGroup.hidden = gameMode !== "doubles"
 
     clampTeamCount()
     onSelectionChange()

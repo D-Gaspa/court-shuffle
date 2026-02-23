@@ -127,12 +127,52 @@
 
                             <div class="config-group">
                                 <h2 class="section-label">Mode</h2>
-                                <div id="mode-selector" class="mode-selector">
+                                <div id="mode-selector" class="mode-selector mode-selector-4">
                                     <button type="button" class="mode-btn selected" data-mode="free">Free</button>
                                     <button type="button" class="mode-btn" data-mode="singles">Singles (1v1)</button>
                                     <button type="button" class="mode-btn" data-mode="doubles">Doubles (2v2)</button>
+                                    <button type="button" class="mode-btn" data-mode="tournament">Tournament</button>
                                 </div>
                                 <div id="mode-hint" class="hint"></div>
+                            </div>
+
+                            <div id="tournament-config" class="config-group" hidden>
+                                <h2 class="section-label">Format</h2>
+                                <div id="format-selector" class="mode-selector">
+                                    <button type="button" class="format-btn mode-btn selected" data-format="consolation">Consolation</button>
+                                    <button type="button" class="format-btn mode-btn" data-format="elimination">Elimination</button>
+                                    <button type="button" class="format-btn mode-btn" data-format="round-robin">Round Robin</button>
+                                </div>
+
+                                <h2 class="section-label">Match Type</h2>
+                                <div id="tournament-team-size" class="mode-selector mode-selector-2">
+                                    <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
+                                    <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
+                                </div>
+
+                                <div id="tournament-pairing-config" hidden>
+                                    <h2 class="section-label">Team Pairing</h2>
+                                    <div id="pairing-selector" class="mode-selector mode-selector-2">
+                                        <button type="button" class="pairing-btn mode-btn selected" data-pairing="random">Random</button>
+                                        <button type="button" class="pairing-btn mode-btn" data-pairing="manual">Manual</button>
+                                    </div>
+                                    <div id="manual-pairing-area" hidden>
+                                        <p class="hint" style="margin-top: var(--space-sm)">Drag players together to form teams, or they'll be paired in order.</p>
+                                        <div id="manual-pairing-grid" class="manual-pairing-grid"></div>
+                                    </div>
+                                </div>
+
+                                <h2 class="section-label">Seeding</h2>
+                                <div id="seeding-selector" class="mode-selector mode-selector-2">
+                                    <button type="button" class="seeding-btn mode-btn selected" data-seeding="random">Random</button>
+                                    <button type="button" class="seeding-btn mode-btn" data-seeding="manual">Manual</button>
+                                </div>
+                                <div id="manual-seeding-area" hidden>
+                                    <p class="hint" style="margin-top: var(--space-sm)">Reorder to set bracket positions. Top seeds get byes if needed.</p>
+                                    <div id="manual-seeding-list" class="seeding-list"></div>
+                                </div>
+
+                                <div id="tournament-hint" class="hint"></div>
                             </div>
 
                             <div id="courts-config" class="config-group" hidden>
@@ -150,6 +190,17 @@
                                     </button>
                                 </div>
                                 <div id="court-hint" class="hint"></div>
+                            </div>
+
+                            <div id="not-strict-doubles" class="config-group" hidden>
+                                <label class="toggle-row" for="allow-2v1">
+                                    <span class="toggle-switch">
+                                        <input type="checkbox" id="allow-2v1" />
+                                        <span class="toggle-track"></span>
+                                    </span>
+                                    <span class="toggle-label">Allow 2v1 matchups</span>
+                                </label>
+                                <div class="hint">Lets courts run with 3 players instead of requiring 4.</div>
                             </div>
 
                             <div id="teams-config" class="config-group">
@@ -198,7 +249,7 @@
                                     Previous
                                 </button>
                                 <button type="button" id="next-round-btn" class="btn btn-primary btn-sm">
-                                    Next Round
+                                    <span id="next-round-label">Next Round</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
                                 </button>
                                 <button type="button" id="end-session-btn" class="btn btn-ghost btn-sm btn-danger">End Session</button>

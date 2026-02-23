@@ -57,5 +57,15 @@ export function getModeLabel(session) {
     if (session.mode === "doubles") {
         return "2v2"
     }
+    if (session.mode === "tournament") {
+        const formatLabels = {
+            elimination: "Elimination",
+            consolation: "Consolation",
+            "round-robin": "Round Robin",
+        }
+        const sizeLabel = session.tournamentTeamSize === 1 ? "Singles" : "Doubles"
+        const format = formatLabels[session.tournamentFormat] || "Tournament"
+        return `${format} · ${sizeLabel}`
+    }
     return `${session.teamCount} teams`
 }
