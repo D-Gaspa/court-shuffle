@@ -6,13 +6,16 @@ import { advanceTournament } from "../tournament/bracket.js"
 import { attachTournamentCourtSchedule, getBatchBlockReason } from "../tournament/courts.js"
 import {
     isSeriesTournamentSession,
-    moveToNextTournamentInSeries,
-    moveToPrevTournamentInSeries,
     persistTournamentSeriesAliases,
     syncTournamentSeriesAliases,
 } from "../tournament/series-sync.js"
 import { allScoresEntered, getRoundScoreBlockReason } from "../tournament/utils.js"
 import { endSession } from "./active.js"
+import {
+    onNextTournamentClick as onNextTournamentClickHandler,
+    onPrevTournamentClick as onPrevTournamentClickHandler,
+    onSkipTournamentClick as onSkipTournamentClickHandler,
+} from "./tournament-series-navigation.js"
 
 let _globalState = null
 let _saveState = null
@@ -33,13 +36,18 @@ function onPrevRoundClick() {
     if (!session) {
         return
     }
-    if (session.mode === "tournament" && isSeriesTournamentSession(session)) {
-        syncTournamentSeriesAliases(session)
-        if (retreatTournamentView(session)) {
-            persistTournamentSeriesAliases(session)
-            _saveState()
-            _renderFn()
+    if (session.mode === "tournament") {
+        if (isSeriesTournamentSession(session)) {
+            syncTournamentSeriesAliases(session)
         }
+        if (!retreatTournamentView(session)) {
+            return
+        }
+        if (isSeriesTournamentSession(session)) {
+            persistTournamentSeriesAliases(session)
+        }
+        _saveState()
+        _renderFn()
         return
     }
     if (session.currentRound <= 0) {
@@ -92,13 +100,7 @@ function onNextRoundClick() {
         syncTournamentSeriesAliases(session)
     }
 
-    if (session.mode === "tournament" && session.tournamentComplete) {
-        if (isSeriesTournamentSession(session) && moveToNextTournamentInSeries(session)) {
-            _saveState()
-            _renderFn()
-            return
-        }
-        onEndSessionClick()
+    if (session.mode === "tournament" && isCompletedTournamentFrontierView(session)) {
         return
     }
 
@@ -115,6 +117,53 @@ function onNextRoundClick() {
     }
     _saveState()
     _renderFn()
+}
+
+function isCompletedTournamentFrontierView(session) {
+    if (!(session.mode === "tournament" && session.tournamentComplete)) {
+        return false
+    }
+    const rounds = session.rounds || []
+    if (rounds.length === 0) {
+        return true
+    }
+    const currentRoundIndex = session.currentRound || 0
+    if (currentRoundIndex < rounds.length - 1) {
+        return false
+    }
+    const currentRound = rounds[currentRoundIndex]
+    if (currentRound?.courtSchedule?.mode !== "batches") {
+        return true
+    }
+    const batchCount = currentRound.courtSchedule.batches?.length || 1
+    const batchIndex = currentRound.courtSchedule.activeBatchIndex || 0
+    return batchIndex >= batchCount - 1
+}
+
+function onPrevTournamentClick() {
+    onPrevTournamentClickHandler({
+        state: _globalState,
+        saveState: _saveState,
+        renderFn: _renderFn,
+    })
+}
+
+function onNextTournamentClick() {
+    onNextTournamentClickHandler({
+        state: _globalState,
+        saveState: _saveState,
+        renderFn: _renderFn,
+        askConfirm: _askConfirm,
+    })
+}
+
+function onSkipTournamentClick() {
+    onSkipTournamentClickHandler({
+        state: _globalState,
+        saveState: _saveState,
+        renderFn: _renderFn,
+        askConfirm: _askConfirm,
+    })
 }
 
 function advanceTournamentNavigation(session) {
@@ -199,17 +248,6 @@ function retreatTournamentView(session) {
         return true
     }
 
-    if (moveToPrevTournamentInSeries(session)) {
-        session.tournamentComplete = false
-        session.currentRound = session.rounds.length - 1
-        const lastRound = session.rounds[session.currentRound]
-        if (lastRound?.courtSchedule?.mode === "batches") {
-            const lastBatch = (lastRound.courtSchedule.batches?.length || 1) - 1
-            lastRound.courtSchedule.activeBatchIndex = Math.max(0, lastBatch)
-        }
-        return true
-    }
-
     return false
 }
 
@@ -234,4 +272,12 @@ function onEndSessionClick() {
     )
 }
 
-export { initNavigation, onPrevRoundClick, onNextRoundClick, onEndSessionClick }
+export {
+    initNavigation,
+    onPrevRoundClick,
+    onNextRoundClick,
+    onPrevTournamentClick,
+    onNextTournamentClick,
+    onSkipTournamentClick,
+    onEndSessionClick,
+}

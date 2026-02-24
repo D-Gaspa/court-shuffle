@@ -30,7 +30,20 @@ export function renderTournamentActive({ session, roundInfo, saveState, ui, comm
         updateTournamentNavigation(session, navState, ui)
     }
 
-    renderTournamentRound({ session, round: roundInfo.round, saveState, ui, refreshNav, commitScore })
+    const rerenderView = () => {
+        renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection })
+    }
+
+    renderTournamentRound({
+        session,
+        roundInfo,
+        round: roundInfo.round,
+        saveState,
+        ui,
+        refreshNav,
+        rerenderView,
+        commitScore,
+    })
 
     if (session.tournamentFormat === "round-robin") {
         renderStandingsTable(session.teams, session.rounds, ui.bracketContainer)

@@ -3,13 +3,8 @@ import { teamByPlayers } from "../tournament/utils.js"
 import { renderBracket } from "./render.js"
 import { appendExecutionInfo, getTournamentRoundDisplayState } from "./tournament-active-round-state.js"
 
-function noopRefreshNav() {
-    // Intentional no-op for read-only queue previews.
-}
-
-function noopCommitScore() {
-    // Intentional no-op for read-only queue previews.
-}
+const noopRefreshNav = () => undefined
+const noopCommitScore = () => undefined
 
 function makeTeamNameResolver(session) {
     return (players) => {
@@ -59,11 +54,36 @@ function makeSingleMatchRound(match, scoreEntry, displayCourt) {
     }
 }
 
+function getQueueDisplayCourt(round, match, globalIdx) {
+    const courtCount = Math.max(1, round?.courtSchedule?.courtCount || 1)
+    const baseCourt = Number(match?.court) || globalIdx + 1
+    return ((baseCourt - 1) % courtCount) + 1
+}
+
+function resolveDisplayCourt({ round, match, globalIdx, localIdx, showCourtSlots }) {
+    if (!showCourtSlots) {
+        return match.court
+    }
+    if (round?.courtSchedule?.mode === "queue") {
+        return getQueueDisplayCourt(round, match, globalIdx)
+    }
+    return localIdx + 1
+}
+
 function appendSectionLabel(container, text, className = "section-label") {
     const label = document.createElement("h3")
     label.className = className
     label.textContent = text
     container.appendChild(label)
+}
+
+function canEditTournamentRoundScores(session, roundIndex) {
+    const format = session?.tournamentFormat
+    if (format !== "elimination" && format !== "consolation") {
+        return true
+    }
+    const lastRoundIndex = Math.max(0, (session?.rounds?.length || 1) - 1)
+    return roundIndex === lastRoundIndex
 }
 
 function renderMatchGroup({
@@ -74,7 +94,9 @@ function renderMatchGroup({
     container,
     teamNames,
     refreshNav,
+    onAfterScoreSave,
     commitScore,
+    allowScoreEditing = true,
     editableIndices = null,
     showCourtSlots = false,
 }) {
@@ -83,26 +105,36 @@ function renderMatchGroup({
         const globalIdx = indices[j]
         const scoreEntry = round.scores ? round.scores[globalIdx] : null
         let canEdit = true
-        if (!scoreEntry && editableIndices) {
+        if (!allowScoreEditing) {
+            canEdit = false
+        } else if (!scoreEntry && editableIndices) {
             canEdit = editableIndices.has(globalIdx)
         }
 
-        const tempRound = makeSingleMatchRound(match, scoreEntry, showCourtSlots ? j + 1 : match.court)
+        const displayCourt = resolveDisplayCourt({
+            round,
+            match,
+            globalIdx,
+            localIdx: j,
+            showCourtSlots,
+        })
+        const tempRound = makeSingleMatchRound(match, scoreEntry, displayCourt)
         const matchDiv = document.createElement("div")
         container.appendChild(matchDiv)
 
         renderBracket(tempRound, matchDiv, {
             editable: canEdit,
-            onCommit: (_, sets) => {
+            onCommit: (_, sets, options) => {
                 if (!canEdit) {
                     return
                 }
+                const isPartial = Boolean(options?.partial)
                 commitScore({
                     round,
                     matchIndex: globalIdx,
                     sets,
                     saveState,
-                    onAfterSave: refreshNav,
+                    onAfterSave: isPartial ? refreshNav : onAfterScoreSave || refreshNav,
                 })
             },
             teamNames,
@@ -138,7 +170,9 @@ function renderTournamentPoolSections({
     container,
     teamNames,
     refreshNav,
+    onAfterScoreSave,
     commitScore,
+    allowScoreEditing = true,
     displayState,
 }) {
     const { winnersMatches, losersMatches, matchIndices } = splitTournamentMatchesByPool(round)
@@ -159,7 +193,9 @@ function renderTournamentPoolSections({
             container,
             teamNames,
             refreshNav,
+            onAfterScoreSave,
             commitScore,
+            allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
         })
@@ -175,7 +211,9 @@ function renderTournamentPoolSections({
             container,
             teamNames,
             refreshNav,
+            onAfterScoreSave,
             commitScore,
+            allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
         })
@@ -208,11 +246,12 @@ function renderByeInfo(round, teams, container) {
     container.appendChild(byeSection)
 }
 
-function renderTournamentRound({ session, round, saveState, ui, refreshNav, commitScore }) {
+function renderTournamentRound({ session, roundInfo, round, saveState, ui, refreshNav, rerenderView, commitScore }) {
     ui.bracketContainer.textContent = ""
     ensureTournamentCourtSchedule(round, session.courtCount || 1, session.tournamentSeries?.courtHandling || "queue")
     const teamNames = makeTeamNameResolver(session)
     const displayState = getTournamentRoundDisplayState(round)
+    const allowScoreEditing = canEditTournamentRoundScores(session, roundInfo?.current)
 
     appendExecutionInfo(round, session, ui.bracketContainer)
 
@@ -224,7 +263,9 @@ function renderTournamentRound({ session, round, saveState, ui, refreshNav, comm
             container: ui.bracketContainer,
             teamNames,
             refreshNav,
+            onAfterScoreSave: rerenderView,
             commitScore,
+            allowScoreEditing,
             displayState,
         })
         if (round.courtSchedule?.mode === "queue") {
@@ -243,7 +284,9 @@ function renderTournamentRound({ session, round, saveState, ui, refreshNav, comm
         container: ui.bracketContainer,
         teamNames,
         refreshNav,
+        onAfterScoreSave: rerenderView,
         commitScore,
+        allowScoreEditing,
         editableIndices: displayState.editableIndices,
         showCourtSlots: true,
     })

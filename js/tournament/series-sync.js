@@ -89,8 +89,21 @@ function isSeriesTournamentSession(session) {
     return Boolean(session?.mode === "tournament" && session?.tournamentSeries)
 }
 
+function hasMultipleTournamentsInSeries(session) {
+    if (!isSeriesTournamentSession(session)) {
+        return false
+    }
+    const series = session.tournamentSeries
+    const count =
+        Array.isArray(series.tournaments) && series.tournaments.length > 0
+            ? series.tournaments.length
+            : (series.maxTournaments || 0)
+    return count > 1
+}
+
 export {
     getCurrentTournamentRun,
+    hasMultipleTournamentsInSeries,
     isSeriesTournamentSession,
     moveToNextTournamentInSeries,
     moveToPrevTournamentInSeries,

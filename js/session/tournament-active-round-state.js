@@ -22,16 +22,16 @@ function appendExecutionInfo(round, session, container) {
 
 function renderTournamentLevelSitOuts(session, ui) {
     const sitOuts = session.tournamentLevelSitOuts || []
+    for (const chip of ui.sitOutList.querySelectorAll(".tournament-sit-out-chip")) {
+        chip.remove()
+    }
     if (!Array.isArray(sitOuts) || sitOuts.length === 0) {
         return
     }
     ui.sitOutContainer.hidden = false
-    if (ui.sitOutList.children.length === 0) {
-        ui.sitOutList.textContent = ""
-    }
     for (const player of sitOuts) {
         const chip = document.createElement("div")
-        chip.className = "sit-out-chip"
+        chip.className = "sit-out-chip tournament-sit-out-chip"
         const name = document.createElement("span")
         name.textContent = `${player} (tournament sit-out)`
         chip.appendChild(name)

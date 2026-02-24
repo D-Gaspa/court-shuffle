@@ -9,7 +9,7 @@ function createActionBtn(label, extraClass, onClick) {
     return btn
 }
 
-function renderRows({ rows, draft, tiebreaks, onAnyUpdate, onRemoveAt }) {
+function renderRows({ rows, draft, tiebreaks, onAnyUpdate, onRemoveAt, onAutoSave }) {
     rows.textContent = ""
     let lastRow = null
     for (let i = 0; i < draft.length; i += 1) {
@@ -28,6 +28,7 @@ function renderRows({ rows, draft, tiebreaks, onAnyUpdate, onRemoveAt }) {
                 draft[i] = next
             },
             onAnyUpdate,
+            onAutoSave,
             onRemove: () => onRemoveAt(i),
             onTiebreakChange: (tbPair) => {
                 tiebreaks[i] = tbPair
@@ -46,13 +47,12 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
 
     const sync = () => {
         addSetBtn.disabled = draft.length >= maxSets
-        onAutoSave()
     }
 
     const onRemoveAt = (i) => {
         draft.splice(i, 1)
         tiebreaks.splice(i, 1)
-        renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
+        renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt, onAutoSave })
         sync()
     }
 
@@ -60,7 +60,7 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
         if (draft.length < maxSets) {
             draft.push([null, null])
             tiebreaks.push(null)
-            const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
+            const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt, onAutoSave })
             sync()
             if (lastRow?.focusFirst) {
                 lastRow.focusFirst()
@@ -68,7 +68,7 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
         }
     })
 
-    const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
+    const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt, onAutoSave })
 
     // Auto-focus first input when opening with empty score
     if (draft.length === 1 && draft[0][0] === null && draft[0][1] === null && lastRow?.focusFirst) {

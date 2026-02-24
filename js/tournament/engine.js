@@ -79,7 +79,7 @@ function generateRoundRobinSchedule(teams) {
         const matches = []
         for (let i = 0; i < list.length / 2; i += 1) {
             const home = list[i]
-            const away = list.at(1 + i)
+            const away = list.at(-(i + 1))
             if (home === null || away === null) {
                 continue
             }

@@ -224,3 +224,9 @@
     transform: translateX(20px);
     background: var(--court-light);
 }
+.toggle-switch input:disabled + .toggle-track {
+    opacity: 0.45;
+}
+.toggle-switch input:disabled + .toggle-track::after {
+    background: var(--text-muted);
+}

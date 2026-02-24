@@ -1,57 +1,77 @@
 # Court Shuffle
 
-Court Shuffle is a tennis session manager for building matchups, running sessions, and saving history.
+Court Shuffle is a browser-based tennis session planner for small groups. It helps you build matchups, run rounds, track scores, and save session history locally.
+
+## What It Does
+
+- Manage a reusable player roster
+- Start a session from any selected subset of players
+- Run free-form shuffled rounds or tournament sessions
+- Enter set scores per match
+- Navigate rounds and mini-tournaments during a session
+- Save finished sessions to local history for later review
 
 ## Session Modes
 
-- `Free`: flexible team shuffling (existing free mode behavior)
-- `Tournament`: a chained series of mini-tournaments in one session
+### Free
 
-Top-level `Singles` and `Doubles` setup modes were removed. In `Tournament`, you now choose match type inside tournament settings:
+Flexible team shuffling across rounds. Use this when you just want balanced rotation and quick match generation.
 
-- `Singles (1v1)`
-- `Doubles (2v2)`
+### Tournament
 
-## Tournament Series
+Creates a tournament session made of one or more mini-tournaments in a series.
 
-Tournament mode precomputes a full series of mini-tournaments and shows progress.
-You must finish the current mini-tournament before advancing to the next one.
+Tournament configuration includes:
 
-Supported mini-tournament formats:
+- Format: `Consolation`, `Elimination`, or `Round Robin`
+- Match type: `Singles (1v1)` or `Doubles (2v2)`
+- Court shortage handling: `Queue` or `Batches`
+- Optional doubles flexibility: `Allow 2v1 matchups`
 
-- `Consolation`
-- `Elimination`
-- `Round Robin`
+## Tournament Series Behavior
 
-### Doubles tournaments
+Tournament sessions prebuild a series of mini-tournaments from the selected players.
 
-- Teams stay fixed within each mini-tournament
-- Across the same tournament session, teammate pairs are not repeated
-- The app precomputes as many valid mini-tournaments as possible for a deterministic seed (`X`)
+- You can move between mini-tournaments with dedicated tournament navigation controls
+- You can skip a mini-tournament if you do not want to play that shuffle/seeding
+- Round navigation stays separate from mini-tournament navigation
+- Progress and scores are preserved while browsing between mini-tournaments
 
-### Singles tournaments
+### Singles series
 
-- The app avoids repeating opening-round matchups across mini-tournaments when generating the series
+- Avoids repeating opening-round matchups across the generated series when possible
 
-## Court Logic in Tournament Mode
+### Doubles series
 
-Tournament mode now uses the court count setting.
+- Teams stay fixed within a mini-tournament
+- Partner pairings are not repeated across the same tournament session when possible
+- Sit-outs rotate across the series for odd player counts (strict doubles mode)
 
-If a round has more matches than available courts, choose one of:
+## Court Shortage Handling (Tournament)
 
-- `Queue` (default): only up to the court count is active; remaining matches are shown as `Next Up`
-- `Batches`: the round is split into sequential batches (for example `Batch 1/2`, `Batch 2/2`)
+When a round has more matches than available courts:
 
-Bracket / standings progression only happens after the full logical round is completed.
+- `Queue`: only the active matches are shown on court and the rest appear as `Next Up`
+- `Batches`: the round is split into sequential batches and advanced batch-by-batch
 
-## Doubles Odd-Player Behavior
+Tournament progression only advances after the required scores for the current batch/round are entered.
 
-### Strict doubles (`Allow 2v1` OFF)
+## Data Storage
 
-- One player sits out for the entire mini-tournament
-- Tournament-level sit-outs rotate across the series
+The app stores roster, active session state, and session history in local browser storage on your device.
 
-### Flexible doubles (`Allow 2v1` ON)
+## Development
 
-- Odd player counts are allowed
-- Some matches may include `2v1`
+This project is a static HTML/CSS/JavaScript app (no framework required).
+
+### Run locally
+
+Serve the folder with any static file server.
+
+### Format / lint
+
+Biome is used for formatting and lint checks:
+
+```bash
+npx biome check --write .
+```

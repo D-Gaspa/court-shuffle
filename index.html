@@ -230,13 +230,40 @@
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                                         <polyline points="15 18 9 12 15 6" />
                                     </svg>
-                                    Previous
+                                    Prev Round
                                 </button>
                                 <button type="button" id="next-round-btn" class="btn btn-primary btn-sm">
                                     <span id="next-round-label">Next Round</span>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
                                 </button>
                                 <button type="button" id="end-session-btn" class="btn btn-ghost btn-sm btn-danger">End Session</button>
+                            </div>
+                        </div>
+
+                        <div id="tournament-series-nav" class="tournament-series-nav" hidden>
+                            <div class="tournament-series-nav-meta">
+                                <span class="tournament-series-nav-label">Mini Tournament</span>
+                                <div class="tournament-series-nav-meta-right">
+                                    <span id="tournament-series-nav-status" class="tournament-series-nav-status"></span>
+                                    <button
+                                        type="button"
+                                        id="tournament-series-nav-toggle"
+                                        class="btn btn-ghost btn-sm tournament-series-nav-toggle"
+                                        aria-label="Collapse mini tournament controls"
+                                        title="Collapse"
+                                        aria-expanded="true"
+                                        aria-controls="tournament-series-nav-actions"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="18 15 12 9 6 15" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="tournament-series-nav-actions" class="tournament-series-nav-actions">
+                                <button type="button" id="prev-tournament-btn" class="btn btn-ghost btn-sm">Previous Tournament</button>
+                                <button type="button" id="skip-tournament-btn" class="btn btn-ghost btn-sm btn-danger">Skip Tournament</button>
+                                <button type="button" id="next-tournament-btn" class="btn btn-accent btn-sm">Next Tournament</button>
                             </div>
                         </div>
 

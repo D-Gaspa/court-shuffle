@@ -77,6 +77,9 @@ export function cloneSets(sets) {
 }
 
 export function parseScoreValue(value) {
+    if (value === "" || value === null || value === undefined) {
+        return null
+    }
     const n = Number(value)
     if (!Number.isFinite(n)) {
         return null

@@ -1,4 +1,9 @@
-import { isSeriesTournamentSession, syncTournamentSeriesAliases } from "../tournament/series-sync.js"
+import {
+    getCurrentTournamentRun,
+    hasMultipleTournamentsInSeries,
+    isSeriesTournamentSession,
+    syncTournamentSeriesAliases,
+} from "../tournament/series-sync.js"
 import { getModeLabel } from "../utils.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament-active.js"
@@ -29,20 +34,33 @@ function renderActiveSession(state, saveState, ui) {
     } else if ((session.courtCount || 1) > 1) {
         courts = ` · ${session.courtCount} courts`
     }
-    const seriesLabel = isSeriesTournamentSession(session)
+    const seriesLabel = hasMultipleTournamentsInSeries(session)
         ? ` · Tournament ${(session.tournamentSeries.currentTournamentIndex || 0) + 1} of ${session.tournamentSeries.maxTournaments}`
         : ""
     ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
 
     const roundInfo = { round, current, total, isLast }
+    if (ui.tournamentSeriesNav) {
+        ui.tournamentSeriesNav.hidden = true
+    }
+    const commitScoreForSession = (args) => {
+        commitScore({ ...args, session })
+    }
     if (session.mode === "tournament") {
-        renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection })
+        renderTournamentActive({
+            session,
+            roundInfo,
+            saveState,
+            ui,
+            commitScore: commitScoreForSession,
+            renderSitOutsSection,
+        })
     } else {
-        renderStandardActive(roundInfo, saveState, ui)
+        renderStandardActive(roundInfo, saveState, ui, commitScoreForSession)
     }
 }
 
-function renderStandardActive(roundInfo, saveState, ui) {
+function renderStandardActive(roundInfo, saveState, ui, commitScoreForSession) {
     if (ui.roundPrefix) {
         ui.roundPrefix.hidden = false
     }
@@ -52,7 +70,7 @@ function renderStandardActive(roundInfo, saveState, ui) {
     renderBracket(roundInfo.round, ui.bracketContainer, {
         editable: true,
         onCommit: (matchIndex, sets) => {
-            commitScore({ round: roundInfo.round, matchIndex, sets, saveState })
+            commitScoreForSession({ round: roundInfo.round, matchIndex, sets, saveState })
         },
     })
 
@@ -64,7 +82,7 @@ function renderStandardActive(roundInfo, saveState, ui) {
     ui.noMoreRounds.hidden = !roundInfo.isLast
 }
 
-function commitScore({ round, matchIndex, sets, saveState, onAfterSave }) {
+function commitScore({ round, matchIndex, sets, saveState, onAfterSave, session }) {
     if (!round.scores) {
         round.scores = round.matches.map(() => null)
     }
@@ -72,6 +90,12 @@ function commitScore({ round, matchIndex, sets, saveState, onAfterSave }) {
         round.scores[matchIndex] = {
             court: round.matches[matchIndex].court,
             sets,
+        }
+        if (isSeriesTournamentSession(session)) {
+            const run = getCurrentTournamentRun(session)
+            if (run?.skipped) {
+                run.skipped = false
+            }
         }
     } else {
         round.scores[matchIndex] = null
@@ -85,6 +109,7 @@ function renderSitOutsSection(round, ui) {
         ui.sitOutContainer.hidden = false
         renderSitOuts(round.sitOuts, ui.sitOutList)
     } else {
+        ui.sitOutList.textContent = ""
         ui.sitOutContainer.hidden = true
     }
 }

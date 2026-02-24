@@ -60,6 +60,70 @@
     color: var(--clay-light);
 }
 
+/* Mini-tournament series navigation (kept visually distinct from round nav) */
+.tournament-series-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--court), var(--border) 45%);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--court-glow), transparent 35%), transparent), var(--bg-card);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--court), transparent 85%);
+}
+.tournament-series-nav-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+.tournament-series-nav-meta-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.tournament-series-nav-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--court-light);
+}
+.tournament-series-nav-status {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.tournament-series-nav-toggle {
+    display: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: var(--radius-full);
+}
+.tournament-series-nav-toggle svg {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.tournament-series-nav.is-collapsed .tournament-series-nav-toggle svg {
+    transform: rotate(180deg);
+}
+.tournament-series-nav-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+.tournament-series-nav-actions .btn-accent {
+    box-shadow:
+        var(--shadow-sm),
+        0 0 18px color-mix(in srgb, var(--court-glow), transparent 10%);
+}
+
 /* Bye info section */
 .bye-info {
     margin-top: var(--space-lg);
@@ -184,5 +248,22 @@
 @media (width < 480px) {
     .mode-selector-4 {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .tournament-series-nav-toggle {
+        display: inline-flex;
+    }
+
+    .tournament-series-nav-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .tournament-series-nav.is-collapsed .tournament-series-nav-actions {
+        display: none;
+    }
+
+    .tournament-series-nav.is-collapsed {
+        padding-bottom: 10px;
     }
 }

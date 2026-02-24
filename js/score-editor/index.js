@@ -172,16 +172,20 @@ function hasCompleteTiebreak(tb) {
     return tbA !== null && tbB !== null
 }
 
-export function buildMatchResultSection({ entry, editable, onCommit, teamLabels }) {
+export function buildMatchResultSection({ entry, editable, onCommit, onEntryChange, teamLabels }) {
     const root = document.createElement("div")
     root.className = "match-result"
-
     let editing = false
     let draft = [[null, null]]
     let tiebreaks = [null]
-
     const els = buildResultElements(() => {
         if (!editable) {
+            return
+        }
+        if (editing) {
+            editing = false
+            els.editor.hidden = true
+            commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null)
             return
         }
         editing = !editing
@@ -195,9 +199,10 @@ export function buildMatchResultSection({ entry, editable, onCommit, teamLabels 
         }
     })
 
-    function commit(newSets) {
-        onCommit(newSets)
+    function commit(newSets, options) {
+        onCommit(newSets, options)
         entry = newSets ? { sets: newSets } : null
+        onEntryChange?.(entry)
         updateResultDisplay({ elements: els, sets: normalizeSets(entry), editable, teamLabels, editing })
     }
 
@@ -209,10 +214,10 @@ export function buildMatchResultSection({ entry, editable, onCommit, teamLabels 
                 tiebreaks,
                 maxSets: MAX_SETS,
                 onAutoSave: () => {
-                    commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null)
+                    commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null, { partial: true })
                 },
                 onClear: () => {
-                    commit(null)
+                    commit(null, { partial: true })
                     draft = [[null, null]]
                     tiebreaks = [null]
                     renderEditor()

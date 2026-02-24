@@ -229,6 +229,7 @@ function buildTournamentSeries({ players, format, teamSize, courtCount, courtHan
     const usedSinglesOpeningMatchups = new Set()
     const sitOutCounts = Object.fromEntries(players.map((p) => [p, 0]))
     const tournaments = []
+    const singleTournamentOnly = teamSize === 1 && format === "round-robin"
 
     for (;;) {
         const run =
@@ -257,6 +258,9 @@ function buildTournamentSeries({ players, format, teamSize, courtCount, courtHan
         }
         run.index = tournaments.length
         tournaments.push(run)
+        if (singleTournamentOnly) {
+            break
+        }
     }
 
     if (tournaments.length === 0) {

@@ -47,7 +47,7 @@ function createTiebreakInput(value) {
     return input
 }
 
-function buildTiebreakFields(tb, onTbChange) {
+function buildTiebreakFields(tb, onTbChange, onAutoSave) {
     const wrap = document.createElement("div")
     wrap.className = "tb-fields"
 
@@ -78,9 +78,12 @@ function buildTiebreakFields(tb, onTbChange) {
     })
     tbB.addEventListener("input", () => {
         emitTb()
-        if (tbB.value !== "") {
-            tbB.blur()
+    })
+    tbB.addEventListener("change", () => {
+        if (tbB.value === "") {
+            return
         }
+        onAutoSave?.()
     })
 
     wrap.appendChild(openParen)
@@ -136,7 +139,7 @@ function syncTiebreakValidity(tbFields, scoreA, scoreB) {
     applyTiebreakValidity(tbFields, message)
 }
 
-function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange }) {
+function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange, onAutoSave }) {
     const tbContainer = document.createElement("div")
     tbContainer.className = "tb-container"
     tbContainer.hidden = true
@@ -150,11 +153,15 @@ function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange })
         if (tbFields) {
             return
         }
-        tbFields = buildTiebreakFields(currentTb, (tbPair) => {
-            currentTb = tbPair
-            onTiebreakChange?.(tbPair)
-            onAnyUpdate()
-        })
+        tbFields = buildTiebreakFields(
+            currentTb,
+            (tbPair) => {
+                currentTb = tbPair
+                onTiebreakChange?.(tbPair)
+                onAnyUpdate()
+            },
+            onAutoSave,
+        )
         tbContainer.appendChild(tbFields.wrap)
         tbFields.tbA.addEventListener("input", syncFromInputs)
         tbFields.tbB.addEventListener("input", syncFromInputs)
@@ -178,7 +185,7 @@ function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange })
     return { tbContainer, update }
 }
 
-function wireInputs({ a, b, onChange, onAnyUpdate }) {
+function wireInputs({ a, b, onChange, onAnyUpdate, onAutoSave }) {
     function emit() {
         onChange([parseScoreValue(a.value), parseScoreValue(b.value)])
         onAnyUpdate()
@@ -193,6 +200,7 @@ function wireInputs({ a, b, onChange, onAnyUpdate }) {
     b.addEventListener("input", () => {
         emit()
         if (b.value !== "") {
+            onAutoSave?.()
             b.blur()
         }
     })
@@ -214,7 +222,7 @@ function createActions({ setIndex, canRemove, onRemove }) {
     return { actions }
 }
 
-function buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange }) {
+function buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange, onAutoSave }) {
     const fields = document.createElement("div")
     fields.className = "set-fields"
 
@@ -224,7 +232,7 @@ function buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange }) {
     fields.appendChild(createDash())
     fields.appendChild(b)
 
-    const tiebreak = createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange })
+    const tiebreak = createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange, onAutoSave })
     tiebreak.update(pair[0], pair[1])
     fields.appendChild(tiebreak.tbContainer)
 
@@ -236,19 +244,29 @@ function buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange }) {
             tiebreak.update(next[0], next[1])
         },
         onAnyUpdate,
+        onAutoSave,
     })
 
     return { fields, a }
 }
 
-export function buildSetRow({ setIndex, pair, onChange, onRemove, canRemove, onAnyUpdate, onTiebreakChange }) {
+export function buildSetRow({
+    setIndex,
+    pair,
+    onChange,
+    onRemove,
+    canRemove,
+    onAnyUpdate,
+    onTiebreakChange,
+    onAutoSave,
+}) {
     const row = document.createElement("div")
     row.className = "set-row"
 
     const left = document.createElement("div")
     left.className = "set-left"
 
-    const { fields, a } = buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange })
+    const { fields, a } = buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange, onAutoSave })
 
     left.appendChild(createLabel(setIndex))
     left.appendChild(fields)
