@@ -8,95 +8,37 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
-/* Tournament config sections */
-#tournament-config {
+/* Tournament config sections — visually distinct from global controls */
+.tournament-settings {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+    border-left: 3px solid var(--court);
+    padding-left: var(--space-md);
+    margin-left: var(--space-xs);
 }
-#tournament-config .section-label {
+.tournament-settings-header {
+    display: flex;
+    align-items: center;
+}
+.tournament-settings-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--court-light);
+    background: var(--court-glow);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+.tournament-settings .section-label {
     margin-top: var(--space-xs);
 }
 
-/* Manual pairing grid */
-.manual-pairing-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-}
-.manual-pair {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: 10px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-}
-.pair-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--court-light);
-    white-space: nowrap;
-}
-.pair-names {
-    font-size: 0.875rem;
-    color: var(--text);
-}
-
-/* Seeding list */
-.seeding-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: var(--space-sm);
-}
-.seeding-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: 10px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    cursor: grab;
-    transition: all var(--duration-fast) var(--ease-out);
-    user-select: none;
-}
-.seeding-item:hover {
-    border-color: var(--border-light);
-    background: var(--bg-elevated);
-}
-.seeding-item.dragging {
-    opacity: 0.5;
-    transform: scale(0.98);
-}
-.seeding-item.drag-over {
+/* Override button accent in tournament settings */
+.tournament-settings .mode-btn.selected {
     border-color: var(--court);
     background: var(--court-glow);
-}
-.seed-number {
-    font-family: "Syne", system-ui, sans-serif;
-    font-weight: 700;
-    font-size: 0.875rem;
-    color: var(--clay-light);
-    min-width: 28px;
-}
-.seed-name {
-    flex: 1;
-    font-size: 0.875rem;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.seed-grip {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    cursor: grab;
 }
 
 /* Bracket pool labels */

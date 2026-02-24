@@ -1,3 +1,4 @@
+import { formatSets } from "../score-editor/sets.js"
 import { getModeLabel } from "../utils.js"
 
 function formatDate(isoString) {
@@ -67,6 +68,15 @@ function buildHistoryCardHeader(session, dateStr) {
     return headerEl
 }
 
+function createDiv(className, text) {
+    const el = document.createElement("div")
+    el.className = className
+    if (text !== undefined) {
+        el.textContent = text
+    }
+    return el
+}
+
 function renderTeamsToGrid(teams, grid) {
     let ti = 0
     while (ti < teams.length) {
@@ -106,68 +116,119 @@ function getSetsForMatch(round, matchIndex) {
     return null
 }
 
-function appendHistorySets(teamsGrid, sets) {
+function appendHistorySets(container, sets) {
     const el = document.createElement("div")
-    el.className = "history-score"
-    el.textContent = sets.map((s) => `${s[0]}–${s[1]}`).join(", ")
-    teamsGrid.appendChild(el)
+    const text = formatSets(sets)
+    el.className = text ? "history-score" : "history-score muted"
+    el.textContent = text || "No score"
+    container.appendChild(el)
 }
 
-function renderStructuredRound(round, teamsGrid) {
+function buildPoolBadge(pool) {
+    if (!pool) {
+        return null
+    }
+    const label = pool === "losers" ? "Losers" : "Winners"
+    const badge = document.createElement("span")
+    badge.className = `history-pool-badge ${pool === "losers" ? "losers" : "winners"}`
+    badge.textContent = label
+    return badge
+}
+
+function buildMatchTeamRow(players, index) {
+    const row = createDiv("history-match-team")
+    row.appendChild(createDiv("history-match-team-label", `Team ${index + 1}`))
+    row.appendChild(createDiv("history-match-team-players", players.join(", ")))
+    return row
+}
+
+function buildMatchCard(round, match, matchIndex) {
+    const card = createDiv("history-match")
+
+    const header = createDiv("history-match-header")
+    header.appendChild(createDiv("history-match-court", `Court ${match.court || matchIndex + 1}`))
+    const badge = buildPoolBadge(match.bracketPool)
+    if (badge) {
+        header.appendChild(badge)
+    }
+    card.appendChild(header)
+
+    const teamList = createDiv("history-match-teams")
+    for (let i = 0; i < match.teams.length; i += 1) {
+        teamList.appendChild(buildMatchTeamRow(match.teams[i], i))
+    }
+    card.appendChild(teamList)
+
+    const sets = getSetsForMatch(round, matchIndex)
+    if (sets) {
+        appendHistorySets(card, sets)
+    } else {
+        const noScore = createDiv("history-score muted", "No score")
+        card.appendChild(noScore)
+    }
+
+    return card
+}
+
+function resolveByeTeamNames(session, round) {
+    if (!session?.teams) {
+        return []
+    }
+    const byeIds = [...(round.byes || []), ...(round.losersByes || [])]
+    return byeIds.map((id) => session.teams.find((team) => team.id === id)?.name || null).filter(Boolean)
+}
+
+function appendChipGroup(container, label, values) {
+    if (!values || values.length === 0) {
+        return
+    }
+    const group = createDiv("history-chip-group")
+    group.appendChild(createDiv("history-chip-label", label))
+
+    const list = createDiv("history-chip-list")
+    for (const value of values) {
+        list.appendChild(createDiv("history-chip", value))
+    }
+
+    group.appendChild(list)
+    container.appendChild(group)
+}
+
+function renderStructuredRound(session, round, container) {
+    const matchList = createDiv("history-match-list")
     for (let i = 0; i < round.matches.length; i += 1) {
-        const match = round.matches[i]
-
-        if (round.matches.length > 1) {
-            const courtLabel = document.createElement("div")
-            courtLabel.className = "history-team-name"
-            courtLabel.textContent = `Court ${match.court}`
-            courtLabel.style.gridColumn = "1 / -1"
-            teamsGrid.appendChild(courtLabel)
-        }
-
-        renderTeamsToGrid(match.teams, teamsGrid)
-
-        const sets = getSetsForMatch(round, i)
-        if (sets) {
-            appendHistorySets(teamsGrid, sets)
-        }
+        matchList.appendChild(buildMatchCard(round, round.matches[i], i))
     }
+    container.appendChild(matchList)
 
-    if (round.sitOuts && round.sitOuts.length > 0) {
-        const sitOutDiv = document.createElement("div")
-        sitOutDiv.className = "history-team"
-        const sitOutLabel = document.createElement("div")
-        sitOutLabel.className = "history-team-name"
-        sitOutLabel.style.color = "var(--text-muted)"
-        sitOutLabel.textContent = "Sat out"
-        const sitOutPlayers = document.createElement("div")
-        sitOutPlayers.className = "history-team-players"
-        sitOutPlayers.textContent = round.sitOuts.join(", ")
-        sitOutDiv.appendChild(sitOutLabel)
-        sitOutDiv.appendChild(sitOutPlayers)
-        teamsGrid.appendChild(sitOutDiv)
+    const meta = createDiv("history-round-meta")
+    appendChipGroup(meta, "Byes", resolveByeTeamNames(session, round))
+    appendChipGroup(meta, "Sat out", round.sitOuts || [])
+    if (meta.childElementCount > 0) {
+        container.appendChild(meta)
     }
 }
 
-function buildHistoryRound(round, index) {
+function buildHistoryRound(session, round, index) {
     const roundDiv = document.createElement("div")
     roundDiv.className = "history-round"
 
     const roundLabel = document.createElement("div")
     roundLabel.className = "history-round-label"
     roundLabel.textContent = round.tournamentRoundLabel || `Round ${index + 1}`
-
-    const teamsGrid = document.createElement("div")
-    teamsGrid.className = "history-round-teams"
+    roundDiv.appendChild(roundLabel)
 
     if (round.matches) {
-        renderStructuredRound(round, teamsGrid)
+        const content = document.createElement("div")
+        content.className = "history-round-content"
+        renderStructuredRound(session, round, content)
+        roundDiv.appendChild(content)
     } else {
+        const teamsGrid = document.createElement("div")
+        teamsGrid.className = "history-round-teams"
         renderTeamsToGrid(round, teamsGrid)
+        roundDiv.appendChild(teamsGrid)
     }
-
-    roundDiv.appendChild(roundLabel)
-    roundDiv.appendChild(teamsGrid)
     return roundDiv
 }
 
@@ -176,7 +237,7 @@ function buildHistoryCardBody(session, onDelete) {
     body.className = "history-card-body"
 
     for (let r = 0; r < session.rounds.length; r += 1) {
-        body.appendChild(buildHistoryRound(session.rounds[r], r))
+        body.appendChild(buildHistoryRound(session, session.rounds[r], r))
     }
 
     const deleteRow = document.createElement("div")

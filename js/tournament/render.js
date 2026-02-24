@@ -34,7 +34,33 @@ function formatScore(scoreEntry) {
     if (!scoreEntry?.sets || scoreEntry.sets.length === 0) {
         return "vs"
     }
-    return scoreEntry.sets.map(([a, b]) => `${a}-${b}`).join(", ")
+    const { sets } = scoreEntry
+    let wins0 = 0
+    let wins1 = 0
+    for (const s of sets) {
+        if (s[0] > s[1]) {
+            wins0 += 1
+        } else if (s[1] > s[0]) {
+            wins1 += 1
+        }
+    }
+    const setScores = sets
+        .map((s) => {
+            const base = `${s[0]}-${s[1]}`
+            if (s[2]?.tb) {
+                const [tbA, tbB] = s[2].tb
+                if (tbA !== null && tbB !== null) {
+                    const loserTb = s[0] > s[1] ? tbB : tbA
+                    return `${base}(${loserTb})`
+                }
+            }
+            return base
+        })
+        .join(", ")
+    if (wins0 > 0 || wins1 > 0) {
+        return `(${wins0}-${wins1}) ${setScores}`
+    }
+    return setScores
 }
 
 function renderRoundElement(session, round, r) {

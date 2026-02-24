@@ -41,24 +41,19 @@ function noop() {
 
 function collectUsedHistory(session) {
     const played = session.rounds.slice(0, session.currentRound + 1)
-    if (session.mode === "free") {
-        const pairs = new Set()
-        for (const round of played) {
-            for (const match of round.matches) {
-                for (const p of extractPairs(match.teams)) {
-                    pairs.add(p)
-                }
-            }
-        }
-        return pairs
-    }
-    const matchups = new Set()
+    const usedPairs = new Set()
+    const usedMatchups = new Set()
+
     for (const round of played) {
         for (const match of round.matches) {
-            matchups.add(matchupKey(match.teams, session.mode))
+            for (const p of extractPairs(match.teams)) {
+                usedPairs.add(p)
+            }
+            usedMatchups.add(matchupKey(match.teams, session.mode))
         }
     }
-    return matchups
+
+    return { usedPairs, usedMatchups }
 }
 
 function applyModifyPlayers() {
@@ -76,16 +71,14 @@ function applyModifyPlayers() {
     let newRounds
 
     if (session.mode === "free") {
-        const raw = generateOptimalRoundSequence(newPlayers, session.teamCount, usedHistory)
+        const raw = generateOptimalRoundSequence(newPlayers, session.teamCount, usedHistory.usedPairs)
         newRounds = wrapFreeRounds(raw)
     } else {
-        newRounds = generateStructuredRounds(
-            newPlayers,
-            session.mode,
-            session.courtCount,
-            usedHistory,
-            session.allowNotStrictDoubles,
-        )
+        newRounds = generateStructuredRounds(newPlayers, session.mode, session.courtCount, {
+            initialUsedMatchups: usedHistory.usedMatchups,
+            initialUsedPairs: usedHistory.usedPairs,
+            allowNotStrict: session.allowNotStrictDoubles,
+        })
     }
 
     session.players = newPlayers

@@ -135,19 +135,4 @@ function autoFormTeams(players, teamSize) {
     return teams
 }
 
-function createTeamsFromPairings(pairings) {
-    return pairings.map((players, i) => ({
-        id: i,
-        name: players.join(" & "),
-        players,
-    }))
-}
-
-export {
-    nextPowerOf2,
-    generateBracketFirstRound,
-    generateRoundRobinSchedule,
-    createInitialBracket,
-    autoFormTeams,
-    createTeamsFromPairings,
-}
+export { nextPowerOf2, generateBracketFirstRound, generateRoundRobinSchedule, createInitialBracket, autoFormTeams }

@@ -1,5 +1,4 @@
 import { buildSetRow } from "./set-row.js"
-import { isComplete } from "./sets.js"
 
 function createActionBtn(label, extraClass, onClick) {
     const btn = document.createElement("button")
@@ -10,78 +9,83 @@ function createActionBtn(label, extraClass, onClick) {
     return btn
 }
 
-function createSaveBtn(onSave) {
-    const btn = document.createElement("button")
-    btn.type = "button"
-    btn.className = "btn btn-accent btn-sm"
-    btn.textContent = "Save"
-    btn.addEventListener("click", onSave)
-    return btn
-}
-
-function updateControls({ draft, maxSets, addSetBtn, saveBtn }) {
-    saveBtn.disabled = !isComplete(draft)
-    addSetBtn.disabled = draft.length >= maxSets
-}
-
-function renderRows({ rows, draft, onAnyUpdate, onRemoveAt }) {
+function renderRows({ rows, draft, tiebreaks, onAnyUpdate, onRemoveAt }) {
     rows.textContent = ""
+    let lastRow = null
     for (let i = 0; i < draft.length; i += 1) {
-        rows.appendChild(
-            buildSetRow({
-                setIndex: i,
-                pair: draft[i],
-                canRemove: draft.length > 1,
-                onChange: (next) => {
-                    draft[i] = next
-                },
-                onAnyUpdate,
-                onRemove: () => onRemoveAt(i),
-            }),
-        )
+        const pair = draft[i]
+        // Attach tiebreak metadata if present
+        if (tiebreaks[i]) {
+            pair[2] = { tb: [...tiebreaks[i]] }
+        } else if (pair.length > 2) {
+            pair.splice(2)
+        }
+        const row = buildSetRow({
+            setIndex: i,
+            pair,
+            canRemove: draft.length > 1,
+            onChange: (next) => {
+                draft[i] = next
+            },
+            onAnyUpdate,
+            onRemove: () => onRemoveAt(i),
+            onTiebreakChange: (tbPair) => {
+                tiebreaks[i] = tbPair
+            },
+        })
+        rows.appendChild(row)
+        lastRow = row
     }
+    return lastRow
 }
 
-function buildFooter({ draft, commitAndClose, revertAndClose }) {
-    const footer = document.createElement("div")
-    footer.className = "result-editor-actions"
-
-    footer.appendChild(createActionBtn("Clear", "btn-danger", () => commitAndClose(null)))
-    footer.appendChild(createActionBtn("Cancel", "", revertAndClose))
-
-    const saveBtn = createSaveBtn(() => commitAndClose(draft.map((s) => [...s])))
-    footer.appendChild(saveBtn)
-
-    return { footer, saveBtn }
-}
-
-export function buildEditorContent({ draft, maxSets, commitAndClose, revertAndClose }) {
+export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onClear }) {
     const container = document.createElement("div")
     const rows = document.createElement("div")
     rows.className = "set-rows"
 
-    const { footer, saveBtn } = buildFooter({ draft, commitAndClose, revertAndClose })
+    const sync = () => {
+        addSetBtn.disabled = draft.length >= maxSets
+        onAutoSave()
+    }
 
-    const sync = () => updateControls({ draft, maxSets, addSetBtn, saveBtn })
     const onRemoveAt = (i) => {
         draft.splice(i, 1)
-        renderRows({ rows, draft, onAnyUpdate: sync, onRemoveAt })
+        tiebreaks.splice(i, 1)
+        renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
         sync()
     }
 
-    const addSetBtn = createActionBtn("Add set", "add-set-btn", () => {
+    const addSetBtn = createActionBtn("+ Add set", "add-set-btn", () => {
         if (draft.length < maxSets) {
             draft.push([null, null])
-            renderRows({ rows, draft, onAnyUpdate: sync, onRemoveAt })
+            tiebreaks.push(null)
+            const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
             sync()
+            if (lastRow?.focusFirst) {
+                lastRow.focusFirst()
+            }
         }
     })
 
-    renderRows({ rows, draft, onAnyUpdate: sync, onRemoveAt })
-    sync()
+    const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt })
+
+    // Auto-focus first input when opening with empty score
+    if (draft.length === 1 && draft[0][0] === null && draft[0][1] === null && lastRow?.focusFirst) {
+        requestAnimationFrame(() => lastRow.focusFirst())
+    }
 
     container.appendChild(rows)
-    container.appendChild(addSetBtn)
-    container.appendChild(footer)
+
+    const bottomBar = document.createElement("div")
+    bottomBar.className = "editor-bottom-bar"
+    bottomBar.appendChild(addSetBtn)
+
+    const clearLink = createActionBtn("Clear score", "clear-link btn-danger", () => {
+        onClear()
+    })
+    bottomBar.appendChild(clearLink)
+
+    container.appendChild(bottomBar)
     return container
 }

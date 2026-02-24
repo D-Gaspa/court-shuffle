@@ -43,6 +43,7 @@ const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
 
 const uiState = {
+    roundPrefix: document.getElementById("round-prefix"),
     roundNumber: document.getElementById("round-number"),
     roundTotal: document.getElementById("round-total"),
     roundInfo: document.getElementById("round-info"),
@@ -129,8 +130,13 @@ function onModeChange(mode) {
         setCourtVisibility(mode)
     }
 
-    // Not-strict doubles: show for doubles mode only (tournament handles its own)
-    notStrictDoublesGroup.hidden = mode !== "doubles"
+    // Not-strict doubles: show only for doubles mode.
+    // For tournament, hide it initially — tournament setup re-shows it when team size = doubles.
+    if (mode === "tournament") {
+        notStrictDoublesGroup.hidden = true
+    } else {
+        notStrictDoublesGroup.hidden = mode !== "doubles"
+    }
     if (mode !== "doubles" && mode !== "tournament") {
         allow2v1Checkbox.checked = false
         setNotStrictDoubles(false)
@@ -274,7 +280,11 @@ function refreshSessionView() {
         hideTournamentConfig()
         setCourtVisibility(gameMode)
     }
-    notStrictDoublesGroup.hidden = gameMode !== "doubles"
+    if (gameMode === "tournament") {
+        notStrictDoublesGroup.hidden = true
+    } else {
+        notStrictDoublesGroup.hidden = gameMode !== "doubles"
+    }
 
     clampTeamCount()
     onSelectionChange()

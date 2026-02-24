@@ -69,12 +69,14 @@ function renderVersusMatch(teams, matchNum, container, opts) {
     card.appendChild(header)
     card.appendChild(versus)
 
+    const teamLabels = opts?.teamLabels || ["Team 1", "Team 2"]
     if (opts?.entry) {
         card.appendChild(
             buildMatchResultSection({
                 entry: opts.entry,
                 editable: Boolean(opts.editable && opts.onCommit),
                 onCommit: opts.onCommit ?? {},
+                teamLabels,
             }),
         )
     } else {
@@ -83,6 +85,7 @@ function renderVersusMatch(teams, matchNum, container, opts) {
                 entry: null,
                 editable: Boolean(opts?.editable && opts?.onCommit),
                 onCommit: opts?.onCommit ?? {},
+                teamLabels,
             }),
         )
     }
@@ -142,34 +145,50 @@ function renderTeamCards(teams, container) {
     }
 }
 
-function buildMatchOpts(bracketOpts, matchIndex, scoreEntry) {
+function buildMatchOpts(bracketOpts, matchIndex, scoreEntry, teamLabels) {
     if (bracketOpts.editable && bracketOpts.onCommit) {
         return {
             editable: true,
             entry: scoreEntry,
             onCommit: (val) => bracketOpts.onCommit(matchIndex, val),
+            teamLabels,
         }
     }
     if (scoreEntry) {
-        return { entry: scoreEntry }
+        return { entry: scoreEntry, teamLabels }
     }
     return null
+}
+
+function resolveTeamLabels(match, opts) {
+    if (match.teams.length !== 2) {
+        return
+    }
+    if (opts?.teamNames) {
+        return [opts.teamNames(match.teams[0]), opts.teamNames(match.teams[1])]
+    }
+    return ["Team 1", "Team 2"]
+}
+
+function renderMatchList(round, container, opts) {
+    for (let i = 0; i < round.matches.length; i += 1) {
+        const match = round.matches[i]
+        const scoreEntry = round.scores ? round.scores[i] : null
+        const teamLabels = resolveTeamLabels(match, opts)
+        const matchOpts = opts ? buildMatchOpts(opts, i, scoreEntry, teamLabels) : null
+        if (match.teams.length === 2) {
+            renderVersusMatch(match.teams, match.court, container, matchOpts)
+        } else {
+            renderTeamCards(match.teams, container)
+        }
+    }
 }
 
 export function renderBracket(round, container, opts) {
     container.textContent = ""
 
     if (round.matches) {
-        for (let i = 0; i < round.matches.length; i += 1) {
-            const match = round.matches[i]
-            const scoreEntry = round.scores ? round.scores[i] : null
-            const matchOpts = opts ? buildMatchOpts(opts, i, scoreEntry) : null
-            if (match.teams.length === 2) {
-                renderVersusMatch(match.teams, match.court, container, matchOpts)
-            } else {
-                renderTeamCards(match.teams, container)
-            }
-        }
+        renderMatchList(round, container, opts)
         return
     }
 

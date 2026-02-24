@@ -2,13 +2,13 @@
  * Structured-mode round generation — singles/doubles with court assignment and sit-out rotation.
  */
 
-import { DEFAULT_MAX_ATTEMPTS, matchupKey, selectActivePlayers, shuffleArray } from "./core.js"
+import { DEFAULT_MAX_ATTEMPTS, extractPairs, matchupKey, pairKey, selectActivePlayers, shuffleArray } from "./core.js"
 
 const DOUBLES_TEAM_SIZE = 2
 const SINGLES_TEAM_SIZE = 1
 const STRUCTURED_MAX_DOUBLES = 50
 const STRUCTURED_MIN_ROUNDS = 10
-const STRUCTURED_FAIL_LIMIT = 3
+const STRUCTURED_FAIL_LIMIT = 5
 const FULL_DOUBLES_COURT = 4
 const MIN_2V1_COURT = 3
 const DOUBLES_TEAMS_PER_COURT = 2
@@ -41,9 +41,28 @@ function assignNotStrictCourts(shuffled, ctx) {
         if (ctx.usedMatchups.has(key)) {
             return null
         }
+        if (hasRepeatedPair([team1, team2], ctx.usedPairs)) {
+            return null
+        }
         matches.push({ court: c + 1, teams: [team1, team2] })
     }
     return matches
+}
+
+/**
+ * Check if any within-team partner pair has already been used.
+ */
+function hasRepeatedPair(teams, usedPairs) {
+    for (const team of teams) {
+        for (let i = 0; i < team.length; i += 1) {
+            for (let j = i + 1; j < team.length; j += 1) {
+                if (usedPairs.has(pairKey(team[i], team[j]))) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
 }
 
 /**
@@ -60,6 +79,9 @@ function assignStrictCourts(shuffled, ctx) {
         const team2 = courtPlayers.slice(ctx.teamSize)
         const key = matchupKey([team1, team2], ctx.mode)
         if (ctx.usedMatchups.has(key)) {
+            return null
+        }
+        if (hasRepeatedPair([team1, team2], ctx.usedPairs)) {
             return null
         }
         matches.push({ court: c + 1, teams: [team1, team2] })
@@ -98,7 +120,9 @@ function computeMaxStructuredRounds(players, mode) {
     if (mode === "singles") {
         return (n * (n - 1)) / 2
     }
-    return Math.min(STRUCTURED_MAX_DOUBLES, n * (n - 1))
+    // With partner-uniqueness, each player can partner with at most (n-1) others.
+    // Each round uses ~2 partners per player (one teammate), so upper bound is roughly n-1 rounds.
+    return Math.min(STRUCTURED_MAX_DOUBLES, n - 1)
 }
 
 /**
@@ -112,6 +136,9 @@ function tryStructuredRound(players, activeCount, sitOutCounts, ctx) {
         if (matches) {
             for (const match of matches) {
                 ctx.usedMatchups.add(matchupKey(match.teams, ctx.mode))
+                for (const p of extractPairs(match.teams)) {
+                    ctx.usedPairs.add(p)
+                }
             }
             return { matches, sitOuts, scores: null }
         }
@@ -128,7 +155,7 @@ function tryStructuredRound(players, activeCount, sitOutCounts, ctx) {
  * Generate structured rounds for singles/doubles modes with sit-out rotation.
  */
 function generateStructuredRounds(players, mode, courtCount, options = {}) {
-    const { initialUsedMatchups = null, allowNotStrict = false } = options
+    const { initialUsedMatchups = null, initialUsedPairs = null, allowNotStrict = false } = options
     const teamSize = mode === "singles" ? SINGLES_TEAM_SIZE : DOUBLES_TEAM_SIZE
     const playersPerCourt = teamSize * DOUBLES_TEAMS_PER_COURT
     const minPerCourt = allowNotStrict && mode === "doubles" ? MIN_2V1_COURT : playersPerCourt
@@ -137,9 +164,10 @@ function generateStructuredRounds(players, mode, courtCount, options = {}) {
     const activeCount = Math.min(Math.max(minActive, Math.min(maxActive, players.length)), players.length)
     const sitOutCounts = new Map(players.map((p) => [p, 0]))
     const usedMatchups = new Set(initialUsedMatchups)
+    const usedPairs = new Set(initialUsedPairs)
     const rounds = []
     const maxRounds = Math.max(computeMaxStructuredRounds(players, mode), STRUCTURED_MIN_ROUNDS)
-    const ctx = { teamSize, playersPerCourt, courtCount, mode, usedMatchups, allowNotStrict }
+    const ctx = { teamSize, playersPerCourt, courtCount, mode, usedMatchups, usedPairs, allowNotStrict }
     let consecutiveFails = 0
 
     for (let r = 0; r < maxRounds; r += 1) {

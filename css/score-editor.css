@@ -1,0 +1,221 @@
+.match-result-editor {
+    padding: 12px 16px 14px;
+    background: var(--bg-card);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.set-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.set-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+
+    padding: 10px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+
+    transition:
+        background var(--duration-fast) var(--ease-out),
+        border-color var(--duration-fast) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .set-row:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-light);
+        transform: translateY(-1px);
+    }
+}
+
+.set-row:focus-within {
+    border-color: color-mix(in srgb, var(--court), transparent 15%);
+    box-shadow:
+        var(--shadow-sm),
+        0 0 0 3px var(--court-glow);
+}
+
+.set-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+    flex: 1;
+}
+
+@media (width < 480px) {
+    .set-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
+
+.set-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.set-fields {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.set-input {
+    width: clamp(54px, 16vw, 72px);
+    height: 44px;
+    padding: 0 10px;
+    text-align: center;
+
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+
+    color: var(--text);
+    font-family: "Outfit", system-ui, sans-serif;
+    font-size: clamp(0.95rem, 4vw, 1.05rem);
+    font-weight: 850;
+    font-variant-numeric: tabular-nums;
+
+    outline: none;
+
+    transition:
+        border-color var(--duration-fast) var(--ease-out),
+        box-shadow var(--duration-fast) var(--ease-out),
+        background var(--duration-fast) var(--ease-out);
+}
+
+.set-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 750;
+}
+
+.set-input:focus,
+.set-input:focus-visible {
+    border-color: var(--court);
+    box-shadow: 0 0 0 3px var(--court-glow);
+}
+
+.set-input.invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger), transparent 78%);
+}
+
+.set-input::-webkit-outer-spin-button,
+.set-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.set-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Tiebreak inputs */
+.tb-container {
+    display: contents;
+}
+
+.tb-fields {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+}
+
+.tb-paren {
+    color: var(--text-muted);
+    font-weight: 800;
+    font-size: 1rem;
+    user-select: none;
+}
+
+.tb-input {
+    width: 40px;
+    height: 36px;
+    font-size: 0.85rem;
+    padding: 0 4px;
+}
+
+.tb-dash {
+    font-size: 0.8rem;
+}
+
+/* Set actions */
+.set-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    opacity: 0.85;
+    transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .set-row:hover .set-actions {
+        opacity: 1;
+    }
+}
+
+.set-actions .btn-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--bg-input);
+    border-color: var(--border);
+}
+
+.set-actions .btn-icon:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+}
+
+.set-actions .btn-icon:focus-visible {
+    outline: none;
+    border-color: var(--court);
+    box-shadow: 0 0 0 3px var(--court-glow);
+}
+
+.set-delete {
+    color: var(--danger);
+}
+
+.set-delete:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger-bg), var(--bg-hover) 55%);
+    border-color: color-mix(in srgb, var(--danger), transparent 35%);
+}
+
+/* Editor bottom bar (add set + clear) */
+.editor-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-top: 4px;
+}
+
+.clear-link {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.clear-link:hover {
+    opacity: 1;
+}
