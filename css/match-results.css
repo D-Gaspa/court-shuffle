@@ -87,6 +87,50 @@
     gap: 6px;
 }
 
+@media (width < 560px) {
+    .match-result-bar {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .match-result-value {
+        white-space: normal;
+        text-overflow: clip;
+        line-height: 1.25;
+    }
+
+    .result-separator {
+        display: none;
+    }
+
+    .result-detail {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.8rem;
+    }
+
+    .match-result-actions {
+        align-self: flex-start;
+        margin-top: -2px;
+    }
+}
+
+@media (width < 440px) {
+    .match-result-bar {
+        flex-wrap: wrap;
+    }
+
+    .match-result-value {
+        flex-basis: 100%;
+        order: 3;
+        padding-top: 2px;
+    }
+
+    .match-result-actions {
+        margin-left: auto;
+    }
+}
+
 @media (width < 360px) {
     .match-result-bar {
         padding: 10px 12px;

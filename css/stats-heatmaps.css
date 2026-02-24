@@ -1,0 +1,125 @@
+.stats-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.stats-heatmap-grid {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.stats-heatmap-scroller {
+    overflow: auto;
+    border-radius: 12px;
+    border: 1px solid #ffffff10;
+    background: #100f0c;
+}
+
+.stats-heatmap-table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.stats-heatmap-corner,
+.stats-heatmap-header,
+.stats-heatmap-row-header {
+    padding: 0.5rem;
+    background: #171512;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    border-bottom: 1px solid #ffffff08;
+    border-right: 1px solid #ffffff08;
+}
+
+.stats-heatmap-header,
+.stats-heatmap-row-header {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.stats-heatmap-header.is-selected,
+.stats-heatmap-row-header.is-selected {
+    color: var(--ball);
+    background:
+        radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--ball), transparent 78%), transparent 70%),
+        color-mix(in srgb, var(--ball), #171512 90%);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--ball), transparent 55%),
+        inset 0 -1px 0 #ffffff10;
+}
+
+.stats-heatmap-cell {
+    --heat: 0;
+    --win-rate: 0.5;
+    min-width: 42px;
+    text-align: center;
+    padding: 0.45rem 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    border-right: 1px solid #ffffff08;
+    border-bottom: 1px solid #ffffff08;
+    transition:
+        background-color var(--duration-fast) ease,
+        transform var(--duration-fast) ease;
+}
+
+.stats-heatmap-cell.metric-count {
+    color: color-mix(in srgb, var(--text), transparent calc(18% + (1 - var(--heat)) * 42%));
+    background:
+        linear-gradient(180deg, #ffffff04, #00000010), color-mix(in srgb, var(--court) calc(var(--heat) * 55%), #13110e);
+}
+
+.stats-heatmap-cell.metric-win-rate {
+    color: color-mix(in srgb, #fff, transparent 8%);
+    background: linear-gradient(180deg, #ffffff08, #00000016), hsl(calc(var(--win-rate) * 120) 52% 26%);
+}
+
+.stats-heatmap-cell.metric-win-rate.is-no-data {
+    color: var(--text-muted);
+    background: #14120f;
+}
+
+.stats-heatmap-cell.is-selected-axis {
+    position: relative;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--ball), transparent 58%),
+        inset 0 0 0 999px color-mix(in srgb, var(--ball), transparent 93%);
+}
+
+.stats-heatmap-cell.is-selected-axis::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, color-mix(in srgb, #fff, transparent 92%), transparent 45%);
+    pointer-events: none;
+}
+
+.stats-heatmap-cell.is-diagonal {
+    color: var(--text-muted);
+    border-right-color: #ffffff05;
+    border-bottom-color: #ffffff05;
+    background:
+        linear-gradient(135deg, #ffffff06 0 25%, transparent 25% 50%, #ffffff04 50% 75%, transparent 75% 100%), #14120f;
+    background-size:
+        10px 10px,
+        auto;
+}
+
+.stats-heatmap-cell:hover {
+    transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stats-heatmap-cell {
+        transition: none;
+    }
+}

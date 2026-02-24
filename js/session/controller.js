@@ -16,6 +16,7 @@ import {
 } from "./controller-ui.js"
 import {
     clampCourtCount,
+    clearCourtHint,
     getCourtCount,
     getNotStrictDoubles,
     initCourtConfig,
@@ -224,7 +225,7 @@ function onSelectionChange() {
         startSessionBtn.disabled = count < minPlayers
         updateTournamentPlayers([...selectedPlayers])
         clampCourtCount(count, tournamentMatchMode)
-        updateCourtHint(count, tournamentMatchMode)
+        clearCourtHint()
     } else if (gameMode === "free") {
         updateTeamSizeHint(count, teamCount, teamSizeHint)
         modeHint.textContent = ""

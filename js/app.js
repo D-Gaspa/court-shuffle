@@ -1,6 +1,7 @@
 import { renderHistory } from "./history/render.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
 import { initSession, refreshSessionView } from "./session/controller.js"
+import { renderStats } from "./stats/render.js"
 import { loadState, saveState } from "./storage.js"
 
 const state = loadState()
@@ -10,11 +11,13 @@ const tabs = document.querySelectorAll(".tab")
 const views = {
     roster: document.getElementById("view-roster"),
     session: document.getElementById("view-session"),
+    stats: document.getElementById("view-stats"),
     history: document.getElementById("view-history"),
 }
 
 const historyList = document.getElementById("history-list")
 const historyEmpty = document.getElementById("history-empty")
+const statsRoot = document.getElementById("stats-root")
 
 const confirmDialog = document.getElementById("confirm-dialog")
 const confirmTitle = document.getElementById("confirm-title")
@@ -44,6 +47,8 @@ function switchView(viewName) {
         refreshRoster()
     } else if (viewName === "session") {
         refreshSessionView()
+    } else if (viewName === "stats") {
+        refreshStats()
     } else if (viewName === "history") {
         refreshHistory()
     }
@@ -106,6 +111,10 @@ function refreshHistory() {
             refreshHistory()
         })
     })
+}
+
+function refreshStats() {
+    renderStats(state.history, statsRoot)
 }
 
 function init() {

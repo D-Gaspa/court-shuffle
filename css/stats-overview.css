@@ -1,0 +1,231 @@
+.stats-scope-panel {
+    padding-bottom: 0.85rem;
+}
+
+.stats-scope-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    margin-bottom: 0.7rem;
+}
+
+.stats-scope-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    border: 1px solid #ffffff12;
+    background: #0000001a;
+    border-radius: 999px;
+    padding: 0.22rem 0.5rem;
+    white-space: nowrap;
+}
+
+.stats-toggle-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 999px;
+    background: #100f0d;
+    border: 1px solid #ffffff10;
+}
+
+.stats-toggle-row-compact {
+    margin-top: 0.55rem;
+}
+
+.stats-toggle-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+        color var(--duration-fast) ease,
+        background-color var(--duration-fast) ease;
+}
+
+.stats-toggle-btn:hover {
+    color: var(--text-secondary);
+    background: #ffffff08;
+}
+
+.stats-toggle-btn.is-selected {
+    color: var(--text);
+    background: linear-gradient(180deg, #2f2b22, #1f1d18);
+    box-shadow: inset 0 0 0 1px #ffffff12;
+}
+
+.stats-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stats-highlight-card {
+    border-radius: 14px;
+    border: 1px solid #ffffff10;
+    background:
+        radial-gradient(circle at 85% 10%, #ffffff10, transparent 40%), linear-gradient(180deg, #ffffff06, #00000012);
+    padding: 0.8rem;
+    display: grid;
+    gap: 2px;
+}
+
+.stats-highlight-label {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+}
+
+.stats-highlight-value {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.stats-highlight-player {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-highlight-meta {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.stats-subpanel {
+    border-radius: 14px;
+    border: 1px solid #ffffff10;
+    background: #ffffff04;
+    padding: 0.75rem;
+}
+
+.stats-subpanel-title {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 0.95rem;
+    margin-bottom: 0.45rem;
+}
+
+.stats-mini-list {
+    display: grid;
+    gap: 6px;
+    list-style: none;
+}
+
+.stats-mini-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    align-items: center;
+    padding: 0.45rem 0.5rem;
+    border-radius: 10px;
+    background: #00000014;
+    border: 1px solid #ffffff08;
+}
+
+.stats-mini-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.86rem;
+}
+
+.stats-mini-value {
+    justify-self: end;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+}
+
+.stats-mini-meta {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+}
+
+.stats-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stats-player-row {
+    width: 100%;
+    border: 1px solid transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.stats-player-row:hover {
+    background: var(--bg-elevated);
+    border-color: #ffffff10;
+}
+
+.stats-player-row.is-selected {
+    border-color: color-mix(in srgb, var(--ball), transparent 55%);
+    background: linear-gradient(180deg, #2d281f, #232019);
+    box-shadow: inset 0 0 0 1px #ffffff0c;
+}
+
+.stats-player-name-wrap {
+    min-width: 0;
+    flex: 1;
+}
+
+.stats-player-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.stats-player-row-pill {
+    border-radius: 999px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.72rem;
+    border: 1px solid #ffffff14;
+    background: #00000018;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.stats-player-row-pill-win {
+    color: #9ce0b9;
+}
+
+@media (width >= 768px) {
+    .stats-highlight-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (width <= 640px) {
+    .stats-scope-header {
+        flex-direction: column;
+    }
+
+    .stats-player-row {
+        align-items: flex-start;
+    }
+
+    .stats-player-row-meta {
+        max-width: 40%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stats-toggle-btn {
+        transition: none;
+    }
+}

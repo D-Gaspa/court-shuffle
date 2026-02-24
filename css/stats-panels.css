@@ -1,0 +1,118 @@
+.stats-panel-header {
+    margin-bottom: 0.8rem;
+}
+
+.stats-panel-title {
+    font-size: 1.05rem;
+    margin-bottom: 2px;
+}
+
+.stats-panel-subtitle {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.stats-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stats-metric-card {
+    display: grid;
+    gap: 4px;
+    padding: 0.8rem;
+    border-radius: 14px;
+    border: 1px solid #ffffff10;
+    background: linear-gradient(180deg, #ffffff07, #00000014);
+}
+
+.stats-metric-label {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.stats-metric-value {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+}
+
+.stats-metric-caption {
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+}
+
+.stats-columns {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.stats-panel-relationship.stats-tone-court {
+    border-color: color-mix(in srgb, var(--court), var(--border) 60%);
+}
+
+.stats-panel-relationship.stats-tone-clay {
+    border-color: color-mix(in srgb, var(--clay), var(--border) 60%);
+}
+
+.stats-relationship-empty {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+}
+
+.stats-relationship-list {
+    display: grid;
+    gap: 8px;
+    list-style: none;
+}
+
+.stats-relationship-row {
+    display: grid;
+    gap: 8px;
+    border-radius: 12px;
+    border: 1px solid #ffffff10;
+    background: #ffffff06;
+    padding: 0.75rem;
+}
+
+.stats-relationship-name {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    align-items: baseline;
+}
+
+.stats-relationship-name span {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.stats-relationship-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.stats-pill {
+    font-size: 0.76rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid #ffffff14;
+    background: #0000001a;
+    color: var(--text-secondary);
+}
+
+@media (width >= 768px) {
+    #view-stats {
+        margin-inline: -6px;
+    }
+
+    .stats-summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stats-columns {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

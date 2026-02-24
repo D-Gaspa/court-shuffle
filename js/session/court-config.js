@@ -69,6 +69,10 @@ function updateCourtHint(playerCount, gameMode) {
     courtHint.textContent = parts.join(" · ")
 }
 
+function clearCourtHint() {
+    courtHint.textContent = ""
+}
+
 function setNotStrictDoubles(value) {
     notStrictDoubles = value
 }
@@ -107,6 +111,7 @@ export {
     initCourtConfig,
     clampCourtCount,
     updateCourtHint,
+    clearCourtHint,
     setCourtVisibility,
     resetCourtCount,
     getCourtCount,

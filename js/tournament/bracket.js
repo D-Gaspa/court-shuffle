@@ -137,6 +137,17 @@ function resolveLosersBracket(losersMatches, lastRound, session) {
     return { losersAdvancing, losersBracketLosers }
 }
 
+function resolveWinnersBracket(winnersMatches, lastRound, session) {
+    const winnersResult = collectMatchOutcomes(winnersMatches, lastRound.scores, session.teams)
+    if (!winnersResult) {
+        return null
+    }
+
+    const byeTeams = (lastRound.byes || []).map((id) => teamById(session.teams, id)).filter(Boolean)
+    const winnersAdvancing = [...winnersResult.winners, ...byeTeams]
+    return { winnersResult, winnersAdvancing }
+}
+
 function finalizeConsolationOnWinnersChampion(session, winnersAdvancing, losersPool) {
     if (winnersAdvancing.length !== 1) {
         return false
@@ -149,25 +160,7 @@ function finalizeConsolationOnWinnersChampion(session, winnersAdvancing, losersP
     return true
 }
 
-function advanceConsolation(session) {
-    const lastRound = session.rounds.at(-1)
-    const { winnersMatches, losersMatches } = separatePoolMatches(lastRound)
-
-    const winnersResult = collectMatchOutcomes(winnersMatches, lastRound.scores, session.teams)
-    if (!winnersResult) {
-        return null
-    }
-
-    const byeTeams = (lastRound.byes || []).map((id) => teamById(session.teams, id)).filter(Boolean)
-    const winnersAdvancing = [...winnersResult.winners, ...byeTeams]
-
-    const losersInfo = resolveLosersBracket(losersMatches, lastRound, session)
-    if (!losersInfo) {
-        return null
-    }
-
-    const losersPool = [...winnersResult.losers, ...losersInfo.losersAdvancing]
-
+function buildConsolationRoundMatches(winnersAdvancing, losersPool) {
     const winnersHalf = buildPairedMatches(winnersAdvancing, "winners")
     const losersHalf = buildPairedMatches(losersPool, "losers")
     const matches = [...winnersHalf.matches, ...losersHalf.matches]
@@ -175,6 +168,60 @@ function advanceConsolation(session) {
     for (let i = 0; i < matches.length; i += 1) {
         matches[i].court = i + 1
     }
+
+    return { winnersHalf, losersHalf, matches }
+}
+
+function resolveConsolationTerminalRoundDisplay(session, winnersAdvancing, losersHalf) {
+    const isWinnersFinal = winnersAdvancing.length <= 2 && winnersAdvancing.length > 0
+    if (!isWinnersFinal) {
+        return {
+            losersByes: losersHalf.byes,
+            sitOuts: [],
+        }
+    }
+
+    const sitOuts = losersHalf.byes.map((id) => teamById(session.teams, id)?.name || null).filter(Boolean)
+
+    return {
+        losersByes: [],
+        sitOuts,
+    }
+}
+
+function buildConsolationNextRound({ session, winnersAdvancing, losersPool, winnersHalf, losersHalf, matches }) {
+    const roundNum = session.rounds.length + 1
+    const { losersByes, sitOuts } = resolveConsolationTerminalRoundDisplay(session, winnersAdvancing, losersHalf)
+    const isWinnersFinal = winnersAdvancing.length <= 2 && winnersAdvancing.length > 0
+    const label = isWinnersFinal && losersPool.length <= 2 ? `Finals (Round ${roundNum})` : `Round ${roundNum}`
+
+    return {
+        matches,
+        byes: winnersHalf.byes,
+        losersByes,
+        sitOuts,
+        scores: null,
+        tournamentRoundLabel: label,
+    }
+}
+
+function advanceConsolation(session) {
+    const lastRound = session.rounds.at(-1)
+    const { winnersMatches, losersMatches } = separatePoolMatches(lastRound)
+
+    const winnersInfo = resolveWinnersBracket(winnersMatches, lastRound, session)
+    if (!winnersInfo) {
+        return null
+    }
+    const { winnersResult, winnersAdvancing } = winnersInfo
+
+    const losersInfo = resolveLosersBracket(losersMatches, lastRound, session)
+    if (!losersInfo) {
+        return null
+    }
+
+    const losersPool = [...winnersResult.losers, ...losersInfo.losersAdvancing]
+    const { winnersHalf, losersHalf, matches } = buildConsolationRoundMatches(winnersAdvancing, losersPool)
 
     markEliminated(
         session.bracket,
@@ -194,18 +241,16 @@ function advanceConsolation(session) {
         return null
     }
 
-    const roundNum = session.rounds.length + 1
-    const isWinnersFinal = winnersAdvancing.length <= 2 && winnersAdvancing.length > 0
-    const label = isWinnersFinal && losersPool.length <= 2 ? `Finals (Round ${roundNum})` : `Round ${roundNum}`
-
-    return {
+    // If this round contains the winners final, the tournament ends once that match is decided.
+    // Keep playable losers matches, but convert terminal losers-side "bye" entries into sit-outs.
+    return buildConsolationNextRound({
+        session,
+        winnersAdvancing,
+        losersPool,
+        winnersHalf,
+        losersHalf,
         matches,
-        byes: winnersHalf.byes,
-        losersByes: losersHalf.byes,
-        sitOuts: [],
-        scores: null,
-        tournamentRoundLabel: label,
-    }
+    })
 }
 
 // ── Format dispatch ─────────────────────────────────────────────

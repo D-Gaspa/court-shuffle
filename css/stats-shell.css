@@ -1,0 +1,189 @@
+.stats-shell {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.stats-view-header {
+    margin-bottom: var(--space-md);
+}
+
+.stats-empty-shell {
+    position: relative;
+    border-radius: var(--radius-xl);
+    border: 1px solid color-mix(in srgb, var(--border), var(--ball) 20%);
+    background:
+        radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--ball), transparent 86%), transparent 55%),
+        radial-gradient(circle at 80% 30%, color-mix(in srgb, var(--court), transparent 82%), transparent 62%),
+        linear-gradient(180deg, var(--bg-elevated), var(--bg-card));
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.stats-empty-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        135deg,
+        #fff1 12.5%,
+        transparent 12.5%,
+        transparent 50%,
+        #fff1 50%,
+        #fff1 62.5%,
+        transparent 62.5%,
+        transparent
+    );
+    background-size: 18px 18px;
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.stats-empty-state {
+    position: relative;
+    z-index: 1;
+    min-height: 280px;
+}
+
+.stats-empty-icon {
+    color: var(--ball);
+    background: color-mix(in srgb, var(--ball), var(--bg-elevated) 88%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ball), transparent 70%);
+}
+
+.stats-board {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.stats-hero {
+    position: relative;
+    padding: 1.2rem;
+    border-radius: 22px;
+    border: 1px solid color-mix(in srgb, var(--border), var(--ball) 15%);
+    background:
+        linear-gradient(160deg, #34261f, #211b16 52%, #171612), linear-gradient(180deg, var(--bg-card), var(--bg-card));
+    box-shadow:
+        var(--shadow-md),
+        inset 0 1px 0 #fff1;
+    overflow: hidden;
+}
+
+.stats-hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.stats-hero-deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.stats-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(4px);
+    opacity: 0.8;
+}
+
+.stats-orb-clay {
+    width: 180px;
+    height: 180px;
+    top: -70px;
+    left: -35px;
+    background: radial-gradient(circle at 30% 30%, #ee9d75, #c4613a55 60%, transparent 70%);
+}
+
+.stats-orb-court {
+    width: 200px;
+    height: 200px;
+    right: -80px;
+    bottom: -95px;
+    background: radial-gradient(circle at 60% 40%, #65d39f, #2d6b4f44 62%, transparent 72%);
+}
+
+.stats-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #fff4, transparent);
+    transform-origin: left center;
+}
+
+.stats-line-a {
+    width: 140%;
+    top: 38%;
+    left: -10%;
+    transform: rotate(-9deg);
+}
+
+.stats-line-b {
+    width: 120%;
+    top: 72%;
+    left: -8%;
+    transform: rotate(12deg);
+    opacity: 0.45;
+}
+
+.stats-kicker {
+    margin-bottom: 6px;
+    color: var(--ball);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.stats-hero-title h2 {
+    font-size: 1.45rem;
+    margin-bottom: 0.35rem;
+}
+
+.stats-hero-copy {
+    max-width: 34ch;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+}
+
+.stats-hero-counts {
+    margin-top: var(--space-md);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stats-hero-stat {
+    border-radius: 14px;
+    padding: 0.75rem 0.85rem;
+    background: linear-gradient(180deg, #ffffff08, #00000015);
+    border: 1px solid #ffffff12;
+    backdrop-filter: blur(3px);
+}
+
+.stats-hero-stat-label {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.stats-hero-stat-value {
+    font-size: 1.2rem;
+    font-family: "Syne", system-ui, sans-serif;
+}
+
+.stats-panel {
+    position: relative;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated), black 8%), var(--bg-card));
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-md);
+    overflow: hidden;
+}
+
+.stats-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 110% -10%, #fff1, transparent 45%);
+    pointer-events: none;
+}
