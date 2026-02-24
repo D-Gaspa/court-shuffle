@@ -1,3 +1,4 @@
+import { isSeriesTournamentSession, syncTournamentSeriesAliases } from "../tournament/series-sync.js"
 import { getModeLabel } from "../utils.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament-active.js"
@@ -6,6 +7,10 @@ function renderActiveSession(state, saveState, ui) {
     const session = state.activeSession
     if (!session) {
         return
+    }
+
+    if (isSeriesTournamentSession(session)) {
+        syncTournamentSeriesAliases(session)
     }
 
     let current = session.currentRound ?? session.rounds.length - 1
@@ -24,11 +29,10 @@ function renderActiveSession(state, saveState, ui) {
     } else if ((session.courtCount || 1) > 1) {
         courts = ` · ${session.courtCount} courts`
     }
-    ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}`
-
-    if (ui.modifyPlayersBtn) {
-        ui.modifyPlayersBtn.hidden = session.mode === "tournament"
-    }
+    const seriesLabel = isSeriesTournamentSession(session)
+        ? ` · Tournament ${(session.tournamentSeries.currentTournamentIndex || 0) + 1} of ${session.tournamentSeries.maxTournaments}`
+        : ""
+    ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
 
     const roundInfo = { round, current, total, isLast }
     if (session.mode === "tournament") {
@@ -170,28 +174,57 @@ function buildTournamentHistoryRounds(rounds) {
     return savedRounds
 }
 
+function buildTournamentSeriesHistory(series) {
+    const historyRuns = series.tournaments
+        .map((run) => ({
+            ...run,
+            rounds: buildTournamentHistoryRounds(run.rounds),
+        }))
+        .filter((run) => run.rounds.length > 0)
+
+    return {
+        ...series,
+        tournaments: historyRuns,
+    }
+}
+
+function buildHistoryEntryForSession(session) {
+    const playedRounds = session.rounds.filter((round) => round.scores?.some((s) => s !== null) ?? false)
+    const historyEntry = {
+        id: session.id,
+        date: session.date,
+        players: session.players,
+        teamCount: session.teamCount,
+        mode: session.mode || "free",
+        courtCount: session.courtCount || 1,
+        rounds:
+            session.mode === "tournament" && !session.tournamentSeries
+                ? buildTournamentHistoryRounds(session.rounds)
+                : playedRounds,
+    }
+
+    if (session.mode !== "tournament") {
+        return historyEntry
+    }
+
+    if (session.tournamentSeries) {
+        historyEntry.tournamentSeries = buildTournamentSeriesHistory(session.tournamentSeries)
+        historyEntry.tournamentFormat = session.tournamentSeries.format
+        historyEntry.tournamentTeamSize = session.tournamentSeries.matchType === "singles" ? 1 : 2
+        return historyEntry
+    }
+
+    historyEntry.tournamentFormat = session.tournamentFormat
+    historyEntry.tournamentTeamSize = session.tournamentTeamSize
+    historyEntry.teams = session.teams
+    historyEntry.bracket = session.bracket
+    return historyEntry
+}
+
 function endSession(state, saveState, save) {
-    if (save) {
-        const session = state.activeSession
-        if (session) {
-            const playedRounds = session.rounds.filter((round) => round.scores?.some((s) => s !== null) ?? false)
-            const historyEntry = {
-                id: session.id,
-                date: session.date,
-                players: session.players,
-                teamCount: session.teamCount,
-                mode: session.mode || "free",
-                courtCount: session.courtCount || 1,
-                rounds: session.mode === "tournament" ? buildTournamentHistoryRounds(session.rounds) : playedRounds,
-            }
-            if (session.mode === "tournament") {
-                historyEntry.tournamentFormat = session.tournamentFormat
-                historyEntry.tournamentTeamSize = session.tournamentTeamSize
-                historyEntry.teams = session.teams
-                historyEntry.bracket = session.bracket
-            }
-            state.history.push(historyEntry)
-        }
+    const session = state.activeSession
+    if (save && session) {
+        state.history.push(buildHistoryEntryForSession(session))
     }
     state.activeSession = null
     saveState()

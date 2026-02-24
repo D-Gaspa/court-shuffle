@@ -1,21 +1,22 @@
 /**
  * Tournament setup UI controller.
- * Manages format and team size selection. Seeding is always random.
+ * Manages format, match type, and court handling selection.
  */
-
-import { autoFormTeams } from "./engine.js"
 
 const MIN_DOUBLES_TEAM_PLAYERS = 4
 const MIN_SINGLES_TEAM_PLAYERS = 2
+const MIN_NOT_STRICT_DOUBLES_TOURNAMENT_PLAYERS = 3
 
 const tournamentConfig = document.getElementById("tournament-config")
 const formatSelector = document.getElementById("format-selector")
 const teamSizeSelector = document.getElementById("tournament-team-size")
 const tournamentHint = document.getElementById("tournament-hint")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
+const courtHandlingSelector = document.getElementById("tournament-court-handling")
 
 let tournamentFormat = "consolation"
 let tournamentTeamSize = 1
+let tournamentCourtHandling = "queue"
 
 function initTournamentSetup(onChange) {
     for (const btn of formatSelector.querySelectorAll(".format-btn")) {
@@ -40,6 +41,18 @@ function initTournamentSetup(onChange) {
             onChange()
         })
     }
+
+    if (courtHandlingSelector) {
+        for (const btn of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
+            btn.addEventListener("click", () => {
+                tournamentCourtHandling = btn.dataset.courtHandling || "queue"
+                for (const b of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
+                    b.classList.toggle("selected", b === btn)
+                }
+                onChange()
+            })
+        }
+    }
 }
 
 function showTournamentConfig() {
@@ -60,57 +73,45 @@ function updateTournamentHint() {
 }
 
 function updateTournamentPlayers(_players) {
-    // No manual UI to update — seeding is always random
-}
-
-function buildTournamentTeams(players) {
-    if (tournamentTeamSize === 1) {
-        return players.map((p, i) => ({ id: i, name: p, players: [p] }))
-    }
-
-    return autoFormTeams(players, 2)
-}
-
-function randomSeedTeams(teams) {
-    const seeded = [...teams]
-    for (let i = seeded.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1))
-        const tmp = seeded[i]
-        seeded[i] = seeded[j]
-        seeded[j] = tmp
-    }
-    seeded.forEach((t, i) => {
-        t.id = i
-    })
-    return seeded
+    // No manual UI to update
 }
 
 function getTournamentConfig(players, allowNotStrict) {
-    const teams = buildTournamentTeams(players)
-    const seededTeams = randomSeedTeams(teams)
-
     return {
         format: tournamentFormat,
         teamSize: tournamentTeamSize,
-        teams: seededTeams,
-        seeding: "random",
+        playerCount: players.length,
+        courtHandling: tournamentCourtHandling,
         allowNotStrictDoubles: allowNotStrict && tournamentTeamSize === 2,
     }
 }
 
-function getMinPlayersForTournament() {
-    return tournamentTeamSize === 2 ? MIN_DOUBLES_TEAM_PLAYERS : MIN_SINGLES_TEAM_PLAYERS
+function getMinPlayersForTournament(allowNotStrict = false) {
+    if (tournamentTeamSize === 2) {
+        return allowNotStrict ? MIN_NOT_STRICT_DOUBLES_TOURNAMENT_PLAYERS : MIN_DOUBLES_TEAM_PLAYERS
+    }
+    return MIN_SINGLES_TEAM_PLAYERS
+}
+
+function getTournamentMatchMode() {
+    return tournamentTeamSize === 1 ? "singles" : "doubles"
 }
 
 function resetTournamentSetup() {
     tournamentFormat = "consolation"
     tournamentTeamSize = 1
+    tournamentCourtHandling = "queue"
 
     for (const b of formatSelector.querySelectorAll(".format-btn")) {
         b.classList.toggle("selected", b.dataset.format === "consolation")
     }
     for (const b of teamSizeSelector.querySelectorAll(".team-size-btn")) {
         b.classList.toggle("selected", b.dataset.teamSize === "1")
+    }
+    if (courtHandlingSelector) {
+        for (const b of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
+            b.classList.toggle("selected", b.dataset.courtHandling === "queue")
+        }
     }
 
     notStrictDoublesGroup.hidden = true
@@ -123,6 +124,7 @@ export {
     hideTournamentConfig,
     getTournamentConfig,
     getMinPlayersForTournament,
+    getTournamentMatchMode,
     updateTournamentPlayers,
     resetTournamentSetup,
     updateTournamentHint,

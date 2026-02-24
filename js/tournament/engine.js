@@ -14,10 +14,10 @@ function nextPowerOf2(n) {
     return v
 }
 
-function shuffleArray(arr) {
+function shuffleArray(arr, rng = Math.random) {
     const a = [...arr]
     for (let i = a.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1))
+        const j = Math.floor(rng() * (i + 1))
         const tmp = a[i]
         a[i] = a[j]
         a[j] = tmp
@@ -116,8 +116,8 @@ function createInitialBracket(_format) {
 
 // ── Team formation helpers ─────────────────────────────────────
 
-function autoFormTeams(players, teamSize) {
-    const shuffled = shuffleArray(players)
+function autoFormTeams(players, teamSize, rng = Math.random) {
+    const shuffled = shuffleArray(players, rng)
     const teams = []
     let id = 0
     for (let i = 0; i < shuffled.length; i += teamSize) {

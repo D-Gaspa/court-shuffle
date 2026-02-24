@@ -1,5 +1,6 @@
 import {
     getMinPlayersForTournament,
+    getTournamentMatchMode,
     hideTournamentConfig,
     initTournamentSetup,
     resetTournamentSetup,
@@ -18,7 +19,6 @@ import {
     setNotStrictDoubles,
     updateCourtHint,
 } from "./court-config.js"
-import { initModifyPlayers, openModifyDialog } from "./modify-players.js"
 import { initNavigation, onEndSessionClick, onNextRoundClick, onPrevRoundClick } from "./navigation.js"
 import { renderPlayerSelection, updateTeamSizeHint } from "./render.js"
 import { buildFreeSession, buildTournamentSession } from "./session-start.js"
@@ -38,7 +38,6 @@ const teamsIncBtn = document.getElementById("teams-inc")
 const teamCountValue = document.getElementById("team-count-value")
 const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
-const modifyPlayersBtn = document.getElementById("modify-players-btn")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
 
@@ -54,7 +53,6 @@ const uiState = {
     sitOutContainer: document.getElementById("sit-out-container"),
     sitOutList: document.getElementById("sit-out-list"),
     noMoreRounds: document.getElementById("no-more-rounds"),
-    modifyPlayersBtn: document.getElementById("modify-players-btn"),
 }
 
 const endSessionBtn = document.getElementById("end-session-btn")
@@ -81,9 +79,6 @@ function initSession(state, persistFn, confirmFn) {
     uiState.prevRoundBtn.addEventListener("click", onPrevRoundClick)
     uiState.nextRoundBtn.addEventListener("click", onNextRoundClick)
     endSessionBtn.addEventListener("click", onEndSessionClick)
-    modifyPlayersBtn.addEventListener("click", openModifyDialog)
-
-    initModifyPlayers(state, persistFn, renderActiveSessionState)
     initCourtConfig(onSelectionChange)
     initTournamentSetup(onSelectionChange)
     initNavigation({
@@ -116,28 +111,23 @@ function onModeChange(mode) {
     } else {
         teamsConfig.hidden = true
         teamCount = 2
-        resetCourtCount()
     }
 
     // Tournament config visibility
     if (mode === "tournament") {
         showTournamentConfig()
         updateTournamentHint()
-        setCourtVisibility("free") // hide courts for tournament
+        setCourtVisibility(getTournamentMatchMode())
     } else {
         hideTournamentConfig()
         resetTournamentSetup()
         setCourtVisibility(mode)
+        resetCourtCount()
     }
 
-    // Not-strict doubles: show only for doubles mode.
-    // For tournament, hide it initially — tournament setup re-shows it when team size = doubles.
-    if (mode === "tournament") {
-        notStrictDoublesGroup.hidden = true
-    } else {
-        notStrictDoublesGroup.hidden = mode !== "doubles"
-    }
-    if (mode !== "doubles" && mode !== "tournament") {
+    // Not-strict doubles: only exposed through tournament match type selector now.
+    notStrictDoublesGroup.hidden = !(mode === "tournament" && getTournamentMatchMode() === "doubles")
+    if (mode !== "tournament") {
         allow2v1Checkbox.checked = false
         setNotStrictDoubles(false)
     }
@@ -178,7 +168,11 @@ function onStartSessionClick() {
 
     let session
     if (gameMode === "tournament") {
-        session = buildTournamentSession(players, getNotStrictDoubles())
+        session = buildTournamentSession({
+            players,
+            allowNotStrict: getNotStrictDoubles(),
+            courtCount: getCourtCount(),
+        })
     } else {
         session = buildFreeSession({
             players,
@@ -206,19 +200,16 @@ function onSelectionChange() {
     if (gameMode === "tournament") {
         teamSizeHint.textContent = ""
         modeHint.textContent = ""
-        const minPlayers = getMinPlayersForTournament()
+        const minPlayers = getMinPlayersForTournament(getNotStrictDoubles())
+        const tournamentMatchMode = getTournamentMatchMode()
+        setCourtVisibility(tournamentMatchMode)
         startSessionBtn.disabled = count < minPlayers
         updateTournamentPlayers([...selectedPlayers])
+        clampCourtCount(count, tournamentMatchMode)
+        updateCourtHint(count, tournamentMatchMode)
     } else if (gameMode === "free") {
         updateTeamSizeHint(count, teamCount, teamSizeHint)
         modeHint.textContent = ""
-        clampCourtCount(count, gameMode)
-        updateCourtHint(count, gameMode)
-        startSessionBtn.disabled = count < 2
-    } else {
-        teamSizeHint.textContent = ""
-        const label = gameMode === "singles" ? "1v1" : "2v2"
-        modeHint.textContent = count >= 2 ? `${label} matches` : ""
         clampCourtCount(count, gameMode)
         updateCourtHint(count, gameMode)
         startSessionBtn.disabled = count < 2
@@ -275,16 +266,12 @@ function refreshSessionView() {
     teamsConfig.hidden = gameMode !== "free"
     if (gameMode === "tournament") {
         showTournamentConfig()
-        setCourtVisibility("free")
+        setCourtVisibility(getTournamentMatchMode())
     } else {
         hideTournamentConfig()
         setCourtVisibility(gameMode)
     }
-    if (gameMode === "tournament") {
-        notStrictDoublesGroup.hidden = true
-    } else {
-        notStrictDoublesGroup.hidden = gameMode !== "doubles"
-    }
+    notStrictDoublesGroup.hidden = !(gameMode === "tournament" && getTournamentMatchMode() === "doubles")
 
     clampTeamCount()
     onSelectionChange()

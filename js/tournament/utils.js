@@ -9,8 +9,10 @@ function isTiebreakEligibleSetScore(s0, s1) {
     return Math.abs(s0 - s1) === 1
 }
 
-function isTiebreakRequiredSetScore(s0, s1) {
-    return isTiebreakEligibleSetScore(s0, s1)
+function isTiebreakRequiredSetScore(_s0, _s1) {
+    // House rules may allow 7-6 / 6-7 style set scores without recording a tiebreak.
+    // If a tiebreak is provided we validate it, but we do not require it.
+    return false
 }
 
 function isInvalidTiebreakForSet(setScore) {

@@ -1,5 +1,11 @@
 import { pairKey } from "../shuffle/core.js"
-import { hideFieldError, renameInPlayerList, renameInRounds, showFieldError } from "../utils.js"
+import {
+    hideFieldError,
+    renameInPlayerList,
+    renameInRounds,
+    renameInTournamentSeries,
+    showFieldError,
+} from "../utils.js"
 import { renderRoster } from "./render.js"
 
 const playerNameInput = document.getElementById("player-name-input")
@@ -18,6 +24,22 @@ let globalState = null
 let saveState = null
 let askConfirm = null
 let renameIndex = -1
+
+function renameTeamObjects(teams, oldName, newName) {
+    if (!Array.isArray(teams)) {
+        return
+    }
+    for (const team of teams) {
+        if (!Array.isArray(team?.players)) {
+            continue
+        }
+        const idx = team.players.indexOf(oldName)
+        if (idx !== -1) {
+            team.players[idx] = newName
+            team.name = team.players.join(" & ")
+        }
+    }
+}
 
 function syncAddButton() {
     addPlayerBtn.disabled = !playerNameInput.value.trim()
@@ -115,6 +137,10 @@ function updateSessionsWithNewName(oldName, newName) {
     if (globalState.activeSession) {
         renameInPlayerList(globalState.activeSession.players, oldName, newName)
         renameInRounds(globalState.activeSession.rounds, oldName, newName)
+        renameTeamObjects(globalState.activeSession.teams, oldName, newName)
+        if (globalState.activeSession.tournamentSeries) {
+            renameInTournamentSeries(globalState.activeSession.tournamentSeries, oldName, newName)
+        }
         if (globalState.activeSession.usedPairs) {
             globalState.activeSession.usedPairs = globalState.activeSession.usedPairs.map((pk) => {
                 const parts = pk.split("||")
@@ -127,6 +153,10 @@ function updateSessionsWithNewName(oldName, newName) {
     for (const session of globalState.history) {
         renameInPlayerList(session.players, oldName, newName)
         renameInRounds(session.rounds, oldName, newName)
+        renameTeamObjects(session.teams, oldName, newName)
+        if (session.tournamentSeries) {
+            renameInTournamentSeries(session.tournamentSeries, oldName, newName)
+        }
     }
 }
 

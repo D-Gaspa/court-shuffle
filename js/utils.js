@@ -1,8 +1,18 @@
 function renameInTeams(teams, oldName, newName) {
     for (const team of teams) {
-        const ti = team.indexOf(oldName)
-        if (ti !== -1) {
-            team[ti] = newName
+        if (Array.isArray(team)) {
+            const ti = team.indexOf(oldName)
+            if (ti !== -1) {
+                team[ti] = newName
+            }
+            continue
+        }
+        if (Array.isArray(team.players)) {
+            const pi = team.players.indexOf(oldName)
+            if (pi !== -1) {
+                team.players[pi] = newName
+                team.name = team.players.join(" & ")
+            }
         }
     }
 }
@@ -37,6 +47,33 @@ export function renameInPlayerList(players, oldName, newName) {
     renameInList(players, oldName, newName)
 }
 
+export function renameInTournamentSeries(series, oldName, newName) {
+    if (!series?.tournaments) {
+        return
+    }
+    for (const run of series.tournaments) {
+        if (Array.isArray(run.players)) {
+            renameInPlayerList(run.players, oldName, newName)
+        }
+        if (Array.isArray(run.tournamentLevelSitOuts)) {
+            renameInList(run.tournamentLevelSitOuts, oldName, newName)
+        }
+        if (Array.isArray(run.teams)) {
+            renameInTeams(run.teams, oldName, newName)
+        }
+        if (Array.isArray(run.rounds)) {
+            renameInRounds(run.rounds, oldName, newName)
+        }
+    }
+    if (
+        series.constraints?.tournamentSitOutCounts &&
+        Object.hasOwn(series.constraints.tournamentSitOutCounts, oldName)
+    ) {
+        series.constraints.tournamentSitOutCounts[newName] = series.constraints.tournamentSitOutCounts[oldName]
+        delete series.constraints.tournamentSitOutCounts[oldName]
+    }
+}
+
 export function showFieldError(el, msg) {
     el.textContent = msg
     el.hidden = false
@@ -63,8 +100,12 @@ export function getModeLabel(session) {
             consolation: "Consolation",
             "round-robin": "Round Robin",
         }
-        const sizeLabel = session.tournamentTeamSize === 1 ? "Singles" : "Doubles"
-        const format = formatLabels[session.tournamentFormat] || "Tournament"
+        const series = session.tournamentSeries
+        const format = formatLabels[series?.format || session.tournamentFormat] || "Tournament"
+        const sizeLabel =
+            (series?.matchType || (session.tournamentTeamSize === 1 ? "singles" : "doubles")) === "singles"
+                ? "Singles"
+                : "Doubles"
         return `${format} · ${sizeLabel}`
     }
     return `${session.teamCount} teams`

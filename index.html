@@ -127,10 +127,8 @@
 
                             <div class="config-group">
                                 <h2 class="section-label">Mode</h2>
-                                <div id="mode-selector" class="mode-selector mode-selector-4">
+                                <div id="mode-selector" class="mode-selector mode-selector-2">
                                     <button type="button" class="mode-btn selected" data-mode="free">Free</button>
-                                    <button type="button" class="mode-btn" data-mode="singles">Singles (1v1)</button>
-                                    <button type="button" class="mode-btn" data-mode="doubles">Doubles (2v2)</button>
                                     <button type="button" class="mode-btn" data-mode="tournament">Tournament</button>
                                 </div>
                                 <div id="mode-hint" class="hint"></div>
@@ -151,6 +149,12 @@
                                 <div id="tournament-team-size" class="mode-selector mode-selector-2">
                                     <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
                                     <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
+                                </div>
+
+                                <h2 class="section-label">Court Shortage</h2>
+                                <div id="tournament-court-handling" class="mode-selector mode-selector-2">
+                                    <button type="button" class="court-handling-btn mode-btn selected" data-court-handling="queue">Queue</button>
+                                    <button type="button" class="court-handling-btn mode-btn" data-court-handling="batches">Batches</button>
                                 </div>
 
                                 <div id="tournament-hint" class="hint"></div>
@@ -222,7 +226,6 @@
                                 <p id="round-info" class="session-subtitle"></p>
                             </div>
                             <div class="session-actions">
-                                <button type="button" id="modify-players-btn" class="btn btn-ghost btn-sm">Modify Players</button>
                                 <button type="button" id="prev-round-btn" class="btn btn-ghost btn-sm">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                                         <polyline points="15 18 9 12 15 6" />
@@ -289,19 +292,6 @@
                 <div class="modal-actions">
                     <button type="button" id="rename-cancel" class="btn btn-ghost">Cancel</button>
                     <button type="button" id="rename-confirm" class="btn btn-primary">Rename</button>
-                </div>
-            </div>
-        </dialog>
-
-        <!-- Modify Players Modal -->
-        <dialog id="modify-players-dialog" class="modal">
-            <div class="modal-content modal-content-lg">
-                <h2>Modify Players</h2>
-                <p class="modal-subtitle">Add or remove players for the remaining rounds.</p>
-                <div id="modify-players-grid" class="player-selection-grid"></div>
-                <div class="modal-actions">
-                    <button type="button" id="modify-cancel" class="btn btn-ghost">Cancel</button>
-                    <button type="button" id="modify-apply" class="btn btn-primary">Apply Changes</button>
                 </div>
             </div>
         </dialog>

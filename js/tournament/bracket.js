@@ -137,6 +137,18 @@ function resolveLosersBracket(losersMatches, lastRound, session) {
     return { losersAdvancing, losersBracketLosers }
 }
 
+function finalizeConsolationOnWinnersChampion(session, winnersAdvancing, losersPool) {
+    if (winnersAdvancing.length !== 1) {
+        return false
+    }
+    session.bracket.champion = winnersAdvancing[0].id
+    markEliminated(
+        session.bracket,
+        losersPool.map((t) => t.id),
+    )
+    return true
+}
+
 function advanceConsolation(session) {
     const lastRound = session.rounds.at(-1)
     const { winnersMatches, losersMatches } = separatePoolMatches(lastRound)
@@ -168,6 +180,12 @@ function advanceConsolation(session) {
         session.bracket,
         losersInfo.losersBracketLosers.map((t) => t.id),
     )
+
+    // Once the winners bracket has produced a champion, the consolation event ends.
+    // Do not schedule an extra placement match between the winners-final loser and losers-pool winner.
+    if (finalizeConsolationOnWinnersChampion(session, winnersAdvancing, losersPool)) {
+        return null
+    }
 
     if (matches.length === 0) {
         if (winnersAdvancing.length === 1) {
