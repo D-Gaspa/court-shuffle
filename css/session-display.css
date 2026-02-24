@@ -195,6 +195,39 @@
     opacity: 0.6;
 }
 
+.session-bottom-actions {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .session-bottom-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--space-lg);
+        padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+        position: sticky;
+        bottom: calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+        z-index: 5;
+    }
+
+    .session-bottom-actions .btn {
+        margin-left: auto;
+        background: color-mix(in srgb, var(--bg-card), transparent 35%);
+        border: 1px solid color-mix(in srgb, var(--border), transparent 15%);
+        color: var(--text-secondary);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        opacity: 0.9;
+    }
+}
+
+/* Disable entrance animations for active-session rerenders to avoid autosave flicker. */
+.match-card,
+.sit-out-container {
+    animation: none;
+}
+
 /* Animations */
 @keyframes cardIn {
     from {

@@ -8,6 +8,21 @@ import { getModeLabel } from "../utils.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament-active.js"
 
+function renderSessionRoundView({ session, roundInfo, saveState, ui, commitScoreForSession }) {
+    if (session.mode === "tournament") {
+        renderTournamentActive({
+            session,
+            roundInfo,
+            saveState,
+            ui,
+            commitScore: commitScoreForSession,
+            renderSitOutsSection,
+        })
+        return
+    }
+    renderStandardActive(roundInfo, saveState, ui, commitScoreForSession)
+}
+
 function renderActiveSession(state, saveState, ui) {
     const session = state.activeSession
     if (!session) {
@@ -46,18 +61,7 @@ function renderActiveSession(state, saveState, ui) {
     const commitScoreForSession = (args) => {
         commitScore({ ...args, session })
     }
-    if (session.mode === "tournament") {
-        renderTournamentActive({
-            session,
-            roundInfo,
-            saveState,
-            ui,
-            commitScore: commitScoreForSession,
-            renderSitOutsSection,
-        })
-    } else {
-        renderStandardActive(roundInfo, saveState, ui, commitScoreForSession)
-    }
+    renderSessionRoundView({ session, roundInfo, saveState, ui, commitScoreForSession })
 }
 
 function renderStandardActive(roundInfo, saveState, ui, commitScoreForSession) {
@@ -82,7 +86,7 @@ function renderStandardActive(roundInfo, saveState, ui, commitScoreForSession) {
     ui.noMoreRounds.hidden = !roundInfo.isLast
 }
 
-function commitScore({ round, matchIndex, sets, saveState, onAfterSave, session }) {
+function commitScore({ round, matchIndex, sets, saveState, onAfterSave, session, options }) {
     if (!round.scores) {
         round.scores = round.matches.map(() => null)
     }
@@ -101,7 +105,7 @@ function commitScore({ round, matchIndex, sets, saveState, onAfterSave, session 
         round.scores[matchIndex] = null
     }
     saveState()
-    onAfterSave?.()
+    onAfterSave?.(options)
 }
 
 function renderSitOutsSection(round, ui) {

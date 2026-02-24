@@ -41,7 +41,6 @@ function buildSummaryDom(sets, teamLabels) {
 function buildDrawWarning() {
     const warn = document.createElement("span")
     warn.className = "result-draw-warning"
-    warn.textContent = "Draw — add a deciding set"
     return warn
 }
 
@@ -49,7 +48,7 @@ function getCompleteSets(sets) {
     return sets ? sets.filter(([a, b]) => a !== null && b !== null) : []
 }
 
-function updateDrawBadge(drawBadge, completeSets) {
+function updateDrawBadge(drawBadge, completeSets, maxSets) {
     if (!drawBadge) {
         return
     }
@@ -58,7 +57,19 @@ function updateDrawBadge(drawBadge, completeSets) {
         return
     }
     const { winsA, winsB } = countSetWins(completeSets)
-    drawBadge.hidden = winsA !== winsB
+    const isDraw = winsA === winsB
+    drawBadge.hidden = !isDraw
+    if (!isDraw) {
+        return
+    }
+    const warning = drawBadge.querySelector(".result-draw-warning")
+    if (!warning) {
+        return
+    }
+    warning.textContent =
+        completeSets.length >= maxSets
+            ? `Draw — max ${maxSets} sets reached (edit a set to decide)`
+            : "Draw — add a deciding set"
 }
 
 function renderScoreValue(value, completeSets, teamLabels) {
@@ -91,7 +102,7 @@ function getToggleLabel({ editable, editing, hasScore }) {
     return hasScore ? "Edit" : "Score"
 }
 
-function updateResultDisplay({ elements, sets, editable, teamLabels, editing = false }) {
+function updateResultDisplay({ elements, sets, editable, teamLabels, editing = false, maxSets = MAX_SETS }) {
     const { value, toggleBtn, drawBadge } = elements
     toggleBtn.hidden = !editable
 
@@ -101,12 +112,12 @@ function updateResultDisplay({ elements, sets, editable, teamLabels, editing = f
         renderScoreValue(value, completeSets, teamLabels)
         value.classList.remove("muted")
         toggleBtn.textContent = getToggleLabel({ editable, editing, hasScore: true })
-        updateDrawBadge(drawBadge, completeSets)
+        updateDrawBadge(drawBadge, completeSets, maxSets)
     } else {
         value.textContent = "No score"
         value.classList.add("muted")
         toggleBtn.textContent = getToggleLabel({ editable, editing, hasScore: false })
-        updateDrawBadge(drawBadge, completeSets)
+        updateDrawBadge(drawBadge, completeSets, maxSets)
     }
 }
 

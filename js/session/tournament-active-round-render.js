@@ -66,6 +66,14 @@ function renderMatchGroup({
     showCourtSlots = false,
     openEditors = null,
 }) {
+    const handleAfterScoreSave = (options) => {
+        if (options?.partial) {
+            refreshNav()
+            return
+        }
+        ;(onAfterScoreSave || refreshNav)(options)
+    }
+
     for (let j = 0; j < matches.length; j += 1) {
         const match = matches[j]
         const globalIdx = indices[j]
@@ -101,7 +109,7 @@ function renderMatchGroup({
                 }
                 openEditors.delete(globalIdx)
             },
-            onCommit: (_, sets, _options) => {
+            onCommit: (_, sets, options) => {
                 if (!canEdit) {
                     return
                 }
@@ -110,7 +118,8 @@ function renderMatchGroup({
                     matchIndex: globalIdx,
                     sets,
                     saveState,
-                    onAfterSave: onAfterScoreSave || refreshNav,
+                    onAfterSave: handleAfterScoreSave,
+                    options,
                 })
             },
             teamNames,

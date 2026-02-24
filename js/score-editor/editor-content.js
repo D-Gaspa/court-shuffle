@@ -45,8 +45,16 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
     const rows = document.createElement("div")
     rows.className = "set-rows"
 
+    const getAddSetLabel = () => {
+        if (draft.length >= maxSets) {
+            return `Max ${maxSets} sets reached`
+        }
+        return "+ Add set"
+    }
+
     const sync = () => {
         addSetBtn.disabled = draft.length >= maxSets
+        addSetBtn.textContent = getAddSetLabel()
     }
 
     const onRemoveAt = (i) => {
@@ -54,9 +62,10 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
         tiebreaks.splice(i, 1)
         renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt, onAutoSave })
         sync()
+        onAutoSave?.()
     }
 
-    const addSetBtn = createActionBtn("+ Add set", "add-set-btn", () => {
+    const addSetBtn = createActionBtn(getAddSetLabel(), "add-set-btn", () => {
         if (draft.length < maxSets) {
             draft.push([null, null])
             tiebreaks.push(null)
@@ -69,6 +78,7 @@ export function buildEditorContent({ draft, tiebreaks, maxSets, onAutoSave, onCl
     })
 
     const lastRow = renderRows({ rows, draft, tiebreaks, onAnyUpdate: sync, onRemoveAt, onAutoSave })
+    sync()
 
     // Auto-focus first input when opening with empty score
     if (draft.length === 1 && draft[0][0] === null && draft[0][1] === null && lastRow?.focusFirst) {

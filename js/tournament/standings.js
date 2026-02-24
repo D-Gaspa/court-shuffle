@@ -33,6 +33,9 @@ function tallySetScores(sets) {
             sets0 += 1
         } else if (s1 > s0) {
             sets1 += 1
+        } else {
+            sets0 += 1
+            sets1 += 1
         }
     }
     return { sets0, sets1, games0, games1 }

@@ -250,7 +250,7 @@ h3 {
 @media (width >= 768px) {
     .views {
         max-width: 720px;
-        padding: 0 var(--space-xl);
+        padding: 0 var(--space-xl) var(--space-lg);
     }
     .session-topbar {
         flex-direction: row;
@@ -259,6 +259,12 @@ h3 {
     }
     .player-selection-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .views {
+        padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
     }
 }
 

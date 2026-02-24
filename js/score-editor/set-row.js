@@ -1,5 +1,6 @@
 import { iconButton } from "./dom.js"
 import { ICON_TRASH } from "./icons.js"
+import { createNextSetRowFieldScopeId, createScoreInput, createTiebreakInput } from "./set-row-inputs.js"
 import { parseScoreValue } from "./sets.js"
 
 function createLabel(setIndex) {
@@ -9,22 +10,6 @@ function createLabel(setIndex) {
     return label
 }
 
-function createScoreInput(value) {
-    const input = document.createElement("input")
-    input.type = "number"
-    input.min = "0"
-    input.className = "set-input"
-    input.placeholder = "-"
-    if (value !== null && value !== undefined) {
-        input.value = String(value)
-    }
-    // Select all content on focus so user can retype immediately
-    input.addEventListener("focus", () => {
-        input.select()
-    })
-    return input
-}
-
 function createDash() {
     const dash = document.createElement("span")
     dash.className = "set-dash"
@@ -32,22 +17,7 @@ function createDash() {
     return dash
 }
 
-function createTiebreakInput(value) {
-    const input = document.createElement("input")
-    input.type = "number"
-    input.min = "0"
-    input.className = "set-input tb-input"
-    input.placeholder = "-"
-    if (value !== null && value !== undefined) {
-        input.value = String(value)
-    }
-    input.addEventListener("focus", () => {
-        input.select()
-    })
-    return input
-}
-
-function buildTiebreakFields(tb, onTbChange, onAutoSave) {
+function buildTiebreakFields(tb, onTbChange, onAutoSave, { fieldScopeId, setIndex }) {
     const wrap = document.createElement("div")
     wrap.className = "tb-fields"
 
@@ -55,11 +25,11 @@ function buildTiebreakFields(tb, onTbChange, onAutoSave) {
     openParen.className = "tb-paren"
     openParen.textContent = "("
 
-    const tbA = createTiebreakInput(tb ? tb[0] : null)
+    const tbA = createTiebreakInput(tb ? tb[0] : null, { fieldScopeId, setIndex, teamIndex: 0 })
     const tbDash = document.createElement("span")
     tbDash.className = "set-dash tb-dash"
     tbDash.textContent = "–"
-    const tbB = createTiebreakInput(tb ? tb[1] : null)
+    const tbB = createTiebreakInput(tb ? tb[1] : null, { fieldScopeId, setIndex, teamIndex: 1 })
 
     const closeParen = document.createElement("span")
     closeParen.className = "tb-paren"
@@ -139,7 +109,7 @@ function syncTiebreakValidity(tbFields, scoreA, scoreB) {
     applyTiebreakValidity(tbFields, message)
 }
 
-function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange, onAutoSave }) {
+function createTiebreakController({ pair, a, b, fieldScopeId, setIndex, onAnyUpdate, onTiebreakChange, onAutoSave }) {
     const tbContainer = document.createElement("div")
     tbContainer.className = "tb-container"
     tbContainer.hidden = true
@@ -161,6 +131,7 @@ function createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange, o
                 onAnyUpdate()
             },
             onAutoSave,
+            { fieldScopeId, setIndex },
         )
         tbContainer.appendChild(tbFields.wrap)
         tbFields.tbA.addEventListener("input", syncFromInputs)
@@ -222,17 +193,26 @@ function createActions({ setIndex, canRemove, onRemove }) {
     return { actions }
 }
 
-function buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange, onAutoSave }) {
+function buildScoreFields(pair, { fieldScopeId, setIndex, onChange, onAnyUpdate, onTiebreakChange, onAutoSave }) {
     const fields = document.createElement("div")
     fields.className = "set-fields"
 
-    const a = createScoreInput(pair[0])
-    const b = createScoreInput(pair[1])
+    const a = createScoreInput(pair[0], { fieldScopeId, setIndex, teamIndex: 0 })
+    const b = createScoreInput(pair[1], { fieldScopeId, setIndex, teamIndex: 1 })
     fields.appendChild(a)
     fields.appendChild(createDash())
     fields.appendChild(b)
 
-    const tiebreak = createTiebreakController({ pair, a, b, onAnyUpdate, onTiebreakChange, onAutoSave })
+    const tiebreak = createTiebreakController({
+        pair,
+        a,
+        b,
+        fieldScopeId,
+        setIndex,
+        onAnyUpdate,
+        onTiebreakChange,
+        onAutoSave,
+    })
     tiebreak.update(pair[0], pair[1])
     fields.appendChild(tiebreak.tbContainer)
 
@@ -260,13 +240,22 @@ export function buildSetRow({
     onTiebreakChange,
     onAutoSave,
 }) {
+    const fieldScopeId = createNextSetRowFieldScopeId()
+
     const row = document.createElement("div")
     row.className = "set-row"
 
     const left = document.createElement("div")
     left.className = "set-left"
 
-    const { fields, a } = buildScoreFields(pair, { onChange, onAnyUpdate, onTiebreakChange, onAutoSave })
+    const { fields, a } = buildScoreFields(pair, {
+        fieldScopeId,
+        setIndex,
+        onChange,
+        onAnyUpdate,
+        onTiebreakChange,
+        onAutoSave,
+    })
 
     left.appendChild(createLabel(setIndex))
     left.appendChild(fields)

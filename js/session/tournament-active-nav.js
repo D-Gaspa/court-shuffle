@@ -91,10 +91,11 @@ function updateTournamentSeriesNavUi(session, ui, isTournamentOver) {
 
 function updateFrontierTournamentNavigation({ session, navState, ui }) {
     const endsTournamentOnAdvance = navState.scoresComplete && wouldCompleteTournamentOnAdvance(session)
-    ui.nextRoundBtn.disabled = !navState.scoresComplete
     if (navState.scoresComplete) {
+        ui.nextRoundBtn.disabled = false
         ui.nextRoundLabel.textContent = endsTournamentOnAdvance ? "End Tournament" : "Advance Round"
     } else {
+        ui.nextRoundBtn.disabled = true
         ui.nextRoundLabel.textContent = getTournamentBlockedLabel(session.rounds[navState.current])
     }
     ui.noMoreRounds.hidden = true
