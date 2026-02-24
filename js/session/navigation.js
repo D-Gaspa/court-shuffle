@@ -3,7 +3,7 @@
  */
 
 import { advanceTournament } from "../tournament/bracket.js"
-import { attachTournamentCourtSchedule, getBatchBlockReason } from "../tournament/courts.js"
+import { attachTournamentCourtSchedule } from "../tournament/courts.js"
 import {
     isSeriesTournamentSession,
     persistTournamentSeriesAliases,
@@ -67,14 +67,6 @@ function shouldBlockPreGeneratedTournamentAdvance(session) {
 }
 
 function advancePreGeneratedRound(session) {
-    const currentRound = session.rounds[session.currentRound]
-    const batchStep = advanceTournamentBatchNavigation(session, currentRound)
-    if (batchStep === "blocked") {
-        return false
-    }
-    if (batchStep === "advanced-batch") {
-        return true
-    }
     if (shouldBlockPreGeneratedTournamentAdvance(session)) {
         return false
     }
@@ -83,10 +75,6 @@ function advancePreGeneratedRound(session) {
         return true
     }
     session.currentRound += 1
-    const nextRound = session.rounds[session.currentRound]
-    if (nextRound?.courtSchedule?.mode === "batches") {
-        nextRound.courtSchedule.activeBatchIndex = 0
-    }
     return true
 }
 
@@ -131,13 +119,7 @@ function isCompletedTournamentFrontierView(session) {
     if (currentRoundIndex < rounds.length - 1) {
         return false
     }
-    const currentRound = rounds[currentRoundIndex]
-    if (currentRound?.courtSchedule?.mode !== "batches") {
-        return true
-    }
-    const batchCount = currentRound.courtSchedule.batches?.length || 1
-    const batchIndex = currentRound.courtSchedule.activeBatchIndex || 0
-    return batchIndex >= batchCount - 1
+    return true
 }
 
 function onPrevTournamentClick() {
@@ -168,30 +150,11 @@ function onSkipTournamentClick() {
 
 function advanceTournamentNavigation(session) {
     if (session.currentRound < session.rounds.length - 1) {
-        const currentRound = session.rounds[session.currentRound]
-        const batchStep = advanceTournamentBatchNavigation(session, currentRound)
-        if (batchStep === "blocked") {
-            return false
-        }
-        if (batchStep === "advanced-batch") {
-            return true
-        }
         session.currentRound += 1
-        const nextRound = session.rounds[session.currentRound]
-        if (nextRound?.courtSchedule?.mode === "batches") {
-            nextRound.courtSchedule.activeBatchIndex = 0
-        }
         return true
     }
 
     const currentRound = session.rounds[session.currentRound]
-    const batchStep = advanceTournamentBatchNavigation(session, currentRound)
-    if (batchStep === "blocked") {
-        return false
-    }
-    if (batchStep === "advanced-batch") {
-        return true
-    }
     if (!allScoresEntered(currentRound)) {
         return false
     }
@@ -214,37 +177,9 @@ function advanceTournamentNavigation(session) {
     return true
 }
 
-function advanceTournamentBatchNavigation(_session, round) {
-    if (!(round?.courtSchedule?.mode === "batches")) {
-        return "ready"
-    }
-    const blockReason = getBatchBlockReason(round, getRoundScoreBlockReason)
-    if (blockReason !== null) {
-        return "blocked"
-    }
-    const batches = round.courtSchedule.batches || []
-    const idx = round.courtSchedule.activeBatchIndex || 0
-    if (idx < batches.length - 1) {
-        round.courtSchedule.activeBatchIndex = idx + 1
-        return "advanced-batch"
-    }
-    return "ready"
-}
-
 function retreatTournamentView(session) {
-    const currentRound = session.rounds?.[session.currentRound]
-    if (currentRound?.courtSchedule?.mode === "batches" && (currentRound.courtSchedule.activeBatchIndex || 0) > 0) {
-        currentRound.courtSchedule.activeBatchIndex -= 1
-        return true
-    }
-
     if ((session.currentRound || 0) > 0) {
         session.currentRound -= 1
-        const prevRound = session.rounds[session.currentRound]
-        if (prevRound?.courtSchedule?.mode === "batches") {
-            const lastBatch = (prevRound.courtSchedule.batches?.length || 1) - 1
-            prevRound.courtSchedule.activeBatchIndex = Math.max(0, lastBatch)
-        }
         return true
     }
 

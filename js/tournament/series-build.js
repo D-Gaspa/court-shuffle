@@ -6,6 +6,7 @@ import { createSeededRng, shuffleWithRng } from "../random.js"
 import { computeCapacities, pairKey } from "../shuffle/core.js"
 import { attachTournamentCourtSchedule } from "./courts.js"
 import { createInitialBracket, generateBracketFirstRound, generateRoundRobinSchedule } from "./engine.js"
+import { buildSeriesRun, buildTournamentSeriesResult } from "./series-build-helpers.js"
 
 const SERIES_BUILD_ATTEMPTS = 150
 const TEAM_FORM_ATTEMPTS = 120
@@ -232,26 +233,20 @@ function buildTournamentSeries({ players, format, teamSize, courtCount, courtHan
     const singleTournamentOnly = teamSize === 1 && format === "round-robin"
 
     for (;;) {
-        const run =
-            teamSize === 1
-                ? buildSinglesTournament({
-                      players,
-                      format,
-                      usedSinglesOpeningMatchups,
-                      courtCount,
-                      courtHandling,
-                      rng,
-                  })
-                : buildDoublesTournament({
-                      players,
-                      format,
-                      allowNotStrictDoubles,
-                      usedDoublesPartnerPairs,
-                      sitOutCounts,
-                      courtCount,
-                      courtHandling,
-                      rng,
-                  })
+        const run = buildSeriesRun({
+            players,
+            format,
+            teamSize,
+            courtCount,
+            courtHandling,
+            allowNotStrictDoubles,
+            usedDoublesPartnerPairs,
+            usedSinglesOpeningMatchups,
+            sitOutCounts,
+            rng,
+            buildSinglesTournament,
+            buildDoublesTournament,
+        })
 
         if (!run) {
             break
@@ -267,22 +262,18 @@ function buildTournamentSeries({ players, format, teamSize, courtCount, courtHan
         return null
     }
 
-    return {
-        matchType: teamSize === 1 ? "singles" : "doubles",
+    return buildTournamentSeriesResult({
+        tournaments,
+        teamSize,
         format,
         courtCount,
         courtHandling,
-        allowNotStrictDoubles: Boolean(allowNotStrictDoubles && teamSize === 2),
+        allowNotStrictDoubles,
         seed,
-        maxTournaments: tournaments.length,
-        currentTournamentIndex: 0,
-        tournaments,
-        constraints: {
-            usedDoublesPartnerPairs: [...usedDoublesPartnerPairs],
-            usedSinglesOpeningMatchups: [...usedSinglesOpeningMatchups],
-            tournamentSitOutCounts: sitOutCounts,
-        },
-    }
+        usedDoublesPartnerPairs,
+        usedSinglesOpeningMatchups,
+        sitOutCounts,
+    })
 }
 
 export { buildTournamentSeries }

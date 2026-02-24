@@ -1,5 +1,4 @@
 import { advanceTournament } from "../tournament/bracket.js"
-import { getBatchBlockReason } from "../tournament/courts.js"
 import { hasMultipleTournamentsInSeries, isSeriesTournamentSession } from "../tournament/series-sync.js"
 import { getRoundScoreBlockReason } from "../tournament/utils.js"
 
@@ -16,7 +15,7 @@ function wouldCompleteTournamentOnAdvance(session) {
 }
 
 function getTournamentSeriesProgress(session) {
-    if (!isSeriesTournamentSession(session) || !hasMultipleTournamentsInSeries(session)) {
+    if (!(isSeriesTournamentSession(session) && hasMultipleTournamentsInSeries(session))) {
         return null
     }
     const series = session.tournamentSeries
@@ -28,10 +27,7 @@ function getTournamentSeriesProgress(session) {
     }
 }
 
-function getTournamentBlockedLabel(round, options = {}) {
-    if (options.batchOnly) {
-        return getBatchBlockReason(round, getRoundScoreBlockReason) || "Enter all scores"
-    }
+function getTournamentBlockedLabel(round) {
     return getRoundScoreBlockReason(round) || "Enter all scores"
 }
 
@@ -94,15 +90,6 @@ function updateTournamentSeriesNavUi(session, ui, isTournamentOver) {
 }
 
 function updateFrontierTournamentNavigation({ session, navState, ui }) {
-    if (navState.hasMoreBatches) {
-        ui.nextRoundBtn.disabled = !navState.batchScoresComplete
-        ui.nextRoundLabel.textContent = navState.batchScoresComplete
-            ? "Next Batch"
-            : getTournamentBlockedLabel(session.rounds[navState.current], { batchOnly: true })
-        ui.noMoreRounds.hidden = true
-        return
-    }
-
     const endsTournamentOnAdvance = navState.scoresComplete && wouldCompleteTournamentOnAdvance(session)
     ui.nextRoundBtn.disabled = !navState.scoresComplete
     if (navState.scoresComplete) {
@@ -114,15 +101,6 @@ function updateFrontierTournamentNavigation({ session, navState, ui }) {
 }
 
 function updatePreGeneratedTournamentNavigation({ navState, ui, round }) {
-    if (navState.hasMoreBatches) {
-        ui.nextRoundBtn.disabled = !navState.batchScoresComplete
-        ui.nextRoundLabel.textContent = navState.batchScoresComplete
-            ? "Next Batch"
-            : getTournamentBlockedLabel(round, { batchOnly: true })
-        ui.noMoreRounds.hidden = true
-        return
-    }
-
     if (navState.isLast) {
         if (navState.scoresComplete) {
             ui.nextRoundBtn.disabled = false
@@ -153,7 +131,7 @@ function updateBracketTournamentNavigation({ session, navState, ui, isTournament
     }
 
     ui.nextRoundBtn.disabled = false
-    ui.nextRoundLabel.textContent = navState.hasMoreBatches ? "Next Batch" : "Next Round"
+    ui.nextRoundLabel.textContent = "Next Round"
     ui.noMoreRounds.hidden = true
 }
 
@@ -176,18 +154,12 @@ function updateTournamentNavigation(session, navState, ui) {
 function buildTournamentNavState(_session, roundInfo) {
     const scoreBlockReason = getRoundScoreBlockReason(roundInfo.round)
     const scoresComplete = scoreBlockReason === null
-    const batchScoresComplete = getBatchBlockReason(roundInfo.round, getRoundScoreBlockReason) === null
-    const batchCount = roundInfo.round.courtSchedule?.batches?.length || 1
-    const batchIndex = roundInfo.round.courtSchedule?.activeBatchIndex || 0
-    const hasMoreBatches = roundInfo.round.courtSchedule?.mode === "batches" && batchIndex < batchCount - 1
-    const canGoPrev = roundInfo.current > 0 || (roundInfo.round.courtSchedule?.mode === "batches" && batchIndex > 0)
+    const canGoPrev = roundInfo.current > 0
 
     return {
         current: roundInfo.current,
         isLast: roundInfo.isLast,
         scoresComplete,
-        batchScoresComplete,
-        hasMoreBatches,
         canGoPrev,
     }
 }

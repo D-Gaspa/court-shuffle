@@ -1,6 +1,12 @@
 import { ensureTournamentCourtSchedule, getQueuePendingIndexes } from "../tournament/courts.js"
 import { teamByPlayers } from "../tournament/utils.js"
 import { renderBracket } from "./render.js"
+import {
+    appendSectionLabel,
+    filterIndexedMatches,
+    getRoundOpenEditors,
+    splitTournamentMatchesByPool,
+} from "./tournament-active-round-render-helpers.js"
 import { appendExecutionInfo, getTournamentRoundDisplayState } from "./tournament-active-round-state.js"
 
 const noopRefreshNav = () => undefined
@@ -11,40 +17,6 @@ function makeTeamNameResolver(session) {
         const team = teamByPlayers(session.teams, players)
         return team ? team.name : players.join(", ")
     }
-}
-
-function splitTournamentMatchesByPool(round) {
-    const winnersMatches = []
-    const losersMatches = []
-    const matchIndices = { winners: [], losers: [] }
-
-    for (let i = 0; i < round.matches.length; i += 1) {
-        const pool = round.matches[i].bracketPool || "winners"
-        if (pool === "losers") {
-            losersMatches.push(round.matches[i])
-            matchIndices.losers.push(i)
-        } else {
-            winnersMatches.push(round.matches[i])
-            matchIndices.winners.push(i)
-        }
-    }
-
-    return { winnersMatches, losersMatches, matchIndices }
-}
-
-function filterIndexedMatches(matches, indices, includeSet) {
-    if (!includeSet) {
-        return { matches, indices }
-    }
-    const nextMatches = []
-    const nextIndices = []
-    for (let i = 0; i < indices.length; i += 1) {
-        if (includeSet.has(indices[i])) {
-            nextMatches.push(matches[i])
-            nextIndices.push(indices[i])
-        }
-    }
-    return { matches: nextMatches, indices: nextIndices }
 }
 
 function makeSingleMatchRound(match, scoreEntry, displayCourt) {
@@ -70,13 +42,6 @@ function resolveDisplayCourt({ round, match, globalIdx, localIdx, showCourtSlots
     return localIdx + 1
 }
 
-function appendSectionLabel(container, text, className = "section-label") {
-    const label = document.createElement("h3")
-    label.className = className
-    label.textContent = text
-    container.appendChild(label)
-}
-
 function canEditTournamentRoundScores(session, roundIndex) {
     const format = session?.tournamentFormat
     if (format !== "elimination" && format !== "consolation") {
@@ -99,6 +64,7 @@ function renderMatchGroup({
     allowScoreEditing = true,
     editableIndices = null,
     showCourtSlots = false,
+    openEditors = null,
 }) {
     for (let j = 0; j < matches.length; j += 1) {
         const match = matches[j]
@@ -124,17 +90,27 @@ function renderMatchGroup({
 
         renderBracket(tempRound, matchDiv, {
             editable: canEdit,
-            onCommit: (_, sets, options) => {
+            isEditing: (matchIndex) => matchIndex === 0 && openEditors?.has(globalIdx),
+            onEditingChange: (matchIndex, isEditing) => {
+                if (matchIndex !== 0 || !openEditors) {
+                    return
+                }
+                if (isEditing) {
+                    openEditors.add(globalIdx)
+                    return
+                }
+                openEditors.delete(globalIdx)
+            },
+            onCommit: (_, sets, _options) => {
                 if (!canEdit) {
                     return
                 }
-                const isPartial = Boolean(options?.partial)
                 commitScore({
                     round,
                     matchIndex: globalIdx,
                     sets,
                     saveState,
-                    onAfterSave: isPartial ? refreshNav : onAfterScoreSave || refreshNav,
+                    onAfterSave: onAfterScoreSave || refreshNav,
                 })
             },
             teamNames,
@@ -174,6 +150,7 @@ function renderTournamentPoolSections({
     commitScore,
     allowScoreEditing = true,
     displayState,
+    openEditors,
 }) {
     const { winnersMatches, losersMatches, matchIndices } = splitTournamentMatchesByPool(round)
     const winners = filterIndexedMatches(winnersMatches, matchIndices.winners, displayState.mainVisibleIndices)
@@ -198,6 +175,7 @@ function renderTournamentPoolSections({
             allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
+            openEditors,
         })
     }
 
@@ -216,6 +194,7 @@ function renderTournamentPoolSections({
             allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
+            openEditors,
         })
     }
 }
@@ -252,6 +231,7 @@ function renderTournamentRound({ session, roundInfo, round, saveState, ui, refre
     const teamNames = makeTeamNameResolver(session)
     const displayState = getTournamentRoundDisplayState(round)
     const allowScoreEditing = canEditTournamentRoundScores(session, roundInfo?.current)
+    const openEditors = getRoundOpenEditors(round)
 
     appendExecutionInfo(round, session, ui.bracketContainer)
 
@@ -267,6 +247,7 @@ function renderTournamentRound({ session, roundInfo, round, saveState, ui, refre
             commitScore,
             allowScoreEditing,
             displayState,
+            openEditors,
         })
         if (round.courtSchedule?.mode === "queue") {
             renderPendingQueue(round, ui.bracketContainer, teamNames)
@@ -289,6 +270,7 @@ function renderTournamentRound({ session, roundInfo, round, saveState, ui, refre
         allowScoreEditing,
         editableIndices: displayState.editableIndices,
         showCourtSlots: true,
+        openEditors,
     })
     if (round.courtSchedule?.mode === "queue") {
         renderPendingQueue(round, ui.bracketContainer, teamNames)

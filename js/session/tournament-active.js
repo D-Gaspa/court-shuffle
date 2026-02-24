@@ -5,19 +5,9 @@ import { renderTournamentRound } from "./tournament-active-round-render.js"
 import { renderTournamentLevelSitOuts } from "./tournament-active-round-state.js"
 
 export function renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection }) {
-    ensureTournamentCourtSchedule(
-        roundInfo.round,
-        session.courtCount || 1,
-        session.tournamentSeries?.courtHandling || "queue",
-    )
+    ensureTournamentCourtSchedule(roundInfo.round, session.courtCount || 1)
 
-    let roundLabel = roundInfo.round.tournamentRoundLabel || `Round ${roundInfo.current + 1}`
-    const schedule = roundInfo.round.courtSchedule
-    if (schedule?.mode === "batches" && (schedule.batches?.length || 0) > 1) {
-        const active = (schedule.activeBatchIndex || 0) + 1
-        const totalBatches = schedule.batches.length
-        roundLabel = `${roundLabel} · Batch ${active}/${totalBatches}`
-    }
+    const roundLabel = roundInfo.round.tournamentRoundLabel || `Round ${roundInfo.current + 1}`
 
     if (ui.roundPrefix) {
         ui.roundPrefix.hidden = true

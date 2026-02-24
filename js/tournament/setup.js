@@ -1,6 +1,6 @@
 /**
  * Tournament setup UI controller.
- * Manages format, match type, and court handling selection.
+ * Manages format and match type selection.
  */
 
 const MIN_DOUBLES_TEAM_PLAYERS = 4
@@ -12,11 +12,8 @@ const formatSelector = document.getElementById("format-selector")
 const teamSizeSelector = document.getElementById("tournament-team-size")
 const tournamentHint = document.getElementById("tournament-hint")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
-const courtHandlingSelector = document.getElementById("tournament-court-handling")
-
 let tournamentFormat = "consolation"
 let tournamentTeamSize = 1
-let tournamentCourtHandling = "queue"
 
 function initTournamentSetup(onChange) {
     for (const btn of formatSelector.querySelectorAll(".format-btn")) {
@@ -40,18 +37,6 @@ function initTournamentSetup(onChange) {
             updateTournamentHint()
             onChange()
         })
-    }
-
-    if (courtHandlingSelector) {
-        for (const btn of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
-            btn.addEventListener("click", () => {
-                tournamentCourtHandling = btn.dataset.courtHandling || "queue"
-                for (const b of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
-                    b.classList.toggle("selected", b === btn)
-                }
-                onChange()
-            })
-        }
     }
 }
 
@@ -81,7 +66,7 @@ function getTournamentConfig(players, allowNotStrict) {
         format: tournamentFormat,
         teamSize: tournamentTeamSize,
         playerCount: players.length,
-        courtHandling: tournamentCourtHandling,
+        courtHandling: "queue",
         allowNotStrictDoubles: allowNotStrict && tournamentTeamSize === 2,
     }
 }
@@ -100,18 +85,11 @@ function getTournamentMatchMode() {
 function resetTournamentSetup() {
     tournamentFormat = "consolation"
     tournamentTeamSize = 1
-    tournamentCourtHandling = "queue"
-
     for (const b of formatSelector.querySelectorAll(".format-btn")) {
         b.classList.toggle("selected", b.dataset.format === "consolation")
     }
     for (const b of teamSizeSelector.querySelectorAll(".team-size-btn")) {
         b.classList.toggle("selected", b.dataset.teamSize === "1")
-    }
-    if (courtHandlingSelector) {
-        for (const b of courtHandlingSelector.querySelectorAll(".court-handling-btn")) {
-            b.classList.toggle("selected", b.dataset.courtHandling === "queue")
-        }
     }
 
     notStrictDoublesGroup.hidden = true

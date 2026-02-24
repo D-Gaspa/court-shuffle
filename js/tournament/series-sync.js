@@ -97,7 +97,7 @@ function hasMultipleTournamentsInSeries(session) {
     const count =
         Array.isArray(series.tournaments) && series.tournaments.length > 0
             ? series.tournaments.length
-            : (series.maxTournaments || 0)
+            : series.maxTournaments || 0
     return count > 1
 }
 

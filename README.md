@@ -25,7 +25,7 @@ Tournament configuration includes:
 
 - Format: `Consolation`, `Elimination`, or `Round Robin`
 - Match type: `Singles (1v1)` or `Doubles (2v2)`
-- Court shortage handling: `Queue` or `Batches`
+- Court shortage handling: queued courts with `Next Up` matches
 - Optional doubles flexibility: `Allow 2v1 matchups`
 
 ## Tournament Series Behavior
@@ -51,10 +51,10 @@ Tournament sessions prebuild a series of mini-tournaments from the selected play
 
 When a round has more matches than available courts:
 
-- `Queue`: only the active matches are shown on court and the rest appear as `Next Up`
-- `Batches`: the round is split into sequential batches and advanced batch-by-batch
+- Active matches are shown on court and remaining matches appear as `Next Up`
+- As results are entered, queued matches move onto courts automatically
 
-Tournament progression only advances after the required scores for the current batch/round are entered.
+Tournament progression only advances after the round scores required by the tournament format are entered.
 
 ## Data Storage
 

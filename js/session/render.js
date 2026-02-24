@@ -1,6 +1,5 @@
 import { getAvatarClass, getInitials } from "../roster/render.js"
-import { buildMatchResultSection } from "../score-editor/index.js"
-import { countSetWins, normalizeSets } from "../score-editor/sets.js"
+import { appendMatchResult, applyMatchWinnerUi } from "./match-result-render.js"
 
 const TEAM_COLOR_COUNT = 8
 const CARD_STAGGER_SECONDS = 0.06
@@ -41,22 +40,6 @@ function buildMatchTeamSide(team, label, teamClass) {
     return wrapper
 }
 
-function getMatchWinnerIdx(entry) {
-    const sets = normalizeSets(entry)
-    if (!sets) {
-        return null
-    }
-    const completeSets = sets.filter(([a, b]) => a !== null && b !== null)
-    if (completeSets.length === 0) {
-        return null
-    }
-    const { winsA, winsB } = countSetWins(completeSets)
-    if (winsA === winsB) {
-        return null
-    }
-    return winsA > winsB ? 0 : 1
-}
-
 function buildVersusHeader(matchNum) {
     const header = document.createElement("div")
     header.className = "match-card-header"
@@ -64,38 +47,6 @@ function buildVersusHeader(matchNum) {
     headerSpan.textContent = `Court ${matchNum}`
     header.appendChild(headerSpan)
     return header
-}
-
-function applyMatchWinnerUi(card, teamElements, entry) {
-    card.classList.remove("match-card-has-winner")
-    for (const teamElement of teamElements) {
-        teamElement.classList.remove("match-team-winner", "match-team-loser")
-    }
-    const winnerIdx = getMatchWinnerIdx(entry)
-    if (winnerIdx === null) {
-        return
-    }
-    card.classList.add("match-card-has-winner")
-    for (let idx = 0; idx < teamElements.length; idx += 1) {
-        const teamElement = teamElements[idx]
-        teamElement.classList.add(idx === winnerIdx ? "match-team-winner" : "match-team-loser")
-    }
-}
-
-function appendMatchResult(card, opts, teamElements) {
-    const teamLabels = opts?.teamLabels || ["Team 1", "Team 2"]
-    const entry = opts?.entry || null
-    card.appendChild(
-        buildMatchResultSection({
-            entry,
-            editable: Boolean(opts?.editable && opts?.onCommit),
-            onCommit: opts?.onCommit ?? {},
-            onEntryChange: (nextEntry) => {
-                applyMatchWinnerUi(card, teamElements, nextEntry)
-            },
-            teamLabels,
-        }),
-    )
 }
 
 function renderVersusMatch(teams, matchNum, container, opts) {
@@ -183,6 +134,8 @@ function buildMatchOpts(bracketOpts, matchIndex, scoreEntry, teamLabels) {
             editable: true,
             entry: scoreEntry,
             onCommit: (val, options) => bracketOpts.onCommit(matchIndex, val, options),
+            onEditingChange: (isEditing) => bracketOpts.onEditingChange?.(matchIndex, isEditing),
+            isEditing: Boolean(bracketOpts.isEditing?.(matchIndex)),
             teamLabels,
         }
     }

@@ -1,4 +1,4 @@
-import { getBatchIndexes, getQueueActiveIndexes, getQueuePendingIndexes } from "../tournament/courts.js"
+import { getQueueActiveIndexes, getQueuePendingIndexes } from "../tournament/courts.js"
 
 function appendExecutionInfo(round, session, container) {
     const schedule = round.courtSchedule
@@ -8,15 +8,9 @@ function appendExecutionInfo(round, session, container) {
 
     const info = document.createElement("div")
     info.className = "hint"
-    if (schedule.mode === "batches") {
-        const total = schedule.batches?.length || 1
-        const idx = (schedule.activeBatchIndex || 0) + 1
-        info.textContent = `${session.courtCount} courts · Batch ${idx} of ${total}`
-    } else {
-        const queuePending = getQueuePendingIndexes(round).length
-        info.textContent =
-            queuePending > 0 ? `${session.courtCount} courts · ${queuePending} next up` : `${session.courtCount} courts`
-    }
+    const queuePending = getQueuePendingIndexes(round).length
+    info.textContent =
+        queuePending > 0 ? `${session.courtCount} courts · ${queuePending} next up` : `${session.courtCount} courts`
     container.appendChild(info)
 }
 
@@ -40,27 +34,16 @@ function renderTournamentLevelSitOuts(session, ui) {
 }
 
 function getTournamentRoundDisplayState(round) {
-    const schedule = round.courtSchedule
-    if (!schedule || schedule.mode === "queue") {
-        const queueActive = new Set(getQueueActiveIndexes(round))
-        const queuePending = new Set(getQueuePendingIndexes(round))
-        return {
-            editableIndices: queueActive,
-            mainVisibleIndices: new Set(
-                round.matches
-                    .map((_, i) => i)
-                    .filter((i) => round.scores?.[i] || queueActive.has(i) || !queuePending.has(i)),
-            ),
-            queuePending,
-        }
-    }
-
-    const batchIndexes = getBatchIndexes(round)
-    const currentBatchSet = new Set(batchIndexes)
+    const queueActive = new Set(getQueueActiveIndexes(round))
+    const queuePending = new Set(getQueuePendingIndexes(round))
     return {
-        editableIndices: currentBatchSet,
-        mainVisibleIndices: currentBatchSet,
-        queuePending: new Set(),
+        editableIndices: queueActive,
+        mainVisibleIndices: new Set(
+            round.matches
+                .map((_, i) => i)
+                .filter((i) => round.scores?.[i] || queueActive.has(i) || !queuePending.has(i)),
+        ),
+        queuePending,
     }
 }
 

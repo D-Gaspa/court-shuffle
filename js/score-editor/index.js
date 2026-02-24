@@ -172,10 +172,49 @@ function hasCompleteTiebreak(tb) {
     return tbA !== null && tbB !== null
 }
 
-export function buildMatchResultSection({ entry, editable, onCommit, onEntryChange, teamLabels }) {
+function getDraftStateFromEntry(entry) {
+    const sets = normalizeSets(entry)
+    return {
+        draft: sets ? cloneSets(sets) : [[null, null]],
+        tiebreaks: sets ? extractTiebreaks(sets) : [null],
+    }
+}
+
+function renderMatchResultEditor({ editor, draft, tiebreaks, onAutoSave, onClear }) {
+    editor.textContent = ""
+    editor.appendChild(
+        buildEditorContent({
+            draft,
+            tiebreaks,
+            maxSets: MAX_SETS,
+            onAutoSave,
+            onClear,
+        }),
+    )
+}
+
+function applyEditingState({ editable, editing, nextEditing, elements, onEditingChange }) {
+    const normalized = Boolean(editable && nextEditing)
+    if (editing === normalized) {
+        return editing
+    }
+    elements.editor.hidden = !normalized
+    onEditingChange?.(normalized)
+    return normalized
+}
+
+export function buildMatchResultSection({
+    entry,
+    editable,
+    onCommit,
+    onEntryChange,
+    onEditingChange,
+    teamLabels,
+    startEditing = false,
+}) {
     const root = document.createElement("div")
     root.className = "match-result"
-    let editing = false
+    let editing = Boolean(editable && startEditing)
     let draft = [[null, null]]
     let tiebreaks = [null]
     const els = buildResultElements(() => {
@@ -183,18 +222,14 @@ export function buildMatchResultSection({ entry, editable, onCommit, onEntryChan
             return
         }
         if (editing) {
-            editing = false
-            els.editor.hidden = true
+            editing = applyEditingState({ editable, editing, nextEditing: false, elements: els, onEditingChange })
             commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null)
             return
         }
-        editing = !editing
-        els.editor.hidden = !editing
+        editing = applyEditingState({ editable, editing, nextEditing: true, elements: els, onEditingChange })
         updateResultDisplay({ elements: els, sets: normalizeSets(entry), editable, teamLabels, editing })
         if (editing) {
-            const sets = normalizeSets(entry)
-            draft = sets ? cloneSets(sets) : [[null, null]]
-            tiebreaks = sets ? extractTiebreaks(sets) : [null]
+            ;({ draft, tiebreaks } = getDraftStateFromEntry(entry))
             renderEditor()
         }
     })
@@ -207,26 +242,28 @@ export function buildMatchResultSection({ entry, editable, onCommit, onEntryChan
     }
 
     function renderEditor() {
-        els.editor.textContent = ""
-        els.editor.appendChild(
-            buildEditorContent({
-                draft,
-                tiebreaks,
-                maxSets: MAX_SETS,
-                onAutoSave: () => {
-                    commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null, { partial: true })
-                },
-                onClear: () => {
-                    commit(null, { partial: true })
-                    draft = [[null, null]]
-                    tiebreaks = [null]
-                    renderEditor()
-                },
-            }),
-        )
+        renderMatchResultEditor({
+            editor: els.editor,
+            draft,
+            tiebreaks,
+            onAutoSave: () => {
+                commit(hasCompleteSet(draft) ? buildSetsFromDraft(draft, tiebreaks) : null, { partial: true })
+            },
+            onClear: () => {
+                commit(null, { partial: true })
+                draft = [[null, null]]
+                tiebreaks = [null]
+                renderEditor()
+            },
+        })
     }
 
     updateResultDisplay({ elements: els, sets: normalizeSets(entry), editable, teamLabels, editing })
+    if (editing) {
+        els.editor.hidden = false
+        ;({ draft, tiebreaks } = getDraftStateFromEntry(entry))
+        renderEditor()
+    }
     root.appendChild(els.bar)
     root.appendChild(els.drawBadge)
     root.appendChild(els.editor)
