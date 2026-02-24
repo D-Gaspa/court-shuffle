@@ -1,5 +1,5 @@
-import { normalizeSets } from "../score-editor/sets.js"
-import { determineMatchWinner } from "../tournament/utils.js"
+import { normalizeSets } from "../../score-editor/sets.js"
+import { determineMatchWinner } from "../../tournament/utils.js"
 
 function createPlayerSummary() {
     return {

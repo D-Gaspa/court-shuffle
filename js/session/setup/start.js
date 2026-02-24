@@ -2,12 +2,12 @@
  * Session creation — builds session objects for free and tournament modes.
  */
 
-import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../constants.js"
-import { generateOptimalRoundSequence, wrapFreeRounds } from "../shuffle/free.js"
-import { generateStructuredRounds } from "../shuffle/structured.js"
-import { buildTournamentSeries } from "../tournament/series-build.js"
-import { syncTournamentSeriesAliases } from "../tournament/series-sync.js"
-import { getTournamentConfig } from "../tournament/setup.js"
+import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../../core/constants.js"
+import { generateOptimalRoundSequence, wrapFreeRounds } from "../../shuffle/free.js"
+import { generateStructuredRounds } from "../../shuffle/structured.js"
+import { buildTournamentSeries } from "../../tournament/series/build.js"
+import { syncTournamentSeriesAliases } from "../../tournament/series/sync.js"
+import { getTournamentConfig } from "../../tournament/setup.js"
 
 function generateSessionId() {
     return Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END)

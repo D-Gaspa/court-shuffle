@@ -1,5 +1,5 @@
-import { accumulateHistoryStats } from "./analytics-accumulate.js"
-import { finalizeStatsModel } from "./analytics-finalize.js"
+import { accumulateHistoryStats } from "./accumulate.js"
+import { finalizeStatsModel } from "./finalize.js"
 
 const STATS_SCOPE_OPTIONS = [
     { key: "all", label: "All-time", sessionCount: null },

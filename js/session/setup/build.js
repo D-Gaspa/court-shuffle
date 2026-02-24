@@ -1,4 +1,4 @@
-import { buildFreeSession, buildTournamentSession } from "./session-start.js"
+import { buildFreeSession, buildTournamentSession } from "./start.js"
 
 function buildSelectedSession({ players, gameMode, teamCount, courtCount, allowNotStrict }) {
     if (players.length < 2) {

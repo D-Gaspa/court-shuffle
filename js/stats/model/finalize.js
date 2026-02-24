@@ -1,4 +1,4 @@
-import { buildGlobalLeaders, buildHeatmapSet } from "./analytics-derived.js"
+import { buildGlobalLeaders, buildHeatmapSet } from "./derived.js"
 
 const MIN_RELATIONSHIP_MATCHES = 2
 const TOP_RELATIONSHIPS = 3

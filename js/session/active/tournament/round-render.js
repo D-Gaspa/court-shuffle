@@ -1,13 +1,13 @@
-import { ensureTournamentCourtSchedule, getQueuePendingIndexes } from "../tournament/courts.js"
-import { teamByPlayers } from "../tournament/utils.js"
-import { renderBracket } from "./render.js"
+import { ensureTournamentCourtSchedule, getQueuePendingIndexes } from "../../../tournament/courts.js"
+import { teamByPlayers } from "../../../tournament/utils.js"
+import { renderBracket } from "../render.js"
 import {
     appendSectionLabel,
     filterIndexedMatches,
     getRoundOpenEditors,
     splitTournamentMatchesByPool,
-} from "./tournament-active-round-render-helpers.js"
-import { appendExecutionInfo, getTournamentRoundDisplayState } from "./tournament-active-round-state.js"
+} from "./round-render-helpers.js"
+import { appendExecutionInfo, getTournamentRoundDisplayState } from "./round-state.js"
 
 const noopRefreshNav = () => undefined
 const noopCommitScore = () => undefined

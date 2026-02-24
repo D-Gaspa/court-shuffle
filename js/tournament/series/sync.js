@@ -1,4 +1,4 @@
-import { attachTournamentCourtSchedule } from "./courts.js"
+import { attachTournamentCourtSchedule } from "../courts.js"
 
 function getCurrentTournamentRun(session) {
     const series = session?.tournamentSeries

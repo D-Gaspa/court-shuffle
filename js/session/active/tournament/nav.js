@@ -1,6 +1,6 @@
-import { advanceTournament } from "../tournament/bracket.js"
-import { hasMultipleTournamentsInSeries, isSeriesTournamentSession } from "../tournament/series-sync.js"
-import { getRoundScoreBlockReason } from "../tournament/utils.js"
+import { advanceTournament } from "../../../tournament/bracket.js"
+import { hasMultipleTournamentsInSeries, isSeriesTournamentSession } from "../../../tournament/series/sync.js"
+import { getRoundScoreBlockReason } from "../../../tournament/utils.js"
 
 function cloneSessionForAdvancePreview(session) {
     if (typeof structuredClone === "function") {

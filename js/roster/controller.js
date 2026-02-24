@@ -1,11 +1,11 @@
-import { pairKey } from "../shuffle/core.js"
 import {
     hideFieldError,
     renameInPlayerList,
     renameInRounds,
     renameInTournamentSeries,
     showFieldError,
-} from "../utils.js"
+} from "../shared/utils.js"
+import { pairKey } from "../shuffle/core.js"
 import { renderRoster } from "./render.js"
 
 const playerNameInput = document.getElementById("player-name-input")

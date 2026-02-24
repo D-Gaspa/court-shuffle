@@ -2,14 +2,14 @@
  * Session round navigation — prev/next/end handlers.
  */
 
-import { advanceTournament } from "../tournament/bracket.js"
-import { attachTournamentCourtSchedule } from "../tournament/courts.js"
+import { advanceTournament } from "../../tournament/bracket.js"
+import { attachTournamentCourtSchedule } from "../../tournament/courts.js"
 import {
     isSeriesTournamentSession,
     persistTournamentSeriesAliases,
     syncTournamentSeriesAliases,
-} from "../tournament/series-sync.js"
-import { allScoresEntered, getRoundScoreBlockReason } from "../tournament/utils.js"
+} from "../../tournament/series/sync.js"
+import { allScoresEntered, getRoundScoreBlockReason } from "../../tournament/utils.js"
 import { endSession } from "./active.js"
 import {
     onNextTournamentClick as onNextTournamentClickHandler,

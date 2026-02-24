@@ -1,4 +1,4 @@
-import { getModeLabel } from "../utils.js"
+import { getModeLabel } from "../shared/utils.js"
 
 function formatDate(isoString) {
     try {

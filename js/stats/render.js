@@ -1,4 +1,4 @@
-import { buildStatsModel, STATS_SCOPE_OPTIONS } from "./analytics.js"
+import { buildStatsModel, STATS_SCOPE_OPTIONS } from "./model/index.js"
 import {
     createEmptyState,
     createHero,
@@ -6,10 +6,10 @@ import {
     createRelationshipsGrid,
     createShell,
     createStatsIcon,
-} from "./dom.js"
-import { buildHeatmapCard } from "./heatmap.js"
-import { createGlobalHighlightsPanel, createGlobalLeaderboardsPanel, createScopeFilterPanel } from "./overview.js"
-import { createPlayerListPanel } from "./player-list.js"
+} from "./view/dom.js"
+import { buildHeatmapCard } from "./view/heatmap.js"
+import { createGlobalHighlightsPanel, createGlobalLeaderboardsPanel, createScopeFilterPanel } from "./view/overview.js"
+import { createPlayerListPanel } from "./view/player-list.js"
 
 let selectedPlayerName = null
 let selectedScopeKey = STATS_SCOPE_OPTIONS[0].key

@@ -2,11 +2,11 @@
  * Tournament series precompute (chained mini-tournaments in a single session).
  */
 
-import { createSeededRng, shuffleWithRng } from "../random.js"
-import { computeCapacities, pairKey } from "../shuffle/core.js"
-import { attachTournamentCourtSchedule } from "./courts.js"
-import { createInitialBracket, generateBracketFirstRound, generateRoundRobinSchedule } from "./engine.js"
-import { buildSeriesRun, buildTournamentSeriesResult } from "./series-build-helpers.js"
+import { createSeededRng, shuffleWithRng } from "../../core/random.js"
+import { computeCapacities, pairKey } from "../../shuffle/core.js"
+import { attachTournamentCourtSchedule } from "../courts.js"
+import { createInitialBracket, generateBracketFirstRound, generateRoundRobinSchedule } from "../engine.js"
+import { buildSeriesRun, buildTournamentSeriesResult } from "./build-helpers.js"
 
 const SERIES_BUILD_ATTEMPTS = 150
 const TEAM_FORM_ATTEMPTS = 120

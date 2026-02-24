@@ -8,7 +8,18 @@ import {
     updateTournamentHint,
     updateTournamentPlayers,
 } from "../tournament/setup.js"
-import { renderActiveSession } from "./active.js"
+import { renderActiveSession } from "./active/active.js"
+import { resetGoTopButtonVisibility, syncGoTopButtonVisibility } from "./active/go-top-button.js"
+import {
+    initNavigation,
+    onEndSessionClick,
+    onNextRoundClick,
+    onNextTournamentClick,
+    onPrevRoundClick,
+    onPrevTournamentClick,
+    onSkipTournamentClick,
+} from "./active/navigation.js"
+import { renderPlayerSelection, updateTeamSizeHint } from "./active/render.js"
 import {
     allow2v1Checkbox,
     deselectAllBtn,
@@ -30,12 +41,12 @@ import {
     teamsIncBtn,
     tournamentSeriesNavToggleBtn,
     uiState,
-} from "./controller-elements.js"
+} from "./controller/elements.js"
 import {
     setTournamentSeriesNavCollapsedUi,
     syncAllow2v1Visibility as syncAllow2v1VisibilityUi,
     syncTeamCountControls,
-} from "./controller-ui.js"
+} from "./controller/ui.js"
 import {
     bindModeButtons,
     reconcileSelectedPlayersWithRoster,
@@ -43,7 +54,8 @@ import {
     showSetupSessionView,
     syncInitialGoTopButtonState,
     syncModeSelectorSelection,
-} from "./controller-view-helpers.js"
+} from "./controller/view-helpers.js"
+import { buildSelectedSession } from "./setup/build.js"
 import {
     clampCourtCount,
     clearCourtHint,
@@ -54,19 +66,7 @@ import {
     setCourtVisibility,
     setNotStrictDoubles,
     updateCourtHint,
-} from "./court-config.js"
-import { resetGoTopButtonVisibility, syncGoTopButtonVisibility } from "./go-top-button.js"
-import {
-    initNavigation,
-    onEndSessionClick,
-    onNextRoundClick,
-    onNextTournamentClick,
-    onPrevRoundClick,
-    onPrevTournamentClick,
-    onSkipTournamentClick,
-} from "./navigation.js"
-import { renderPlayerSelection, updateTeamSizeHint } from "./render.js"
-import { buildSelectedSession } from "./session-build.js"
+} from "./setup/courts.js"
 
 let selectedPlayers = new Set()
 let teamCount = 2

@@ -1,4 +1,4 @@
-import { getQueueActiveIndexes, getQueuePendingIndexes } from "../tournament/courts.js"
+import { getQueueActiveIndexes, getQueuePendingIndexes } from "../../../tournament/courts.js"
 
 function appendExecutionInfo(round, session, container) {
     const schedule = round.courtSchedule

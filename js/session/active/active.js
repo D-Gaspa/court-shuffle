@@ -1,12 +1,12 @@
+import { getModeLabel } from "../../shared/utils.js"
 import {
     getCurrentTournamentRun,
     hasMultipleTournamentsInSeries,
     isSeriesTournamentSession,
     syncTournamentSeriesAliases,
-} from "../tournament/series-sync.js"
-import { getModeLabel } from "../utils.js"
+} from "../../tournament/series/sync.js"
 import { renderBracket, renderSitOuts } from "./render.js"
-import { renderTournamentActive } from "./tournament-active.js"
+import { renderTournamentActive } from "./tournament/active.js"
 
 function renderSessionRoundView({ session, roundInfo, saveState, ui, commitScoreForSession }) {
     if (session.mode === "tournament") {

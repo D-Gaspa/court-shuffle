@@ -1,4 +1,4 @@
-import { getAvatarClass, getInitials } from "../roster/render.js"
+import { getAvatarClass, getInitials } from "../../roster/render.js"
 import { formatPercent, formatRecord } from "./format.js"
 
 function createEl(tag, className, text) {

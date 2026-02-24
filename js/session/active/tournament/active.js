@@ -1,8 +1,8 @@
-import { ensureTournamentCourtSchedule } from "../tournament/courts.js"
-import { renderStandingsTable, renderTournamentOverview } from "../tournament/render.js"
-import { buildTournamentNavState, updateTournamentNavigation } from "./tournament-active-nav.js"
-import { renderTournamentRound } from "./tournament-active-round-render.js"
-import { renderTournamentLevelSitOuts } from "./tournament-active-round-state.js"
+import { ensureTournamentCourtSchedule } from "../../../tournament/courts.js"
+import { renderStandingsTable, renderTournamentOverview } from "../../../tournament/render.js"
+import { buildTournamentNavState, updateTournamentNavigation } from "./nav.js"
+import { renderTournamentRound } from "./round-render.js"
+import { renderTournamentLevelSitOuts } from "./round-state.js"
 
 export function renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection }) {
     ensureTournamentCourtSchedule(roundInfo.round, session.courtCount || 1)

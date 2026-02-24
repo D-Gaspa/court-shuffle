@@ -1,5 +1,5 @@
-import { buildMatchResultSection } from "../score-editor/index.js"
-import { countSetWins, normalizeSets } from "../score-editor/sets.js"
+import { buildMatchResultSection } from "../../score-editor/index.js"
+import { countSetWins, normalizeSets } from "../../score-editor/sets.js"
 
 function getMatchWinnerIdx(entry) {
     const sets = normalizeSets(entry)

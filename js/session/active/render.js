@@ -1,4 +1,4 @@
-import { getAvatarClass, getInitials } from "../roster/render.js"
+import { getAvatarClass, getInitials } from "../../roster/render.js"
 import { appendMatchResult, applyMatchWinnerUi } from "./match-result-render.js"
 
 const TEAM_COLOR_COUNT = 8

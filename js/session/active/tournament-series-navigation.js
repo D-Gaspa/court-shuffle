@@ -4,7 +4,7 @@ import {
     moveToNextTournamentInSeries,
     moveToPrevTournamentInSeries,
     syncTournamentSeriesAliases,
-} from "../tournament/series-sync.js"
+} from "../../tournament/series/sync.js"
 
 function getSeriesTournamentProgress(session) {
     const series = session?.tournamentSeries
