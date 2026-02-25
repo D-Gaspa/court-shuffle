@@ -80,8 +80,19 @@ function buildSequence(players, teamCount, initialUsedPairs = null) {
     let round = generateRound(players, teamCount, usedPairs, DEFAULT_MAX_ATTEMPTS)
     while (round !== null) {
         sequence.push(round)
-        for (const p of extractPairs(round)) {
-            usedPairs.add(p)
+        const roundPairs = extractPairs(round)
+        let addedAnyPair = false
+        for (const p of roundPairs) {
+            if (!usedPairs.has(p)) {
+                usedPairs.add(p)
+                addedAnyPair = true
+            }
+        }
+
+        // If a round creates no partner pairs (for example N players split into N teams),
+        // there is no state change to constrain future rounds, so continuing would loop forever.
+        if (!addedAnyPair) {
+            break
         }
         round = generateRound(players, teamCount, usedPairs, DEFAULT_MAX_ATTEMPTS)
     }

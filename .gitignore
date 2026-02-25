@@ -1,3 +1,6 @@
 .claude/settings.local.json
 **.txt
-assets/branding/
+assets/*
+!assets/readme/
+assets/readme/*
+!assets/readme/exports/

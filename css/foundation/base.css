@@ -129,6 +129,11 @@ h3 {
     color: var(--ball);
     filter: drop-shadow(0 0 8px var(--ball-glow));
 }
+.brand-icon img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
 .brand-name {
     font-family: "Syne", system-ui, sans-serif;
     font-weight: 800;

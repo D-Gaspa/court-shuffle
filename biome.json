@@ -6,7 +6,7 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "includes": ["**", "!session-cache.json"]
+        "includes": ["**", "!session-cache.json", "!assets"]
     },
     "formatter": {
         "enabled": true,
