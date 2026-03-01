@@ -1,5 +1,7 @@
+import { buildTournamentPreview } from "../tournament/series/build.js"
 import {
     getMinPlayersForTournament,
+    getTournamentConfig,
     getTournamentMatchMode,
     hideTournamentConfig,
     initTournamentSetup,
@@ -20,6 +22,7 @@ import {
     onSkipTournamentClick,
 } from "./active/navigation.js"
 import { renderPlayerSelection, updateTeamSizeHint } from "./active/render.js"
+import { bindActiveSessionNavButtons, bindTournamentSeriesToggle } from "./controller/bindings.js"
 import {
     allow2v1Checkbox,
     deselectAllBtn,
@@ -39,9 +42,17 @@ import {
     teamsConfig,
     teamsDecBtn,
     teamsIncBtn,
+    tournamentAdvancedError,
+    tournamentDistributionGroup,
+    tournamentDistributionHint,
     tournamentSeriesNavToggleBtn,
     uiState,
 } from "./controller/elements.js"
+import { handleModeChange } from "./controller/mode-change.js"
+import { refreshSessionViewState } from "./controller/refresh-view.js"
+import { bindSelectionButtons } from "./controller/selection-buttons.js"
+import { createStartSessionHandler } from "./controller/start-session.js"
+import { clearTournamentDistribution, updateTournamentPreview } from "./controller/tournament-preview.js"
 import {
     setTournamentSeriesNavCollapsedUi,
     syncAllow2v1Visibility as syncAllow2v1VisibilityUi,
@@ -73,6 +84,8 @@ let teamCount = 2
 let gameMode = "free"
 let globalState = null
 let saveState = null
+let tournamentPreview = null
+let tournamentBuildConfig = null
 
 function syncAllow2v1Visibility(playerCount) {
     syncAllow2v1VisibilityUi({
@@ -85,68 +98,73 @@ function syncAllow2v1Visibility(playerCount) {
     })
 }
 
-function onSelectAllClick() {
-    selectedPlayers = new Set(globalState.roster)
-    renderPlayerSelection(globalState.roster, selectedPlayers, playerSelection, onSelectionChange)
-    onSelectionChange()
-}
-
-function onDeselectAllClick() {
-    selectedPlayers.clear()
-    renderPlayerSelection(globalState.roster, selectedPlayers, playerSelection, onSelectionChange)
-    onSelectionChange()
-}
-
-function bindSelectionButtons() {
-    teamsDecBtn.addEventListener("click", () => {
-        if (teamCount > 2) {
-            teamCount -= 1
-            onSelectionChange()
-        }
-    })
-    teamsIncBtn.addEventListener("click", () => {
-        if (teamCount < selectedPlayers.size) {
-            teamCount += 1
-            onSelectionChange()
-        }
-    })
-    selectAllBtn.addEventListener("click", onSelectAllClick)
-    deselectAllBtn.addEventListener("click", onDeselectAllClick)
-}
-
-function bindActiveSessionNavButtons() {
-    uiState.prevRoundBtn.addEventListener("click", onPrevRoundClick)
-    uiState.nextRoundBtn.addEventListener("click", onNextRoundClick)
-    uiState.goTopBtn?.addEventListener("click", () => globalThis.scrollTo({ top: 0, behavior: "smooth" }))
-    uiState.prevTournamentBtn?.addEventListener("click", onPrevTournamentClick)
-    uiState.nextTournamentBtn?.addEventListener("click", onNextTournamentClick)
-    uiState.skipTournamentBtn?.addEventListener("click", onSkipTournamentClick)
-    endSessionBtn.addEventListener("click", onEndSessionClick)
-}
-
-function bindTournamentSeriesToggle() {
-    tournamentSeriesNavToggleBtn?.addEventListener("click", () => {
-        const isCollapsed = !uiState.tournamentSeriesNav.classList.contains("is-collapsed")
-        setTournamentSeriesNavCollapsedUi(
-            {
-                tournamentSeriesNav: uiState.tournamentSeriesNav,
-                tournamentSeriesNavToggleBtn,
+function bindStartSessionButton() {
+    startSessionBtn.addEventListener(
+        "click",
+        createStartSessionHandler({
+            getSelectedPlayers: () => selectedPlayers,
+            getGameMode: () => gameMode,
+            getTournamentPreview: () => tournamentPreview,
+            getTournamentBuildConfig: () => tournamentBuildConfig,
+            buildSelectedSession,
+            getTeamCount: () => teamCount,
+            getCourtCount,
+            getNotStrictDoubles,
+            onSessionStart: (session) => {
+                globalState.activeSession = session
+                saveState()
+                refreshSessionView()
             },
-            isCollapsed,
-        )
+        }),
+    )
+}
+
+function bindSetupControls() {
+    bindSelectionButtons({
+        teamsDecBtn,
+        teamsIncBtn,
+        selectAllBtn,
+        deselectAllBtn,
+        getTeamCount: () => teamCount,
+        setTeamCount: (value) => {
+            teamCount = value
+        },
+        getSelectedPlayers: () => selectedPlayers,
+        getSelectedCount: () => selectedPlayers.size,
+        getRoster: () => globalState.roster,
+        setSelectedPlayers: (next) => {
+            selectedPlayers = next
+        },
+        renderPlayerSelection,
+        playerSelection,
+        onSelectionChange,
     })
+    bindStartSessionButton()
+    bindActiveSessionNavButtons({
+        uiState,
+        onPrevRoundClick,
+        onNextRoundClick,
+        onPrevTournamentClick,
+        onNextTournamentClick,
+        onSkipTournamentClick,
+        endSessionBtn,
+        onEndSessionClick,
+    })
+    bindTournamentSeriesToggle({ uiState, tournamentSeriesNavToggleBtn, setTournamentSeriesNavCollapsedUi })
+    initCourtConfig(onSelectionChange)
+    initTournamentSetup(onSelectionChange)
+    allow2v1Checkbox.addEventListener("change", () => {
+        setNotStrictDoubles(allow2v1Checkbox.checked)
+        onSelectionChange()
+    })
+    bindModeButtons(modeSelector, onModeChange)
 }
 
 function initSession(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
 
-    bindSelectionButtons()
-    startSessionBtn.addEventListener("click", onStartSessionClick)
-    bindActiveSessionNavButtons()
-    bindTournamentSeriesToggle()
-    initCourtConfig(onSelectionChange)
-    initTournamentSetup(onSelectionChange)
+    bindSetupControls()
     initNavigation({
         state,
         saveFn: persistFn,
@@ -155,63 +173,33 @@ function initSession(state, persistFn, confirmFn) {
         refreshFn: refreshSessionView,
     })
     syncInitialGoTopButtonState(globalState, uiState, syncGoTopButtonVisibility)
-    allow2v1Checkbox.addEventListener("change", () => {
-        setNotStrictDoubles(allow2v1Checkbox.checked)
-        onSelectionChange()
-    })
-    bindModeButtons(modeSelector, onModeChange)
 }
 
 function onModeChange(mode) {
-    gameMode = mode
-    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
-        btn.classList.toggle("selected", btn.dataset.mode === mode)
-    }
-
-    if (mode === "free") {
-        teamsConfig.hidden = false
-        modeHint.textContent = ""
-    } else {
-        teamsConfig.hidden = true
-        teamCount = 2
-    }
-
-    // Tournament config visibility
-    if (mode === "tournament") {
-        showTournamentConfig()
-        updateTournamentHint()
-        setCourtVisibility(getTournamentMatchMode())
-    } else {
-        hideTournamentConfig()
-        resetTournamentSetup()
-        setCourtVisibility(mode)
-        resetCourtCount()
-    }
-
-    // Not-strict doubles is only relevant for tournament doubles with an odd player count.
-    syncAllow2v1Visibility(selectedPlayers.size)
-    if (mode !== "tournament") {
-        allow2v1Checkbox.checked = false
-        setNotStrictDoubles(false)
-    }
-    onSelectionChange()
-}
-
-function onStartSessionClick() {
-    const players = [...selectedPlayers]
-    const session = buildSelectedSession({
-        players,
-        gameMode,
-        teamCount,
-        courtCount: getCourtCount(),
-        allowNotStrict: getNotStrictDoubles(),
+    handleModeChange({
+        mode,
+        setGameMode: (value) => {
+            gameMode = value
+        },
+        setTeamCount: (value) => {
+            teamCount = value
+        },
+        modeSelector,
+        teamsConfig,
+        modeHint,
+        showTournamentConfig,
+        updateTournamentHint,
+        setCourtVisibility,
+        getTournamentMatchMode,
+        hideTournamentConfig,
+        resetTournamentSetup,
+        resetCourtCount,
+        syncAllow2v1Visibility,
+        selectedPlayersCount: selectedPlayers.size,
+        allow2v1Checkbox,
+        setNotStrictDoubles,
+        onSelectionChange,
     })
-    if (!session) {
-        return
-    }
-    globalState.activeSession = session
-    saveState()
-    refreshSessionView()
 }
 
 function onSelectionChange() {
@@ -225,74 +213,88 @@ function onSelectionChange() {
         syncAllow2v1Visibility(count)
         const minPlayers = getMinPlayersForTournament(getNotStrictDoubles())
         setCourtVisibility(tournamentMatchMode)
-        startSessionBtn.disabled = count < minPlayers
         updateTournamentPlayers([...selectedPlayers])
         clampCourtCount(count, tournamentMatchMode)
         clearCourtHint()
+        const previewState = updateTournamentPreview({
+            selectedPlayers,
+            count,
+            minPlayers,
+            getCourtCount,
+            getNotStrictDoubles,
+            getTournamentConfig,
+            buildTournamentPreview,
+            tournamentDistributionGroup,
+            tournamentDistributionHint,
+            tournamentAdvancedError,
+        })
+        const {
+            canStartTournament,
+            tournamentPreview: nextTournamentPreview,
+            tournamentBuildConfig: nextBuildConfig,
+        } = previewState
+        tournamentPreview = nextTournamentPreview
+        tournamentBuildConfig = nextBuildConfig
+        startSessionBtn.disabled = count < minPlayers || !canStartTournament
     } else if (gameMode === "free") {
         updateTeamSizeHint(count, teamCount, teamSizeHint)
         modeHint.textContent = ""
         clampCourtCount(count, gameMode)
         updateCourtHint(count, gameMode)
+        clearTournamentDistribution({
+            tournamentDistributionGroup,
+            tournamentDistributionHint,
+            tournamentAdvancedError,
+        })
+        tournamentPreview = null
+        tournamentBuildConfig = null
         startSessionBtn.disabled = count < 2
     }
 }
 
 function refreshSessionView() {
-    if (globalState.activeSession) {
-        renderActiveSessionView({
-            sessionSetup,
-            sessionActive,
-            globalState,
-            saveState,
-            uiState,
-            renderActiveSession,
-            syncGoTopButtonVisibility,
-        })
-        return
-    }
-
-    showSetupSessionView({ sessionSetup, sessionActive, uiState, resetGoTopButtonVisibility })
-
-    if (globalState.roster.length < 2) {
-        noRosterWarning.hidden = false
-        sessionConfig.hidden = true
-        return
-    }
-    noRosterWarning.hidden = true
-    sessionConfig.hidden = false
-
-    selectedPlayers = reconcileSelectedPlayersWithRoster(selectedPlayers, globalState.roster)
-    syncAllow2v1Visibility(selectedPlayers.size)
-    setTournamentSeriesNavCollapsedUi(
-        {
-            tournamentSeriesNav: uiState.tournamentSeriesNav,
-            tournamentSeriesNavToggleBtn,
-        },
-        false,
-    )
-
-    renderPlayerSelection(globalState.roster, selectedPlayers, playerSelection, onSelectionChange)
-
-    syncModeSelectorSelection(modeSelector, gameMode)
-    teamsConfig.hidden = gameMode !== "free"
-    if (gameMode === "tournament") {
-        showTournamentConfig()
-        setCourtVisibility(getTournamentMatchMode())
-    } else {
-        hideTournamentConfig()
-        setCourtVisibility(gameMode)
-    }
-    syncAllow2v1Visibility(selectedPlayers.size)
-
-    teamCount = syncTeamCountControls({
+    const viewState = refreshSessionViewState({
+        globalState,
+        saveState,
+        sessionSetup,
+        sessionActive,
+        uiState,
+        renderActiveSessionView,
+        renderActiveSession,
+        syncGoTopButtonVisibility,
+        showSetupSessionView,
+        resetGoTopButtonVisibility,
+        noRosterWarning,
+        sessionConfig,
+        selectedPlayers,
+        reconcileSelectedPlayersWithRoster,
+        syncAllow2v1Visibility,
+        setTournamentSeriesNavCollapsedUi,
+        tournamentSeriesNavToggleBtn,
+        renderPlayerSelection,
+        playerSelection,
+        onSelectionChange,
+        modeSelector,
+        syncModeSelectorSelection,
+        gameMode,
+        teamsConfig,
+        showTournamentConfig,
+        hideTournamentConfig,
+        setCourtVisibility,
+        getTournamentMatchMode,
+        clearTournamentDistribution,
+        tournamentDistributionGroup,
+        tournamentDistributionHint,
+        tournamentAdvancedError,
         teamCount,
-        selectedCount: selectedPlayers.size,
+        syncTeamCountControls,
         teamCountValue,
         teamsDecBtn,
         teamsIncBtn,
     })
-    onSelectionChange()
+    const { selectedPlayers: nextSelectedPlayers, teamCount: nextTeamCount } = viewState
+    selectedPlayers = nextSelectedPlayers
+    teamCount = nextTeamCount
 }
 
 export { initSession, refreshSessionView }

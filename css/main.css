@@ -3,6 +3,7 @@
 @import url("./features/history.css");
 @import url("./features/roster.css");
 @import url("./features/session/session-config.css");
+@import url("./features/session/session-advanced.css");
 @import url("./features/session/session-display.css");
 @import url("./features/session/match-results.css");
 @import url("./features/session/score-editor.css");

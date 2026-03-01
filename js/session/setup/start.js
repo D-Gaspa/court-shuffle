@@ -5,9 +5,8 @@
 import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../../core/constants.js"
 import { generateOptimalRoundSequence, wrapFreeRounds } from "../../shuffle/free.js"
 import { generateStructuredRounds } from "../../shuffle/structured.js"
-import { buildTournamentSeries } from "../../tournament/series/build.js"
+import { buildTournamentPreview, buildTournamentSeries } from "../../tournament/series/build.js"
 import { syncTournamentSeriesAliases } from "../../tournament/series/sync.js"
-import { getTournamentConfig } from "../../tournament/setup.js"
 
 function generateSessionId() {
     return Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END)
@@ -47,9 +46,25 @@ function buildFreeSession({ players, teamCount, gameMode, courtCount, allowNotSt
 /**
  * Build a tournament session object, or null if not enough teams.
  */
-function buildTournamentSession({ players, allowNotStrict, courtCount }) {
-    const config = getTournamentConfig(players, allowNotStrict)
-    const seed = `${Date.now()}-${players.join("|")}-${config.format}-${config.teamSize}`
+function buildTournamentSession({ players, courtCount, tournamentConfig }) {
+    const config = tournamentConfig
+    if (!config) {
+        return null
+    }
+    const seed = config.seed || `${Date.now()}-${players.join("|")}-${config.format}-${config.teamSize}`
+    const preview = buildTournamentPreview({
+        players,
+        format: config.format,
+        teamSize: config.teamSize,
+        courtCount,
+        courtHandling: config.courtHandling,
+        allowNotStrictDoubles: config.allowNotStrictDoubles,
+        seed,
+        advanced: config.advanced,
+    })
+    if (!preview.ok) {
+        return null
+    }
     const series = buildTournamentSeries({
         players,
         format: config.format,
@@ -58,6 +73,7 @@ function buildTournamentSession({ players, allowNotStrict, courtCount }) {
         courtHandling: config.courtHandling,
         allowNotStrictDoubles: config.allowNotStrictDoubles,
         seed,
+        advanced: config.advanced,
     })
     if (!series || series.tournaments.length === 0) {
         return null

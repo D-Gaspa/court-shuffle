@@ -163,6 +163,9 @@
                                 </div>
 
                                 <div id="tournament-hint" class="hint"></div>
+                                <div class="tournament-advanced-actions">
+                                    <button type="button" id="tournament-advanced-btn" class="btn btn-ghost btn-sm">Advanced Settings</button>
+                                </div>
                             </div>
 
                             <div id="courts-config" class="config-group" hidden>
@@ -173,7 +176,7 @@
                                     </button>
                                     <div class="team-count-display">
                                         <span id="court-count-value">1</span>
-                                        <small>courts</small>
+                                        <small id="court-count-label">court</small>
                                     </div>
                                     <button type="button" id="courts-inc" class="btn btn-icon" aria-label="Increase courts">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -191,6 +194,12 @@
                                     <span class="toggle-label">Allow 2v1 matchups</span>
                                 </label>
                                 <div class="hint">Lets courts run with 3 players instead of requiring 4.</div>
+                            </div>
+
+                            <div id="tournament-distribution-group" class="config-group" hidden>
+                                <h2 class="section-label">Round 1 Preview</h2>
+                                <div id="tournament-distribution-hint" class="hint hint-distribution"></div>
+                                <div id="tournament-advanced-error" class="field-error" hidden></div>
                             </div>
 
                             <div id="teams-config" class="config-group">
@@ -353,6 +362,60 @@
                     <button type="button" id="confirm-cancel" class="btn btn-ghost">Cancel</button>
                     <button type="button" id="confirm-extra" class="btn btn-ghost btn-danger" hidden>Discard</button>
                     <button type="button" id="confirm-ok" class="btn btn-danger">Confirm</button>
+                </div>
+            </div>
+        </dialog>
+
+        <!-- Tournament Advanced Modal -->
+        <dialog id="tournament-advanced-dialog" class="modal">
+            <div class="modal-content modal-content-lg">
+                <h2>Advanced Tournament Settings</h2>
+                <p class="modal-subtitle">These overrides apply only to Tournament 1.</p>
+
+                <div id="advanced-required-sitout-section" class="config-group" hidden>
+                    <h3 class="section-label">Required Sit-Out</h3>
+                    <select id="advanced-required-sitout-select" class="advanced-select"></select>
+                    <div class="hint">Only shown when strict doubles requires one player to sit out.</div>
+                </div>
+
+                <div id="advanced-singles-opening-section" class="config-group" hidden>
+                    <div class="advanced-section-header">
+                        <h3 class="section-label">Singles Opening Matchups</h3>
+                        <button type="button" id="advanced-add-singles-matchup" class="btn btn-ghost btn-sm">Add</button>
+                    </div>
+                    <div id="advanced-singles-opening-list" class="advanced-row-list"></div>
+                    <div class="hint">Used for elimination/consolation only. Round-robin keeps automatic pairings.</div>
+                </div>
+
+                <div id="advanced-doubles-pairs-section" class="config-group" hidden>
+                    <div class="advanced-section-header">
+                        <h3 class="section-label">Doubles Locked Pairs</h3>
+                        <button type="button" id="advanced-add-doubles-pair" class="btn btn-ghost btn-sm">Add</button>
+                    </div>
+                    <div id="advanced-doubles-pairs-list" class="advanced-row-list"></div>
+                    <div class="hint">Locked partners are kept together in Tournament 1 only.</div>
+                </div>
+
+                <div id="advanced-singles-byes-section" class="config-group" hidden>
+                    <h3 class="section-label">Singles Byes (Optional)</h3>
+                    <div id="advanced-singles-byes-list" class="advanced-check-list"></div>
+                    <div class="hint">Leave empty to auto-assign byes.</div>
+                </div>
+
+                <div id="advanced-doubles-byes-section" class="config-group" hidden>
+                    <div class="advanced-section-header">
+                        <h3 class="section-label">Doubles Bye Teams (Optional)</h3>
+                        <button type="button" id="advanced-add-doubles-bye-team" class="btn btn-ghost btn-sm">Add</button>
+                    </div>
+                    <div id="advanced-doubles-byes-list" class="advanced-row-list"></div>
+                    <div class="hint">Leave empty to auto-assign bye teams.</div>
+                </div>
+
+                <div id="advanced-modal-error" class="field-error" hidden></div>
+
+                <div class="modal-actions">
+                    <button type="button" id="advanced-cancel" class="btn btn-ghost">Cancel</button>
+                    <button type="button" id="advanced-apply" class="btn btn-primary">Apply</button>
                 </div>
             </div>
         </dialog>

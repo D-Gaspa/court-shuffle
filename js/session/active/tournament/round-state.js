@@ -9,8 +9,9 @@ function appendExecutionInfo(round, session, container) {
     const info = document.createElement("div")
     info.className = "hint"
     const queuePending = getQueuePendingIndexes(round).length
-    info.textContent =
-        queuePending > 0 ? `${session.courtCount} courts · ${queuePending} next up` : `${session.courtCount} courts`
+    const courtCount = session.courtCount || 1
+    const courtLabel = `${courtCount} ${courtCount === 1 ? "court" : "courts"}`
+    info.textContent = queuePending > 0 ? `${courtLabel} · ${queuePending} next up` : courtLabel
     container.appendChild(info)
 }
 

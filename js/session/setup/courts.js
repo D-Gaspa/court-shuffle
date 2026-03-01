@@ -7,6 +7,7 @@ const courtsConfig = document.getElementById("courts-config")
 const courtsDecBtn = document.getElementById("courts-dec")
 const courtsIncBtn = document.getElementById("courts-inc")
 const courtCountValue = document.getElementById("court-count-value")
+const courtCountLabel = document.getElementById("court-count-label")
 const courtHint = document.getElementById("court-hint")
 
 let courtCount = 1
@@ -40,6 +41,9 @@ function clampCourtCount(playerCount, gameMode) {
         courtCount = 1
     }
     courtCountValue.textContent = courtCount
+    if (courtCountLabel) {
+        courtCountLabel.textContent = courtCount === 1 ? "court" : "courts"
+    }
     courtsDecBtn.disabled = courtCount <= 1
     courtsIncBtn.disabled = courtCount >= max || playerCount < 2
 }

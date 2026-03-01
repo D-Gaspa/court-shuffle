@@ -15,6 +15,9 @@ const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
+const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
+const tournamentDistributionHint = document.getElementById("tournament-distribution-hint")
+const tournamentAdvancedError = document.getElementById("tournament-advanced-error")
 
 const uiState = {
     roundPrefix: document.getElementById("round-prefix"),
@@ -56,6 +59,9 @@ export {
     startSessionBtn,
     teamCountValue,
     teamSizeHint,
+    tournamentAdvancedError,
+    tournamentDistributionGroup,
+    tournamentDistributionHint,
     teamsConfig,
     teamsDecBtn,
     teamsIncBtn,
