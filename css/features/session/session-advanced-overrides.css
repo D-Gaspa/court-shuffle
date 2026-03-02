@@ -1,0 +1,83 @@
+.advanced-row-solo-lock {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px dashed color-mix(in srgb, var(--advanced-accent), var(--advanced-line-soft) 50%);
+    background: color-mix(in srgb, var(--advanced-accent-soft), transparent 25%);
+}
+
+.advanced-check-item-bye {
+    position: relative;
+    gap: 12px;
+    border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line-soft) 60%);
+    background: linear-gradient(
+        130deg,
+        color-mix(in srgb, var(--advanced-accent-soft), transparent 20%),
+        color-mix(in srgb, var(--advanced-panel-raised), transparent 18%)
+    );
+}
+
+.advanced-check-box {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    border: 1.5px solid color-mix(in srgb, var(--advanced-accent), var(--advanced-line-soft) 45%);
+    background: color-mix(in srgb, var(--advanced-panel), #000 35%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff, transparent 92%);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.advanced-check-box::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--advanced-accent), #fff 10%);
+    opacity: 0;
+    transform: scale(0.7);
+    transition:
+        opacity var(--duration-fast) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out);
+}
+
+.advanced-check-box:checked::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.advanced-check-box:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.advanced-check-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.advanced-check-title {
+    font-size: 0.8rem;
+    color: var(--advanced-text);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.advanced-check-meta {
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--advanced-muted);
+}
+
+.advanced-bye-capacity-hint {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    color: color-mix(in srgb, var(--advanced-accent), #fff 12%);
+    text-align: left;
+}

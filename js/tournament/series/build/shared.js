@@ -133,13 +133,13 @@ function allocateSeedBuckets(seedBuckets, capacities) {
 
     for (const bucket of indexedSeeds) {
         let assigned = -1
+        let bestCap = Infinity
         for (let i = 0; i < capacities.length; i += 1) {
-            if (usedIndexes.has(i)) {
-                continue
-            }
-            if (capacities[i] >= bucket.length) {
+            if (usedIndexes.has(i)) continue
+            const cap = capacities[i]
+            if (cap >= bucket.length && cap < bestCap) {
                 assigned = i
-                break
+                bestCap = cap
             }
         }
         if (assigned === -1) {

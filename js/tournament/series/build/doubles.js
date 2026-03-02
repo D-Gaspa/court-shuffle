@@ -46,35 +46,76 @@ function resolveDoublesEntrants({ players, allowNotStrictDoubles, normalizedAdva
     return { entrants, tournamentLevelSitOuts }
 }
 
-function validateLockedPairs(entrants, normalizedAdvanced, errors) {
+function toUniqueLockedPlayers(a, b) {
+    return [...new Set([a, b].filter(Boolean))]
+}
+
+function getLockedTeamRowError({ a, b, uniquePlayers, allowNotStrictDoubles }) {
+    if (uniquePlayers.length === 0) {
+        return "Every locked doubles team row must include at least one player."
+    }
+    if (a && b && a === b) {
+        return "Locked doubles pairs must use two different players."
+    }
+    if (!allowNotStrictDoubles && uniquePlayers.length !== 2) {
+        return "Strict doubles locked teams must include exactly two players."
+    }
+    return null
+}
+
+function hasInactiveLockedPlayers(uniquePlayers, entrantsSet) {
+    return !uniquePlayers.every((player) => entrantsSet.has(player))
+}
+
+function hasDuplicateLockedPlayers(uniquePlayers, lockedPlayers) {
+    return uniquePlayers.some((player) => lockedPlayers.has(player))
+}
+
+function registerLockedPlayers(uniquePlayers, lockedPlayers) {
+    for (const player of uniquePlayers) {
+        lockedPlayers.add(player)
+    }
+}
+
+function validateLockedPairs(entrants, normalizedAdvanced, allowNotStrictDoubles, errors) {
     const entrantsSet = new Set(entrants)
     const lockedPairs = normalizedAdvanced.doublesLockedPairs.filter(([a, b]) => a || b)
     const lockedPlayers = new Set()
+    const validLockedTeams = []
+    let soloLockedTeamCount = 0
+    const availableSoloTeamSlots = allowNotStrictDoubles ? entrants.length % 2 : 0
 
     for (const [a, b] of lockedPairs) {
-        if (!(a && b)) {
-            errors.push("Every locked doubles pair row must select two players.")
+        const uniquePlayers = toUniqueLockedPlayers(a, b)
+        const rowError = getLockedTeamRowError({ a, b, uniquePlayers, allowNotStrictDoubles })
+        if (rowError) {
+            errors.push(rowError)
             continue
         }
-        if (a === b) {
-            errors.push("Locked doubles pairs must use two different players.")
+        if (allowNotStrictDoubles && uniquePlayers.length === 1) {
+            soloLockedTeamCount += 1
+        }
+        if (hasInactiveLockedPlayers(uniquePlayers, entrantsSet)) {
+            errors.push("Locked doubles teams must use currently active players.")
             continue
         }
-        if (!(entrantsSet.has(a) && entrantsSet.has(b))) {
-            errors.push("Locked doubles pairs must use currently active players.")
+        if (hasDuplicateLockedPlayers(uniquePlayers, lockedPlayers)) {
+            errors.push("A player cannot be assigned to multiple locked doubles teams.")
             continue
         }
-        if (lockedPlayers.has(a) || lockedPlayers.has(b)) {
-            errors.push("A player cannot be assigned to multiple locked doubles pairs.")
-            continue
-        }
-        lockedPlayers.add(a)
-        lockedPlayers.add(b)
+        registerLockedPlayers(uniquePlayers, lockedPlayers)
+        validLockedTeams.push(uniquePlayers)
+    }
+
+    if (soloLockedTeamCount > availableSoloTeamSlots) {
+        errors.push(
+            `Solo locked doubles teams exceed available 2v1 team slots (${availableSoloTeamSlots}) for this roster.`,
+        )
     }
 
     return {
         entrantsSet,
-        validLockedPairs: lockedPairs.filter(([a, b]) => a && b && a !== b && entrantsSet.has(a) && entrantsSet.has(b)),
+        validLockedPairs: validLockedTeams,
     }
 }
 
@@ -107,7 +148,12 @@ function buildDoublesFirstRun({
         rng,
         errors,
     })
-    const { entrantsSet, validLockedPairs } = validateLockedPairs(entrants, normalizedAdvanced, errors)
+    const { entrantsSet, validLockedPairs } = validateLockedPairs(
+        entrants,
+        normalizedAdvanced,
+        allowNotStrictDoubles,
+        errors,
+    )
 
     if (entrants.length < 2) {
         errors.push("Not enough active entrants to build a doubles tournament.")

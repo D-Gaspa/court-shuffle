@@ -1,6 +1,6 @@
-.claude/settings.local.json
 **.txt
 assets/*
 !assets/readme/
 assets/readme/*
 !assets/readme/exports/
+AGENTS.md

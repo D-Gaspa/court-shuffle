@@ -1,3 +1,23 @@
+import {
+    collectLockedPairKeySet,
+    filterByeTeamsToLockedPairs,
+    formatCountLabel,
+    normalizeByeTeam as normalizeByeTeamValue,
+    reconcileByeTeams,
+    reconcilePairRows,
+    toLockedTeamPlayers,
+} from "./advanced-model-helpers.js"
+import {
+    isBracketFormat as isBracketFormatValue,
+    requiresForcedSitOut as requiresForcedSitOutValue,
+} from "./advanced-rules.js"
+import { validateAdvancedDraft as validateAdvancedDraftValue } from "./advanced-validation.js"
+
+const normalizeByeTeam = normalizeByeTeamValue
+const isBracketFormat = isBracketFormatValue
+const requiresForcedSitOut = requiresForcedSitOutValue
+const validateAdvancedDraft = validateAdvancedDraftValue
+
 function getDefaultAdvancedSettings() {
     return {
         singlesOpeningMatchups: [],
@@ -20,53 +40,6 @@ function cloneAdvancedSettings(value = getDefaultAdvancedSettings()) {
     }
 }
 
-function isBracketFormat(tournamentFormat) {
-    return tournamentFormat !== "round-robin"
-}
-
-function requiresForcedSitOut({ tournamentTeamSize, allowNotStrictDoubles, selectedPlayers, minRequiredSitOutPool }) {
-    return (
-        tournamentTeamSize === 2 &&
-        !allowNotStrictDoubles &&
-        selectedPlayers.length >= minRequiredSitOutPool &&
-        selectedPlayers.length % 2 !== 0
-    )
-}
-
-function normalizeByeTeam(team) {
-    if (!Array.isArray(team) || team.length === 0) {
-        return ["", ""]
-    }
-    if (team.length === 1) {
-        return [team[0] || "", ""]
-    }
-    return [team[0] || "", team[1] || ""]
-}
-
-function reconcilePairRows(rows, keepEmpty = false) {
-    const nextRows = []
-    for (const row of rows || []) {
-        const a = typeof row?.[0] === "string" ? row[0] : ""
-        const b = typeof row?.[1] === "string" ? row[1] : ""
-        if (keepEmpty || a || b) {
-            nextRows.push([a, b])
-        }
-    }
-    return nextRows
-}
-
-function reconcileByeTeams(teams, keepEmpty = false) {
-    const next = []
-    for (const rawTeam of teams || []) {
-        const [a, b] = normalizeByeTeam(rawTeam)
-        if (!(keepEmpty || a || b)) {
-            continue
-        }
-        next.push([a, b].filter(Boolean))
-    }
-    return next
-}
-
 function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers) {
     const selected = new Set(selectedPlayers)
 
@@ -78,11 +51,18 @@ function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers) {
         .map(([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""])
         .filter(([a, b]) => a || b)
 
+    const lockedPairKeySet = collectLockedPairKeySet(tournamentAdvanced.doublesLockedPairs, true)
+
     tournamentAdvanced.singlesByePlayers = tournamentAdvanced.singlesByePlayers.filter((player) => selected.has(player))
 
     tournamentAdvanced.doublesByeTeams = reconcileByeTeams(tournamentAdvanced.doublesByeTeams)
         .map((team) => team.filter((player) => selected.has(player)))
         .filter((team) => team.length > 0)
+    tournamentAdvanced.doublesByeTeams = filterByeTeamsToLockedPairs(
+        tournamentAdvanced.doublesByeTeams,
+        lockedPairKeySet,
+        true,
+    )
 
     if (tournamentAdvanced.forcedSitOutPlayer && !selected.has(tournamentAdvanced.forcedSitOutPlayer)) {
         tournamentAdvanced.forcedSitOutPlayer = null
@@ -110,6 +90,14 @@ function reconcileAdvancedForMode({
 
     tournamentAdvanced.singlesOpeningMatchups = []
     tournamentAdvanced.singlesByePlayers = []
+    if (!allowNotStrictDoubles) {
+        tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs)
+            .filter(([a, b]) => a && b && a !== b)
+            .map(([a, b]) => [a, b])
+        tournamentAdvanced.doublesByeTeams = reconcileByeTeams(tournamentAdvanced.doublesByeTeams)
+            .filter((team) => team.length === 2)
+            .map((team) => [...team])
+    }
     if (!isBracketFormat(tournamentFormat)) {
         tournamentAdvanced.doublesByeTeams = []
     }
@@ -125,95 +113,113 @@ function reconcileAdvancedForMode({
     }
 }
 
-function validateSinglesRows(rows, label) {
-    for (const [a, b] of rows) {
-        if (!(a && b)) {
-            return `Every ${label} row must select two players.`
+function normalizeAdvancedForConfig(source, allowNotStrictDoubles = false) {
+    const doublesLockedPairs = []
+    for (const row of reconcilePairRows(source.doublesLockedPairs)) {
+        const teamPlayers = toLockedTeamPlayers(row, allowNotStrictDoubles)
+        if (!teamPlayers) {
+            continue
         }
-        if (a === b) {
-            if (label === "singles opening matchup") {
-                return "Singles opening matchup players must be different."
-            }
-            return "Doubles locked pairs must use two different players."
+        if (teamPlayers.length === 1) {
+            doublesLockedPairs.push([teamPlayers[0], ""])
+            continue
         }
-    }
-    return null
-}
-
-function validateDoublesByeTeams(teams, allowNotStrictDoubles) {
-    for (const team of teams) {
-        const normalized = normalizeByeTeam(team).filter(Boolean)
-        if (normalized.length === 0) {
-            return "Every doubles bye team row must include at least one player."
-        }
-        if (!allowNotStrictDoubles && normalized.length < 2) {
-            return "Strict doubles bye teams must include exactly two players."
-        }
-        if (normalized.length > 2) {
-            return "A doubles bye team can include at most two players."
-        }
-        if (normalized.length === 2 && normalized[0] === normalized[1]) {
-            return "Doubles bye team players must be different."
-        }
-    }
-    return null
-}
-
-function validateAdvancedDraft({
-    advancedDraft,
-    tournamentFormat,
-    tournamentTeamSize,
-    allowNotStrictDoubles,
-    selectedPlayers,
-    minRequiredSitOutPool,
-}) {
-    if (tournamentFormat === "round-robin" && tournamentTeamSize === 1) {
-        const hasMatchups = advancedDraft.singlesOpeningMatchups.some(([a, b]) => Boolean(a || b))
-        if (hasMatchups) {
-            return "Singles opening matchups are not supported for round-robin."
-        }
+        doublesLockedPairs.push([teamPlayers[0], teamPlayers[1]])
     }
 
-    const singlesError = validateSinglesRows(advancedDraft.singlesOpeningMatchups, "singles opening matchup")
-    if (singlesError) {
-        return singlesError
-    }
-
-    const doublesError = validateSinglesRows(advancedDraft.doublesLockedPairs, "locked doubles pair")
-    if (doublesError) {
-        return doublesError
-    }
-
-    const byeError = validateDoublesByeTeams(advancedDraft.doublesByeTeams, allowNotStrictDoubles)
-    if (byeError) {
-        return byeError
-    }
-
-    const forcedSitOutRequired = requiresForcedSitOut({
-        tournamentTeamSize,
-        allowNotStrictDoubles,
-        selectedPlayers,
-        minRequiredSitOutPool,
-    })
-    if (!forcedSitOutRequired && advancedDraft.forcedSitOutPlayer) {
-        return "Required sit-out can only be set when strict doubles has an odd player count."
-    }
-    return null
-}
-
-function normalizeAdvancedForConfig(source) {
+    const lockedPairKeySet = collectLockedPairKeySet(doublesLockedPairs, allowNotStrictDoubles)
     return {
         singlesOpeningMatchups: reconcilePairRows(source.singlesOpeningMatchups)
             .filter(([a, b]) => a && b)
             .map(([a, b]) => [a, b]),
-        doublesLockedPairs: reconcilePairRows(source.doublesLockedPairs)
-            .filter(([a, b]) => a && b)
-            .map(([a, b]) => [a, b]),
+        doublesLockedPairs,
         forcedSitOutPlayer: source.forcedSitOutPlayer || null,
         singlesByePlayers: [...new Set((source.singlesByePlayers || []).filter(Boolean))],
-        doublesByeTeams: reconcileByeTeams(source.doublesByeTeams)
-            .map((team) => [...new Set(team.filter(Boolean))])
-            .filter((team) => team.length > 0),
+        doublesByeTeams: filterByeTeamsToLockedPairs(
+            reconcileByeTeams(source.doublesByeTeams),
+            lockedPairKeySet,
+            allowNotStrictDoubles,
+        ),
+    }
+}
+
+function buildCountLabel(count, singular, plural) {
+    if (count <= 0) {
+        return "Auto"
+    }
+    return formatCountLabel(count, singular, plural)
+}
+
+function buildSectionStats({ normalized, tournamentTeamSize, bracketFormat, requiredSitOutVisible }) {
+    let requiredSitOutLabel = "N/A"
+    if (requiredSitOutVisible) {
+        requiredSitOutLabel = normalized.forcedSitOutPlayer ? "Locked" : "Auto"
+    }
+    return {
+        requiredSitOut: {
+            visible: requiredSitOutVisible,
+            activeCount: normalized.forcedSitOutPlayer ? 1 : 0,
+            label: requiredSitOutLabel,
+        },
+        singlesOpening: {
+            visible: tournamentTeamSize === 1 && bracketFormat,
+            activeCount: normalized.singlesOpeningMatchups.length,
+            label: buildCountLabel(normalized.singlesOpeningMatchups.length, "matchup", "matchups"),
+        },
+        doublesPairs: {
+            visible: tournamentTeamSize === 2,
+            activeCount: normalized.doublesLockedPairs.filter(([a, b]) => Boolean(a || b)).length,
+            label: buildCountLabel(
+                normalized.doublesLockedPairs.filter(([a, b]) => Boolean(a || b)).length,
+                "team lock",
+                "team locks",
+            ),
+        },
+        singlesByes: {
+            visible: tournamentTeamSize === 1 && bracketFormat,
+            activeCount: normalized.singlesByePlayers.length,
+            label: buildCountLabel(normalized.singlesByePlayers.length, "player", "players"),
+        },
+        doublesByes: {
+            visible: tournamentTeamSize === 2 && bracketFormat,
+            activeCount: normalized.doublesByeTeams.length,
+            label: buildCountLabel(normalized.doublesByeTeams.length, "team", "teams"),
+        },
+    }
+}
+
+function summarizeAdvancedSettings(advancedSettings, context) {
+    const { tournamentFormat, tournamentTeamSize, allowNotStrictDoubles, selectedPlayers, minRequiredSitOutPool } =
+        context
+    const selection = Array.isArray(selectedPlayers) ? selectedPlayers : []
+    const draft = cloneAdvancedSettings(advancedSettings || getDefaultAdvancedSettings())
+
+    reconcileAdvancedForMode({
+        tournamentAdvanced: draft,
+        tournamentTeamSize,
+        tournamentFormat,
+        allowNotStrictDoubles,
+        selectedPlayers: selection,
+        minRequiredSitOutPool,
+    })
+    reconcileAdvancedForSelection(draft, selection)
+
+    const normalized = normalizeAdvancedForConfig(draft, allowNotStrictDoubles)
+    const bracketFormat = isBracketFormat(tournamentFormat)
+    const requiredSitOutVisible = requiresForcedSitOut({
+        tournamentTeamSize,
+        allowNotStrictDoubles,
+        selectedPlayers: selection,
+        minRequiredSitOutPool,
+    })
+
+    const sectionStats = buildSectionStats({ normalized, tournamentTeamSize, bracketFormat, requiredSitOutVisible })
+
+    const totalActive = Object.values(sectionStats).reduce((total, section) => total + section.activeCount, 0)
+    return {
+        totalActive,
+        triggerLabel: totalActive > 0 ? formatCountLabel(totalActive, "override", "overrides") : "Auto",
+        sections: sectionStats,
     }
 }
 
@@ -223,6 +229,7 @@ export {
     isBracketFormat,
     normalizeAdvancedForConfig,
     normalizeByeTeam,
+    summarizeAdvancedSettings,
     reconcileAdvancedForMode,
     reconcileAdvancedForSelection,
     validateAdvancedDraft,

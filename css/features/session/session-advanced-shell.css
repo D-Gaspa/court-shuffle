@@ -1,0 +1,226 @@
+.tournament-advanced-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
+}
+
+.tournament-advanced-state {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    border: 1px solid color-mix(in srgb, var(--court), var(--border) 45%);
+    padding: 4px 10px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--court-glow), transparent 40%);
+}
+
+.tournament-advanced-state[data-state="active"] {
+    color: var(--court-light);
+    border-color: color-mix(in srgb, var(--court-light), var(--court) 50%);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--court-glow), transparent 30%);
+}
+
+#tournament-advanced-dialog.modal-advanced {
+    width: min(980px, calc(100vw - 1.5rem));
+    max-height: calc(100dvh - 1.5rem);
+}
+
+#tournament-advanced-dialog.modal-advanced::backdrop {
+    background:
+        radial-gradient(circle at 14% 20%, color-mix(in srgb, var(--court-glow), #000 70%), transparent 45%),
+        radial-gradient(circle at 86% 85%, color-mix(in srgb, var(--clay-glow), #000 70%), transparent 45%),
+        rgba(7, 8, 10, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#tournament-advanced-dialog .advanced-modal {
+    --advanced-bg-0: #11161a;
+    --advanced-bg-1: #151d22;
+    --advanced-panel: #19222a;
+    --advanced-panel-raised: #202b34;
+    --advanced-line: color-mix(in srgb, var(--court), #0f1419 60%);
+    --advanced-line-soft: color-mix(in srgb, var(--border-light), transparent 30%);
+    --advanced-accent: #6bd2a0;
+    --advanced-accent-soft: #6bd2a022;
+    --advanced-warning: #ff935f;
+    --advanced-text: #e6f0f7;
+    --advanced-muted: #90a2b2;
+    --advanced-chip-auto: #8e9daa;
+    --advanced-chip-active: #6bd2a0;
+    --advanced-chip-muted: #55616c;
+    --advanced-chip-error: #ff6d5e;
+
+    position: relative;
+    overflow: auto;
+    background:
+        linear-gradient(140deg, color-mix(in srgb, var(--court), #121920 78%), transparent 38%),
+        linear-gradient(163deg, transparent 55%, color-mix(in srgb, var(--clay), transparent 86%) 100%),
+        linear-gradient(180deg, var(--advanced-bg-0), var(--advanced-bg-1));
+    border: 1px solid color-mix(in srgb, var(--court), var(--border) 50%);
+    box-shadow:
+        0 28px 80px #000b,
+        inset 0 0 0 1px color-mix(in srgb, var(--court), transparent 85%);
+    color: var(--advanced-text);
+}
+
+#tournament-advanced-dialog .advanced-modal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--advanced-line), transparent 50%) 0 1px,
+            transparent 1px 44px
+        ),
+        linear-gradient(
+            112deg,
+            transparent 0 53%,
+            color-mix(in srgb, var(--advanced-accent), transparent 88%) 53.5%,
+            transparent 54%
+        );
+    opacity: 0.55;
+}
+
+#tournament-advanced-dialog .advanced-modal > * {
+    position: relative;
+    z-index: 1;
+}
+
+.advanced-modal-header h2 {
+    margin-bottom: 4px;
+    color: var(--advanced-text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+#tournament-advanced-dialog .advanced-modal-header .modal-subtitle {
+    color: var(--advanced-muted);
+}
+
+.advanced-control-shell {
+    margin-top: var(--space-lg);
+    display: grid;
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+    gap: var(--space-md);
+}
+
+.advanced-control-rail {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    display: grid;
+    gap: var(--space-sm);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--advanced-line-soft);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--advanced-panel-raised), transparent 5%),
+        var(--advanced-panel)
+    );
+    padding: 12px;
+}
+
+.advanced-rail-kicker {
+    font-size: 0.67rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--advanced-accent);
+    padding: 0 2px;
+}
+
+.advanced-control-nav {
+    display: grid;
+    gap: 8px;
+}
+
+.advanced-rail-btn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--advanced-line-soft);
+    border-radius: 11px;
+    padding: 9px 10px;
+    background: color-mix(in srgb, var(--advanced-panel-raised), transparent 10%);
+    color: var(--advanced-text);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color var(--duration-fast) var(--ease-out),
+        background-color var(--duration-fast) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out);
+}
+
+.advanced-rail-btn:hover:not(:disabled),
+.advanced-rail-btn:focus-visible {
+    border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line) 40%);
+    background: color-mix(in srgb, var(--advanced-panel-raised), var(--advanced-accent-soft) 20%);
+}
+
+.advanced-rail-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--advanced-accent), transparent 72%);
+}
+
+.advanced-rail-btn.is-active {
+    border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line) 30%);
+}
+
+.advanced-rail-btn.is-error {
+    border-color: color-mix(in srgb, var(--advanced-chip-error), var(--advanced-line) 35%);
+}
+
+.advanced-rail-btn.is-disabled {
+    opacity: 0.48;
+}
+
+.advanced-rail-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--advanced-text);
+}
+
+.advanced-status-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    border-radius: var(--radius-full);
+    border: 1px solid color-mix(in srgb, var(--advanced-chip-auto), transparent 35%);
+    padding: 3px 8px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--advanced-chip-auto);
+    background: color-mix(in srgb, var(--advanced-chip-auto), transparent 87%);
+}
+
+.advanced-status-chip[data-state="active"] {
+    color: var(--advanced-chip-active);
+    border-color: color-mix(in srgb, var(--advanced-chip-active), transparent 35%);
+    background: color-mix(in srgb, var(--advanced-chip-active), transparent 88%);
+}
+
+.advanced-status-chip[data-state="muted"] {
+    color: var(--advanced-chip-muted);
+    border-color: color-mix(in srgb, var(--advanced-chip-muted), transparent 45%);
+    background: color-mix(in srgb, var(--advanced-chip-muted), transparent 90%);
+}
+
+.advanced-status-chip[data-state="error"] {
+    color: var(--advanced-chip-error);
+    border-color: color-mix(in srgb, var(--advanced-chip-error), transparent 35%);
+    background: color-mix(in srgb, var(--advanced-chip-error), transparent 88%);
+}

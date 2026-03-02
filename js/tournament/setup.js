@@ -4,15 +4,20 @@
  */
 
 import { hideFieldError, showFieldError } from "../shared/utils.js"
+import { bindAdvancedActionButtons } from "./setup/advanced-bindings.js"
+import { getAdvancedSetupDom } from "./setup/advanced-dom.js"
+import { createAdvancedModalUiController } from "./setup/advanced-modal-ui.js"
 import {
     cloneAdvancedSettings,
     getDefaultAdvancedSettings,
     normalizeAdvancedForConfig,
     reconcileAdvancedForMode,
     reconcileAdvancedForSelection,
+    summarizeAdvancedSettings,
     validateAdvancedDraft,
 } from "./setup/advanced-model.js"
 import { renderAdvancedModalSections } from "./setup/advanced-render.js"
+import { bindTournamentFormatButtons, bindTournamentTeamSizeButtons } from "./setup/mode-bindings.js"
 
 const MIN_DOUBLES_TEAM_PLAYERS = 4
 const MIN_SINGLES_TEAM_PLAYERS = 2
@@ -25,25 +30,28 @@ const teamSizeSelector = document.getElementById("tournament-team-size")
 const tournamentHint = document.getElementById("tournament-hint")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 
-const advancedBtn = document.getElementById("tournament-advanced-btn")
-const advancedDialog = document.getElementById("tournament-advanced-dialog")
-const advancedCancelBtn = document.getElementById("advanced-cancel")
-const advancedApplyBtn = document.getElementById("advanced-apply")
-const advancedModalError = document.getElementById("advanced-modal-error")
-
-const requiredSitOutSection = document.getElementById("advanced-required-sitout-section")
-const requiredSitOutSelect = document.getElementById("advanced-required-sitout-select")
-const singlesOpeningSection = document.getElementById("advanced-singles-opening-section")
-const singlesOpeningList = document.getElementById("advanced-singles-opening-list")
-const addSinglesMatchupBtn = document.getElementById("advanced-add-singles-matchup")
-const doublesPairsSection = document.getElementById("advanced-doubles-pairs-section")
-const doublesPairsList = document.getElementById("advanced-doubles-pairs-list")
-const addDoublesPairBtn = document.getElementById("advanced-add-doubles-pair")
-const singlesByesSection = document.getElementById("advanced-singles-byes-section")
-const singlesByesList = document.getElementById("advanced-singles-byes-list")
-const doublesByesSection = document.getElementById("advanced-doubles-byes-section")
-const doublesByesList = document.getElementById("advanced-doubles-byes-list")
-const addDoublesByeTeamBtn = document.getElementById("advanced-add-doubles-bye-team")
+const {
+    addDoublesPairBtn,
+    addSinglesMatchupBtn,
+    advancedApplyBtn,
+    advancedBtn,
+    advancedCancelBtn,
+    advancedCardElements,
+    advancedDialog,
+    advancedModalError,
+    advancedValidationSummary,
+    doublesByesList,
+    doublesByesSection,
+    doublesPairsList,
+    doublesPairsSection,
+    requiredSitOutSection,
+    requiredSitOutSelect,
+    singlesByesList,
+    singlesByesSection,
+    singlesOpeningList,
+    singlesOpeningSection,
+    tournamentAdvancedState,
+} = getAdvancedSetupDom(document)
 
 let tournamentFormat = "consolation"
 let tournamentTeamSize = 1
@@ -53,13 +61,36 @@ let changeCallback = null
 let advancedDraft = null
 let tournamentAdvanced = getDefaultAdvancedSettings()
 
-function triggerChange() {
-    if (changeCallback) {
-        changeCallback()
+function getAdvancedSummaryContext() {
+    return {
+        tournamentFormat,
+        tournamentTeamSize,
+        allowNotStrictDoubles,
+        selectedPlayers,
+        minRequiredSitOutPool: MIN_REQUIRED_SIT_OUT_POOL,
     }
 }
 
+function getAdvancedSummary(source) {
+    return summarizeAdvancedSettings(source, getAdvancedSummaryContext())
+}
+
+const advancedUi = createAdvancedModalUiController({
+    advancedDialog,
+    advancedModalError,
+    advancedValidationSummary,
+    tournamentAdvancedState,
+    cardElements: advancedCardElements,
+    getCommittedSummary: () => getAdvancedSummary(tournamentAdvanced),
+    getActiveSummary: () => getAdvancedSummary(advancedDraft || tournamentAdvanced),
+})
+
 function renderAdvancedSections() {
+    if (!advancedDraft) {
+        advancedUi.renderMeta()
+        return
+    }
+
     renderAdvancedModalSections({
         tournamentTeamSize,
         tournamentFormat,
@@ -73,12 +104,15 @@ function renderAdvancedSections() {
         singlesOpeningList,
         doublesPairsSection,
         doublesPairsList,
+        addDoublesPairBtn,
         singlesByesSection,
         singlesByesList,
         doublesByesSection,
         doublesByesList,
         onRequestRender: renderAdvancedSections,
     })
+    advancedUi.syncCardLayout()
+    advancedUi.renderMeta()
 }
 
 function reconcileAdvancedState() {
@@ -91,10 +125,12 @@ function reconcileAdvancedState() {
         minRequiredSitOutPool: MIN_REQUIRED_SIT_OUT_POOL,
     })
     reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers)
+    advancedUi.renderMeta()
 }
 
 function openAdvancedDialog() {
     advancedDraft = cloneAdvancedSettings(tournamentAdvanced)
+    advancedUi.resetCardExpansion(tournamentTeamSize)
     hideFieldError(advancedModalError)
     renderAdvancedSections()
     advancedDialog.showModal()
@@ -111,72 +147,74 @@ function onAdvancedApply() {
     })
     if (error) {
         showFieldError(advancedModalError, error)
+        advancedUi.renderMeta()
         return
     }
 
     hideFieldError(advancedModalError)
-    tournamentAdvanced = normalizeAdvancedForConfig(advancedDraft)
+    tournamentAdvanced = normalizeAdvancedForConfig(advancedDraft, allowNotStrictDoubles)
     advancedDialog.close()
-    triggerChange()
-}
-
-function bindFormatButtons(onChange) {
-    for (const btn of formatSelector.querySelectorAll(".format-btn")) {
-        btn.addEventListener("click", () => {
-            tournamentFormat = btn.dataset.format
-            for (const option of formatSelector.querySelectorAll(".format-btn")) {
-                option.classList.toggle("selected", option === btn)
-            }
-            updateTournamentHint()
-            onChange()
-        })
-    }
-}
-
-function bindTeamSizeButtons(onChange) {
-    for (const btn of teamSizeSelector.querySelectorAll(".team-size-btn")) {
-        btn.addEventListener("click", () => {
-            tournamentTeamSize = Number(btn.dataset.teamSize)
-            for (const option of teamSizeSelector.querySelectorAll(".team-size-btn")) {
-                option.classList.toggle("selected", option === btn)
-            }
-            notStrictDoublesGroup.hidden = tournamentTeamSize !== 2
-            updateTournamentHint()
-            onChange()
-        })
-    }
+    changeCallback?.()
+    advancedUi.renderMeta()
 }
 
 function bindAdvancedButtons() {
-    advancedBtn?.addEventListener("click", openAdvancedDialog)
-    advancedCancelBtn?.addEventListener("click", () => advancedDialog?.close())
-    advancedApplyBtn?.addEventListener("click", onAdvancedApply)
-
-    requiredSitOutSelect?.addEventListener("change", () => {
-        if (advancedDraft) {
-            advancedDraft.forcedSitOutPlayer = requiredSitOutSelect.value || null
-        }
+    bindAdvancedActionButtons({
+        advancedBtn,
+        advancedCancelBtn,
+        advancedApplyBtn,
+        advancedDialog,
+        requiredSitOutSelect,
+        addSinglesMatchupBtn,
+        addDoublesPairBtn,
+        onOpenDialog: openAdvancedDialog,
+        onApplyDialog: onAdvancedApply,
+        onCloseDialog: () => {
+            advancedDraft = null
+            hideFieldError(advancedModalError)
+            advancedUi.renderMeta()
+        },
+        onRequiredSitOutChange: (nextValue) => {
+            if (!advancedDraft) {
+                return
+            }
+            advancedDraft.forcedSitOutPlayer = nextValue || null
+            advancedUi.renderMeta()
+        },
+        onAddSinglesMatchup: () => {
+            if (!advancedDraft) {
+                return
+            }
+            advancedDraft.singlesOpeningMatchups.push(["", ""])
+            renderAdvancedSections()
+        },
+        onAddDoublesPair: () => {
+            if (!advancedDraft) {
+                return
+            }
+            advancedDraft.doublesLockedPairs.push(["", ""])
+            renderAdvancedSections()
+        },
     })
 
-    addSinglesMatchupBtn?.addEventListener("click", () => {
-        advancedDraft.singlesOpeningMatchups.push(["", ""])
-        renderAdvancedSections()
-    })
-    addDoublesPairBtn?.addEventListener("click", () => {
-        advancedDraft.doublesLockedPairs.push(["", ""])
-        renderAdvancedSections()
-    })
-    addDoublesByeTeamBtn?.addEventListener("click", () => {
-        advancedDraft.doublesByeTeams.push(["", ""])
-        renderAdvancedSections()
-    })
+    advancedUi.bindInteractions()
 }
 
 function initTournamentSetup(onChange) {
     changeCallback = onChange
-    bindFormatButtons(onChange)
-    bindTeamSizeButtons(onChange)
+    bindTournamentFormatButtons(formatSelector, (nextFormat) => {
+        tournamentFormat = nextFormat
+        updateTournamentHint()
+        onChange()
+    })
+    bindTournamentTeamSizeButtons(teamSizeSelector, (nextSize) => {
+        tournamentTeamSize = nextSize
+        notStrictDoublesGroup.hidden = tournamentTeamSize !== 2
+        updateTournamentHint()
+        onChange()
+    })
     bindAdvancedButtons()
+    advancedUi.renderMeta()
 }
 
 function showTournamentConfig() {
@@ -199,6 +237,7 @@ function updateTournamentHint() {
 function updateTournamentPlayers(players) {
     selectedPlayers = Array.isArray(players) ? [...players] : []
     reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers)
+    advancedUi.renderMeta()
 }
 
 function getTournamentConfig(players, allowNotStrict) {
@@ -211,7 +250,7 @@ function getTournamentConfig(players, allowNotStrict) {
         playerCount: players.length,
         courtHandling: "queue",
         allowNotStrictDoubles,
-        advanced: normalizeAdvancedForConfig(tournamentAdvanced),
+        advanced: normalizeAdvancedForConfig(tournamentAdvanced, allowNotStrictDoubles),
     }
 }
 
@@ -242,6 +281,7 @@ function resetTournamentSetup() {
     notStrictDoublesGroup.hidden = true
     tournamentHint.textContent = ""
     hideFieldError(advancedModalError)
+    advancedUi.renderMeta()
 }
 
 export {

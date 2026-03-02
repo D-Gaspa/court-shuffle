@@ -164,6 +164,7 @@
 
                                 <div id="tournament-hint" class="hint"></div>
                                 <div class="tournament-advanced-actions">
+                                    <span id="tournament-advanced-state" class="tournament-advanced-state" aria-live="polite">Auto</span>
                                     <button type="button" id="tournament-advanced-btn" class="btn btn-ghost btn-sm">Advanced Settings</button>
                                 </div>
                             </div>
@@ -367,56 +368,174 @@
         </dialog>
 
         <!-- Tournament Advanced Modal -->
-        <dialog id="tournament-advanced-dialog" class="modal">
-            <div class="modal-content modal-content-lg">
-                <h2>Advanced Tournament Settings</h2>
-                <p class="modal-subtitle">These overrides apply only to Tournament 1.</p>
+        <dialog id="tournament-advanced-dialog" class="modal modal-advanced">
+            <div class="modal-content modal-content-lg advanced-modal">
+                <header class="advanced-modal-header">
+                    <h2>Advanced Tournament Settings</h2>
+                    <p class="modal-subtitle">Tournament Control Rail · overrides apply to Tournament 1 only.</p>
+                </header>
 
-                <div id="advanced-required-sitout-section" class="config-group" hidden>
-                    <h3 class="section-label">Required Sit-Out</h3>
-                    <select id="advanced-required-sitout-select" class="advanced-select"></select>
-                    <div class="hint">Only shown when strict doubles requires one player to sit out.</div>
-                </div>
+                <div class="advanced-control-shell">
+                    <aside class="advanced-control-rail" aria-label="Control rail">
+                        <p class="advanced-rail-kicker">Control Rail</p>
+                        <nav class="advanced-control-nav" aria-label="Advanced section navigation">
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-required-sitout-section">
+                                <span class="advanced-rail-label">Required Sit-Out</span>
+                                <span id="advanced-status-required-sitout" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-singles-opening-section">
+                                <span class="advanced-rail-label">Singles Openers</span>
+                                <span id="advanced-status-singles-opening" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-doubles-pairs-section">
+                                <span class="advanced-rail-label">Doubles Pairs</span>
+                                <span id="advanced-status-doubles-pairs" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-singles-byes-section">
+                                <span class="advanced-rail-label">Singles Byes</span>
+                                <span id="advanced-status-singles-byes" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-doubles-byes-section">
+                                <span class="advanced-rail-label">Doubles Byes</span>
+                                <span id="advanced-status-doubles-byes" class="advanced-status-chip">N/A</span>
+                            </button>
+                        </nav>
+                    </aside>
 
-                <div id="advanced-singles-opening-section" class="config-group" hidden>
-                    <div class="advanced-section-header">
-                        <h3 class="section-label">Singles Opening Matchups</h3>
-                        <button type="button" id="advanced-add-singles-matchup" class="btn btn-ghost btn-sm">Add</button>
+                    <div class="advanced-card-stack">
+                        <section
+                            id="advanced-required-sitout-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="requiredSitOut"
+                            hidden
+                        >
+                            <button
+                                type="button"
+                                id="advanced-toggle-required-sitout"
+                                class="advanced-card-header"
+                                data-advanced-toggle="requiredSitOut"
+                                aria-expanded="true"
+                                aria-controls="advanced-required-sitout-body"
+                            >
+                                <span class="advanced-card-kicker">Doubles Guardrail</span>
+                                <span class="advanced-card-title">Required Sit-Out</span>
+                            </button>
+                            <div id="advanced-required-sitout-body" class="advanced-card-body">
+                                <select id="advanced-required-sitout-select" class="advanced-select"></select>
+                                <p class="advanced-card-hint">Only shown when strict doubles requires one player to sit out.</p>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-singles-opening-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="singlesOpening"
+                            hidden
+                        >
+                            <button
+                                type="button"
+                                id="advanced-toggle-singles-opening"
+                                class="advanced-card-header"
+                                data-advanced-toggle="singlesOpening"
+                                aria-expanded="true"
+                                aria-controls="advanced-singles-opening-body"
+                            >
+                                <span class="advanced-card-kicker">Singles Bracket</span>
+                                <span class="advanced-card-title">Opening Matchups</span>
+                            </button>
+                            <div id="advanced-singles-opening-body" class="advanced-card-body">
+                                <div class="advanced-section-header">
+                                    <p class="advanced-card-hint">Used for elimination/consolation only.</p>
+                                    <button type="button" id="advanced-add-singles-matchup" class="btn btn-ghost btn-sm">Add</button>
+                                </div>
+                                <div id="advanced-singles-opening-list" class="advanced-row-list"></div>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-doubles-pairs-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="doublesPairs"
+                            hidden
+                        >
+                            <button
+                                type="button"
+                                id="advanced-toggle-doubles-pairs"
+                                class="advanced-card-header"
+                                data-advanced-toggle="doublesPairs"
+                                aria-expanded="true"
+                                aria-controls="advanced-doubles-pairs-body"
+                            >
+                                <span class="advanced-card-kicker">Doubles Bracket</span>
+                                <span class="advanced-card-title">Locked Teams</span>
+                            </button>
+                            <div id="advanced-doubles-pairs-body" class="advanced-card-body">
+                                <div class="advanced-section-header">
+                                    <p class="advanced-card-hint">Lock full pairs or one solo team when 2v1 is enabled.</p>
+                                    <button type="button" id="advanced-add-doubles-pair" class="btn btn-ghost btn-sm">Add</button>
+                                </div>
+                                <div id="advanced-doubles-pairs-list" class="advanced-row-list"></div>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-singles-byes-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="singlesByes"
+                            hidden
+                        >
+                            <button
+                                type="button"
+                                id="advanced-toggle-singles-byes"
+                                class="advanced-card-header"
+                                data-advanced-toggle="singlesByes"
+                                aria-expanded="false"
+                                aria-controls="advanced-singles-byes-body"
+                            >
+                                <span class="advanced-card-kicker">Singles Bracket</span>
+                                <span class="advanced-card-title">Bye Players</span>
+                            </button>
+                            <div id="advanced-singles-byes-body" class="advanced-card-body">
+                                <div id="advanced-singles-byes-list" class="advanced-check-list"></div>
+                                <p class="advanced-card-hint">Leave empty to auto-assign byes.</p>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-doubles-byes-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="doublesByes"
+                            hidden
+                        >
+                            <button
+                                type="button"
+                                id="advanced-toggle-doubles-byes"
+                                class="advanced-card-header"
+                                data-advanced-toggle="doublesByes"
+                                aria-expanded="false"
+                                aria-controls="advanced-doubles-byes-body"
+                            >
+                                <span class="advanced-card-kicker">Doubles Bracket</span>
+                                <span class="advanced-card-title">Bye Teams</span>
+                            </button>
+                            <div id="advanced-doubles-byes-body" class="advanced-card-body">
+                                <div id="advanced-doubles-byes-list" class="advanced-check-list"></div>
+                                <p class="advanced-card-hint">Choose from locked teams only. Leave empty to auto-assign.</p>
+                            </div>
+                        </section>
                     </div>
-                    <div id="advanced-singles-opening-list" class="advanced-row-list"></div>
-                    <div class="hint">Used for elimination/consolation only. Round-robin keeps automatic pairings.</div>
                 </div>
 
-                <div id="advanced-doubles-pairs-section" class="config-group" hidden>
-                    <div class="advanced-section-header">
-                        <h3 class="section-label">Doubles Locked Pairs</h3>
-                        <button type="button" id="advanced-add-doubles-pair" class="btn btn-ghost btn-sm">Add</button>
+                <footer class="advanced-modal-footer">
+                    <div class="advanced-validation-stack">
+                        <div id="advanced-validation-summary" class="advanced-validation-summary" aria-live="polite"></div>
+                        <div id="advanced-modal-error" class="field-error" hidden></div>
                     </div>
-                    <div id="advanced-doubles-pairs-list" class="advanced-row-list"></div>
-                    <div class="hint">Locked partners are kept together in Tournament 1 only.</div>
-                </div>
-
-                <div id="advanced-singles-byes-section" class="config-group" hidden>
-                    <h3 class="section-label">Singles Byes (Optional)</h3>
-                    <div id="advanced-singles-byes-list" class="advanced-check-list"></div>
-                    <div class="hint">Leave empty to auto-assign byes.</div>
-                </div>
-
-                <div id="advanced-doubles-byes-section" class="config-group" hidden>
-                    <div class="advanced-section-header">
-                        <h3 class="section-label">Doubles Bye Teams (Optional)</h3>
-                        <button type="button" id="advanced-add-doubles-bye-team" class="btn btn-ghost btn-sm">Add</button>
+                    <div class="modal-actions advanced-modal-actions">
+                        <button type="button" id="advanced-cancel" class="btn btn-ghost">Cancel</button>
+                        <button type="button" id="advanced-apply" class="btn btn-primary">Apply</button>
                     </div>
-                    <div id="advanced-doubles-byes-list" class="advanced-row-list"></div>
-                    <div class="hint">Leave empty to auto-assign bye teams.</div>
-                </div>
-
-                <div id="advanced-modal-error" class="field-error" hidden></div>
-
-                <div class="modal-actions">
-                    <button type="button" id="advanced-cancel" class="btn btn-ghost">Cancel</button>
-                    <button type="button" id="advanced-apply" class="btn btn-primary">Apply</button>
-                </div>
+                </footer>
             </div>
         </dialog>
 
