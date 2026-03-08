@@ -75,6 +75,7 @@ function appendByeCheckboxRow({
     const input = document.createElement("input")
     input.type = "checkbox"
     input.className = "advanced-check-box"
+    input.name = `advanced-doubles-bye-${key}`
     input.checked = selectedByeKeys.has(key)
     input.disabled = !input.checked && selectedByeKeys.size >= byeSlots
     input.addEventListener("change", () => {

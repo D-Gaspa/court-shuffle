@@ -1,12 +1,14 @@
 import { ensureTournamentCourtSchedule, getQueuePendingIndexes } from "../../../tournament/courts.js"
 import { teamByPlayers } from "../../../tournament/utils.js"
-import { renderBracket } from "../render.js"
 import {
     appendSectionLabel,
     filterIndexedMatches,
+    getMatchHeaderLabel,
     getRoundOpenEditors,
+    resolveDisplayCourt,
     splitTournamentMatchesByPool,
 } from "./round-render-helpers.js"
+import { renderSingleMatch } from "./round-render-match.js"
 import { appendExecutionInfo, getTournamentRoundDisplayState } from "./round-state.js"
 
 const noopRefreshNav = () => undefined
@@ -17,29 +19,6 @@ function makeTeamNameResolver(session) {
         const team = teamByPlayers(session.teams, players)
         return team ? team.name : players.join(", ")
     }
-}
-
-function makeSingleMatchRound(match, scoreEntry, displayCourt) {
-    return {
-        matches: [{ ...match, court: displayCourt }],
-        scores: scoreEntry ? [scoreEntry] : null,
-    }
-}
-
-function getQueueDisplayCourt(round, match, globalIdx) {
-    const courtCount = Math.max(1, round?.courtSchedule?.courtCount || 1)
-    const baseCourt = Number(match?.court) || globalIdx + 1
-    return ((baseCourt - 1) % courtCount) + 1
-}
-
-function resolveDisplayCourt({ round, match, globalIdx, localIdx, showCourtSlots }) {
-    if (!showCourtSlots) {
-        return match.court
-    }
-    if (round?.courtSchedule?.mode === "queue") {
-        return getQueueDisplayCourt(round, match, globalIdx)
-    }
-    return localIdx + 1
 }
 
 function canEditTournamentRoundScores(session, roundIndex) {
@@ -64,6 +43,7 @@ function renderMatchGroup({
     allowScoreEditing = true,
     editableIndices = null,
     showCourtSlots = false,
+    queueLabelMode = "court",
     openEditors = null,
 }) {
     const handleAfterScoreSave = (options) => {
@@ -85,44 +65,23 @@ function renderMatchGroup({
             canEdit = editableIndices.has(globalIdx)
         }
 
-        const displayCourt = resolveDisplayCourt({
-            round,
+        renderSingleMatch({
             match,
             globalIdx,
             localIdx: j,
+            round,
+            scoreEntry,
             showCourtSlots,
-        })
-        const tempRound = makeSingleMatchRound(match, scoreEntry, displayCourt)
-        const matchDiv = document.createElement("div")
-        container.appendChild(matchDiv)
-
-        renderBracket(tempRound, matchDiv, {
-            editable: canEdit,
-            isEditing: (matchIndex) => matchIndex === 0 && openEditors?.has(globalIdx),
-            onEditingChange: (matchIndex, isEditing) => {
-                if (matchIndex !== 0 || !openEditors) {
-                    return
-                }
-                if (isEditing) {
-                    openEditors.add(globalIdx)
-                    return
-                }
-                openEditors.delete(globalIdx)
-            },
-            onCommit: (_, sets, options) => {
-                if (!canEdit) {
-                    return
-                }
-                commitScore({
-                    round,
-                    matchIndex: globalIdx,
-                    sets,
-                    saveState,
-                    onAfterSave: handleAfterScoreSave,
-                    options,
-                })
-            },
+            queueLabelMode,
+            container,
             teamNames,
+            openEditors,
+            canEdit,
+            commitScore,
+            saveState,
+            handleAfterScoreSave,
+            resolveDisplayCourt,
+            getMatchHeaderLabel,
         })
     }
 }
@@ -145,6 +104,7 @@ function renderPendingQueue(round, container, teamNames) {
         commitScore: noopCommitScore,
         editableIndices: new Set(),
         showCourtSlots: true,
+        queueLabelMode: "next",
     })
 }
 
@@ -184,6 +144,7 @@ function renderTournamentPoolSections({
             allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
+            queueLabelMode: "court",
             openEditors,
         })
     }
@@ -203,6 +164,7 @@ function renderTournamentPoolSections({
             allowScoreEditing,
             editableIndices: displayState.editableIndices,
             showCourtSlots: true,
+            queueLabelMode: "court",
             openEditors,
         })
     }
@@ -279,6 +241,7 @@ function renderTournamentRound({ session, roundInfo, round, saveState, ui, refre
         allowScoreEditing,
         editableIndices: displayState.editableIndices,
         showCourtSlots: true,
+        queueLabelMode: "court",
         openEditors,
     })
     if (round.courtSchedule?.mode === "queue") {

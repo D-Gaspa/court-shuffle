@@ -59,7 +59,9 @@
     --advanced-chip-error: #ff6d5e;
 
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     border-radius: var(--radius-lg);
     background:
         linear-gradient(140deg, color-mix(in srgb, var(--court), #121920 78%), transparent 38%),

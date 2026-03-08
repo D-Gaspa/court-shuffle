@@ -125,20 +125,38 @@
 }
 
 .advanced-check-item {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
     border: 1px solid var(--advanced-line-soft);
     border-radius: 10px;
-    padding: 9px 10px;
+    min-height: 60px;
+    padding: 11px 12px;
     background: color-mix(in srgb, var(--advanced-panel-raised), transparent 22%);
     color: var(--advanced-text);
     font-size: 0.82rem;
+    cursor: pointer;
+    transition:
+        border-color var(--duration-fast) var(--ease-out),
+        background-color var(--duration-fast) var(--ease-out),
+        box-shadow var(--duration-fast) var(--ease-out);
 }
 
-.advanced-check-item input {
-    margin: 0;
-    accent-color: var(--advanced-accent);
+.advanced-check-item:hover:not(.is-disabled),
+.advanced-check-item:focus-within:not(.is-disabled) {
+    border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line-soft) 40%);
+    background: color-mix(in srgb, var(--advanced-panel-raised), var(--advanced-accent-soft) 15%);
+}
+
+.advanced-check-item.is-selected {
+    border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line-soft) 32%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--advanced-accent), transparent 58%);
+}
+
+.advanced-check-item.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
 }
 
 .session-advanced-step .advanced-section-header .btn-ghost {

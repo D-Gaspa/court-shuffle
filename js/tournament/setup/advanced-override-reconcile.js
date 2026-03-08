@@ -2,6 +2,8 @@ import {
     collectLockedPairKeySet,
     filterByeTeamsToLockedPairs,
     getBracketByeSlotCount,
+    normalizeTeamKey,
+    normalizeTeamPlayers,
     reconcileByeTeams,
 } from "./advanced-model-helpers.js"
 import { isBracketFormat } from "./advanced-rules.js"
@@ -58,15 +60,20 @@ function reconcileNextUpSelectionsForContext({
     }
 
     if (tournamentTeamSize === 1) {
-        tournamentAdvanced.singlesNextUpPlayers = [
-            ...new Set(tournamentAdvanced.singlesNextUpPlayers.filter(Boolean)),
-        ].slice(0, nextUpSlotCount)
+        const byePlayers = new Set(tournamentAdvanced.singlesByePlayers || [])
+        tournamentAdvanced.singlesNextUpPlayers = [...new Set(tournamentAdvanced.singlesNextUpPlayers.filter(Boolean))]
+            .filter((player) => !byePlayers.has(player))
+            .slice(0, nextUpSlotCount)
         return
     }
 
+    const byeKeys = new Set(
+        (tournamentAdvanced.doublesByeTeams || []).map((team) => normalizeTeamKey(normalizeTeamPlayers(team))),
+    )
     tournamentAdvanced.doublesNextUpTeams = filterByeTeamsToLockedPairs(
         reconcileByeTeams(tournamentAdvanced.doublesNextUpTeams)
             .filter((team) => team.length > 0)
+            .filter((team) => !byeKeys.has(normalizeTeamKey(normalizeTeamPlayers(team))))
             .slice(0, nextUpSlotCount),
         collectLockedPairKeySet(tournamentAdvanced.doublesLockedPairs, allowNotStrictDoubles),
         allowNotStrictDoubles,

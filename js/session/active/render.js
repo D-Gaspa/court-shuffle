@@ -40,11 +40,11 @@ function buildMatchTeamSide(team, label, teamClass) {
     return wrapper
 }
 
-function buildVersusHeader(matchNum) {
+function buildVersusHeader(matchNum, headerLabel) {
     const header = document.createElement("div")
     header.className = "match-card-header"
     const headerSpan = document.createElement("span")
-    headerSpan.textContent = `Court ${matchNum}`
+    headerSpan.textContent = headerLabel || `Court ${matchNum}`
     header.appendChild(headerSpan)
     return header
 }
@@ -70,7 +70,7 @@ function renderVersusMatch(teams, matchNum, container, opts) {
     const teamTwoElement = buildMatchTeamSide(teams[1], "Team 2", "team-b")
     versus.appendChild(teamTwoElement)
     applyMatchWinnerUi(card, [teamOneElement, teamTwoElement], opts?.entry)
-    card.appendChild(buildVersusHeader(matchNum))
+    card.appendChild(buildVersusHeader(matchNum, opts?.headerLabel))
     card.appendChild(versus)
     appendMatchResult(card, opts, [teamOneElement, teamTwoElement])
     container.appendChild(card)
@@ -128,11 +128,12 @@ function renderTeamCards(teams, container) {
     }
 }
 
-function buildMatchOpts(bracketOpts, matchIndex, scoreEntry, teamLabels) {
+function buildMatchOpts({ bracketOpts, match, matchIndex, scoreEntry, teamLabels }) {
     if (bracketOpts.editable && bracketOpts.onCommit) {
         return {
             editable: true,
             entry: scoreEntry,
+            headerLabel: match.headerLabel,
             onCommit: (val, options) => bracketOpts.onCommit(matchIndex, val, options),
             onEditingChange: (isEditing) => bracketOpts.onEditingChange?.(matchIndex, isEditing),
             isEditing: Boolean(bracketOpts.isEditing?.(matchIndex)),
@@ -140,9 +141,9 @@ function buildMatchOpts(bracketOpts, matchIndex, scoreEntry, teamLabels) {
         }
     }
     if (scoreEntry) {
-        return { entry: scoreEntry, teamLabels }
+        return { entry: scoreEntry, headerLabel: match.headerLabel, teamLabels }
     }
-    return null
+    return match.headerLabel ? { headerLabel: match.headerLabel, teamLabels } : null
 }
 
 function resolveTeamLabels(match, opts) {
@@ -160,7 +161,9 @@ function renderMatchList(round, container, opts) {
         const match = round.matches[i]
         const scoreEntry = round.scores ? round.scores[i] : null
         const teamLabels = resolveTeamLabels(match, opts)
-        const matchOpts = opts ? buildMatchOpts(opts, i, scoreEntry, teamLabels) : null
+        const matchOpts = opts
+            ? buildMatchOpts({ bracketOpts: opts, match, matchIndex: i, scoreEntry, teamLabels })
+            : null
         if (match.teams.length === 2) {
             renderVersusMatch(match.teams, match.court, container, matchOpts)
         } else {

@@ -50,4 +50,34 @@ function appendSectionLabel(container, text, className = "section-label") {
     container.appendChild(label)
 }
 
-export { appendSectionLabel, filterIndexedMatches, getRoundOpenEditors, splitTournamentMatchesByPool }
+function getQueueDisplayCourt(round, match, globalIdx) {
+    const courtCount = Math.max(1, round?.courtSchedule?.courtCount || 1)
+    const baseCourt = Number(match?.court) || globalIdx + 1
+    return ((baseCourt - 1) % courtCount) + 1
+}
+
+function resolveDisplayCourt({ round, match, globalIdx, localIdx, showCourtSlots }) {
+    if (!showCourtSlots) {
+        return match.court
+    }
+    if (round?.courtSchedule?.mode === "queue") {
+        return getQueueDisplayCourt(round, match, globalIdx)
+    }
+    return localIdx + 1
+}
+
+function getMatchHeaderLabel(displayCourt, queueLabelMode) {
+    if (queueLabelMode === "next") {
+        return `Next on Court ${displayCourt}`
+    }
+    return `Court ${displayCourt}`
+}
+
+export {
+    appendSectionLabel,
+    filterIndexedMatches,
+    getMatchHeaderLabel,
+    getRoundOpenEditors,
+    resolveDisplayCourt,
+    splitTournamentMatchesByPool,
+}

@@ -8,6 +8,7 @@ import {
 } from "./advanced-model-helpers.js"
 import { reconcileByeSelectionsForContext, reconcileNextUpSelectionsForContext } from "./advanced-override-reconcile.js"
 import { isBracketFormat, requiresForcedSitOut } from "./advanced-rules.js"
+import { reconcileSinglesOpeningAvailability } from "./advanced-singles-opening.js"
 
 function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers, allowNotStrictDoubles = true) {
     const selected = new Set(selectedPlayers)
@@ -81,6 +82,7 @@ function reconcileAdvancedForEntrants({
 }
 
 function finalizeSinglesOpeningRows(tournamentAdvanced, preserveIncompleteRows) {
+    reconcileSinglesOpeningAvailability(tournamentAdvanced)
     tournamentAdvanced.singlesOpeningMatchups = reconcilePairRows(
         tournamentAdvanced.singlesOpeningMatchups,
         preserveIncompleteRows,

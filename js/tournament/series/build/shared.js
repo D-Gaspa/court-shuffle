@@ -211,52 +211,6 @@ function normalizeTeamKey(players) {
     return [...players].sort().join("||")
 }
 
-function createBracketFirstRoundWithOverrides({ teams, byeTeamIds, forcedPairTeamIds, rng }) {
-    const byeSet = new Set(byeTeamIds)
-    const pairedSet = new Set()
-    const matches = []
-    const teamById = new Map(teams.map((team) => [team.id, team]))
-
-    for (const pair of forcedPairTeamIds) {
-        const [leftId, rightId] = pair
-        const left = teamById.get(leftId)
-        const right = teamById.get(rightId)
-        if (!(left && right)) {
-            continue
-        }
-        if (byeSet.has(left.id) || byeSet.has(right.id) || pairedSet.has(left.id) || pairedSet.has(right.id)) {
-            continue
-        }
-        matches.push({
-            court: matches.length + 1,
-            teams: [left.players, right.players],
-            teamIds: [left.id, right.id],
-        })
-        pairedSet.add(left.id)
-        pairedSet.add(right.id)
-    }
-
-    const remaining = teams.filter((team) => !(byeSet.has(team.id) || pairedSet.has(team.id)))
-    const shuffledRemaining = shuffleWithRng(remaining, rng)
-    for (let i = 0; i + 1 < shuffledRemaining.length; i += 2) {
-        const left = shuffledRemaining[i]
-        const right = shuffledRemaining[i + 1]
-        matches.push({
-            court: matches.length + 1,
-            teams: [left.players, right.players],
-            teamIds: [left.id, right.id],
-        })
-    }
-
-    return {
-        matches,
-        byes: [...byeSet],
-        sitOuts: [],
-        scores: null,
-        tournamentRoundLabel: "Round 1",
-    }
-}
-
 function validateKnownPlayers(values, playersSet, label, errors) {
     for (const value of values) {
         if (!playersSet.has(value)) {
@@ -270,7 +224,6 @@ export {
     buildDoublesTeamPartition,
     buildTournamentRunFromTeams,
     chooseTournamentSitOut,
-    createBracketFirstRoundWithOverrides,
     extractOpeningSinglesMatchupKeys,
     makeTeamObject,
     markPartnerPairsFromTeams,

@@ -28,6 +28,7 @@
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+    margin: 2px 0 0;
 }
 
 .advanced-check-box::after {
@@ -51,6 +52,11 @@
 .advanced-check-box:disabled {
     cursor: not-allowed;
     opacity: 0.4;
+}
+
+.advanced-check-item.is-disabled .advanced-check-meta,
+.advanced-check-item.is-disabled .advanced-check-title {
+    color: color-mix(in srgb, var(--advanced-muted), #fff 8%);
 }
 
 .advanced-check-copy {

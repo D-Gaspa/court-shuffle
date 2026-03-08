@@ -91,23 +91,33 @@ function appendDoublesPairRow({
     )
 
     row.appendChild(
-        createSelect(leftOptions, currentLeft, (next) => {
-            advancedDraft.doublesLockedPairs[rowIndex][0] = next
-            if (next && advancedDraft.doublesLockedPairs[rowIndex][1] === next) {
-                advancedDraft.doublesLockedPairs[rowIndex][1] = ""
-            }
-            onRequestRender()
-        }),
+        createSelect(
+            leftOptions,
+            currentLeft,
+            (next) => {
+                advancedDraft.doublesLockedPairs[rowIndex][0] = next
+                if (next && advancedDraft.doublesLockedPairs[rowIndex][1] === next) {
+                    advancedDraft.doublesLockedPairs[rowIndex][1] = ""
+                }
+                onRequestRender()
+            },
+            { name: `advanced-doubles-pair-${rowIndex}-left` },
+        ),
     )
     row.appendChild(createRowSeparator(allowNotStrictDoubles ? "+" : "and"))
     row.appendChild(
-        createSelect(rightOptions, currentRight, (next) => {
-            advancedDraft.doublesLockedPairs[rowIndex][1] = next
-            if (next && advancedDraft.doublesLockedPairs[rowIndex][0] === next) {
-                advancedDraft.doublesLockedPairs[rowIndex][0] = ""
-            }
-            onRequestRender()
-        }),
+        createSelect(
+            rightOptions,
+            currentRight,
+            (next) => {
+                advancedDraft.doublesLockedPairs[rowIndex][1] = next
+                if (next && advancedDraft.doublesLockedPairs[rowIndex][0] === next) {
+                    advancedDraft.doublesLockedPairs[rowIndex][0] = ""
+                }
+                onRequestRender()
+            },
+            { name: `advanced-doubles-pair-${rowIndex}-right` },
+        ),
     )
     if (allowNotStrictDoubles && (currentLeft || currentRight) && !(currentLeft && currentRight)) {
         row.classList.add("advanced-row-solo-lock")

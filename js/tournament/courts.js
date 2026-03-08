@@ -4,6 +4,17 @@
 
 import { determineMatchWinner } from "./utils.js"
 
+function getQueueCourtLane(round, matchIndex) {
+    const courtCount = Math.max(1, round?.courtSchedule?.courtCount || 1)
+    const scheduledCourt = Number(round?.matches?.[matchIndex]?.court) || matchIndex + 1
+    return ((scheduledCourt - 1) % courtCount) + 1
+}
+
+function isUnresolvedQueueMatch(round, matchIndex) {
+    const score = round?.scores?.[matchIndex]
+    return !(score && determineMatchWinner(score) !== null)
+}
+
 function attachTournamentCourtSchedule(round, courtCount) {
     const normalizedCourtCount = Math.max(1, courtCount || 1)
     round.courtSchedule = {
@@ -27,21 +38,24 @@ function ensureTournamentCourtSchedule(round, courtCount) {
 }
 
 function getQueueActiveIndexes(round) {
-    const courtCount = Math.max(1, round?.courtSchedule?.courtCount || 1)
     const active = []
     if (!round?.matches) {
         return active
     }
+    const activeByLane = new Map()
     for (let i = 0; i < round.matches.length; i += 1) {
-        const score = round.scores?.[i]
-        if (score && determineMatchWinner(score) !== null) {
+        if (!isUnresolvedQueueMatch(round, i)) {
             continue
         }
-        active.push(i)
-        if (active.length >= courtCount) {
-            break
+        const lane = getQueueCourtLane(round, i)
+        if (!activeByLane.has(lane)) {
+            activeByLane.set(lane, i)
         }
     }
+    for (const index of activeByLane.values()) {
+        active.push(index)
+    }
+    active.sort((left, right) => left - right)
     return active
 }
 
@@ -52,8 +66,7 @@ function getQueuePendingIndexes(round) {
         return pending
     }
     for (let i = 0; i < round.matches.length; i += 1) {
-        const score = round.scores?.[i]
-        if (score && determineMatchWinner(score) !== null) {
+        if (!isUnresolvedQueueMatch(round, i)) {
             continue
         }
         if (!active.has(i)) {

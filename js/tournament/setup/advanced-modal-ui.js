@@ -74,7 +74,7 @@ function setStatusChipState(statusEl, sectionSummary, hasError) {
     const visible = Boolean(sectionSummary?.visible)
     const activeCount = sectionSummary?.activeCount || 0
 
-    statusEl.textContent = visible ? sectionSummary.label : "N/A"
+    statusEl.textContent = visible ? sectionSummary.label : ""
     if (hasError) {
         statusEl.dataset.state = "error"
     } else if (visible) {
@@ -91,6 +91,7 @@ function setNavButtonState(button, sectionSummary, hasError, isSelected) {
     const visible = Boolean(sectionSummary?.visible)
     const activeCount = sectionSummary?.activeCount || 0
 
+    button.hidden = !visible
     button.disabled = !visible
     button.classList.toggle("is-disabled", !visible)
     button.classList.toggle("is-active", visible && activeCount > 0)

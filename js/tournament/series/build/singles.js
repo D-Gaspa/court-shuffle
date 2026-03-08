@@ -3,11 +3,11 @@ import { nextPowerOf2 } from "../../engine.js"
 import { reorderRoundMatchesForQueue } from "./queue.js"
 import {
     buildTournamentRunFromTeams,
-    createBracketFirstRoundWithOverrides,
     extractOpeningSinglesMatchupKeys,
     normalizeAdvancedSettings,
     validateKnownPlayers,
 } from "./shared.js"
+import { createBracketFirstRoundWithOverrides } from "./shared-bracket-overrides.js"
 
 function buildSinglesTeams(players, rng) {
     const seededPlayers = shuffleWithRng(players, rng)
@@ -49,19 +49,36 @@ function validateRoundRobinSinglesOverrides(format, openingMatchups, singlesByeP
     }
 }
 
-function collectSinglesForcedPairs({ openingMatchups, teamByPlayer, forcedByeSet, errors }) {
+function getSinglesOpeningPairError({ left, right, teamByPlayer, forcedByeSet, nextUpPlayers, pairedPlayers }) {
+    if (nextUpPlayers.has(left) || nextUpPlayers.has(right)) {
+        return "Singles opening matchups cannot include singles next-up players."
+    }
+    if (forcedByeSet.has(teamByPlayer.get(left)?.id) || forcedByeSet.has(teamByPlayer.get(right)?.id)) {
+        return "Singles opening matchups cannot include players assigned to byes."
+    }
+    if (pairedPlayers.has(left) || pairedPlayers.has(right)) {
+        return "Singles opening matchups cannot reuse a player across rows."
+    }
+    return null
+}
+
+function collectSinglesForcedPairs({ openingMatchups, teamByPlayer, forcedByeSet, nextUpPlayers, errors }) {
     const forcedPairTeamIds = []
     const pairedPlayers = new Set()
     for (const [left, right] of openingMatchups) {
         if (!(left && right)) {
             continue
         }
-        if (forcedByeSet.has(teamByPlayer.get(left)?.id) || forcedByeSet.has(teamByPlayer.get(right)?.id)) {
-            errors.push("Singles opening matchups cannot include players assigned to byes.")
-            continue
-        }
-        if (pairedPlayers.has(left) || pairedPlayers.has(right)) {
-            errors.push("Singles opening matchups cannot reuse a player across rows.")
+        const pairError = getSinglesOpeningPairError({
+            left,
+            right,
+            teamByPlayer,
+            forcedByeSet,
+            nextUpPlayers,
+            pairedPlayers,
+        })
+        if (pairError) {
+            errors.push(pairError)
             continue
         }
         const leftTeam = teamByPlayer.get(left)
@@ -76,7 +93,14 @@ function collectSinglesForcedPairs({ openingMatchups, teamByPlayer, forcedByeSet
     return forcedPairTeamIds
 }
 
-function resolveSinglesBracketOverrides({ teams, singlesByePlayers, openingMatchups, rng, errors }) {
+function resolveSinglesBracketOverrides({
+    teams,
+    singlesByePlayers,
+    openingMatchups,
+    normalizedAdvanced,
+    rng,
+    errors,
+}) {
     const byeCount = nextPowerOf2(teams.length) - teams.length
     if (singlesByePlayers.length > byeCount) {
         errors.push(`Singles byes exceed available Round 1 bye slots (${byeCount}).`)
@@ -87,7 +111,14 @@ function resolveSinglesBracketOverrides({ teams, singlesByePlayers, openingMatch
         .map((player) => teamByPlayer.get(player)?.id)
         .filter((id) => Number.isInteger(id))
     const forcedByeSet = new Set(forcedByeTeamIds)
-    const forcedPairTeamIds = collectSinglesForcedPairs({ openingMatchups, teamByPlayer, forcedByeSet, errors })
+    const nextUpPlayers = new Set((normalizedAdvanced.singlesNextUpPlayers || []).filter(Boolean))
+    const forcedPairTeamIds = collectSinglesForcedPairs({
+        openingMatchups,
+        teamByPlayer,
+        forcedByeSet,
+        nextUpPlayers,
+        errors,
+    })
     const expectedMatchSlots = (teams.length - byeCount) / 2
 
     if (forcedPairTeamIds.length > expectedMatchSlots) {
@@ -157,17 +188,31 @@ function buildBracketSinglesRun({
     rng,
     errors,
 }) {
-    const overrides = resolveSinglesBracketOverrides({ teams, singlesByePlayers, openingMatchups, rng, errors })
+    const overrides = resolveSinglesBracketOverrides({
+        teams,
+        singlesByePlayers,
+        openingMatchups,
+        normalizedAdvanced,
+        rng,
+        errors,
+    })
     if (!overrides) {
         return null
     }
+    const delayedTeamIds = collectSinglesNextUpTeamIds(teams, normalizedAdvanced)
 
     const firstRound = createBracketFirstRoundWithOverrides({
         teams,
         byeTeamIds: overrides.byeTeamIds,
         forcedPairTeamIds: overrides.forcedPairTeamIds,
+        delayedTeamIds,
+        courtCount,
         rng,
     })
+    if (!firstRound) {
+        errors.push("Singles next-up locks could not be assigned to the available Round 1 queued matches.")
+        return null
+    }
     if (firstRound.matches.length !== overrides.expectedMatchSlots) {
         errors.push("Unable to build a valid Round 1 from the selected singles overrides.")
         return null

@@ -9,6 +9,7 @@ import {
     validateSinglesRows,
 } from "./advanced-model-helpers.js"
 import { requiresForcedSitOut } from "./advanced-rules.js"
+import { validateSinglesOpeningSelections } from "./advanced-validation-singles.js"
 
 function getLockedRowMissingError(allowNotStrictDoubles) {
     return allowNotStrictDoubles
@@ -216,6 +217,7 @@ function runAdvancedValidationChecks({
     return (
         validateSinglesOpeningConstraint(advancedDraft, tournamentFormat, tournamentTeamSize) ||
         validateSinglesRows(advancedDraft.singlesOpeningMatchups, "singles opening matchup") ||
+        validateSinglesOpeningSelections(advancedDraft, tournamentTeamSize) ||
         validateDoublesLockedRows(advancedDraft.doublesLockedPairs, allowNotStrictDoubles, activePlayers) ||
         validateSoloLockCapacity(advancedDraft, allowNotStrictDoubles, selectedPlayers) ||
         validateDoublesByeTeams(advancedDraft.doublesByeTeams, allowNotStrictDoubles) ||

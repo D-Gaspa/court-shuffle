@@ -1,5 +1,5 @@
 import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
-import { addPlaceholderRow } from "./advanced-render-utils.js"
+import { addPlaceholderRow, createAdvancedCheckCard } from "./advanced-render-utils.js"
 
 function normalizeTeamKey(team) {
     return [...team].sort().join("||")
@@ -44,32 +44,45 @@ function getSelectedSinglesNextUpPlayers(advancedDraft, slotCount) {
     return new Set(advancedDraft.singlesNextUpPlayers)
 }
 
+function getSinglesNextUpMeta({ checked, disabledByBye, disabledByCapacity }) {
+    if (checked) {
+        return "Queued off court for Round 1"
+    }
+    if (disabledByBye) {
+        return "Unavailable: Round 1 bye locked"
+    }
+    if (disabledByCapacity) {
+        return "Unavailable: queue slots full"
+    }
+    return "Delay this player to queued matches"
+}
+
 function appendSinglesNextUpRows({ activePlayers, advancedDraft, singlesNextUpList, onRequestRender, slotCount }) {
     const selectedPlayers = getSelectedSinglesNextUpPlayers(advancedDraft, slotCount)
+    const byePlayers = new Set(advancedDraft.singlesByePlayers || [])
     for (const player of activePlayers) {
-        const row = document.createElement("label")
-        row.className = "advanced-check-item"
-
-        const input = document.createElement("input")
-        input.type = "checkbox"
-        input.checked = selectedPlayers.has(player)
-        input.disabled = !input.checked && selectedPlayers.size >= slotCount
-        input.addEventListener("change", () => {
-            if (input.checked) {
-                advancedDraft.singlesNextUpPlayers = [...new Set([...advancedDraft.singlesNextUpPlayers, player])]
-            } else {
-                advancedDraft.singlesNextUpPlayers = advancedDraft.singlesNextUpPlayers.filter(
-                    (name) => name !== player,
-                )
-            }
-            onRequestRender()
+        const checked = selectedPlayers.has(player)
+        const disabledByBye = !checked && byePlayers.has(player)
+        const disabledByCapacity = !checked && selectedPlayers.size >= slotCount
+        const disabled = disabledByBye || disabledByCapacity
+        const row = createAdvancedCheckCard({
+            title: player,
+            meta: getSinglesNextUpMeta({ checked, disabledByBye, disabledByCapacity }),
+            checked,
+            disabled,
+            name: `advanced-singles-next-up-${player}`,
+            onChange: (isChecked) => {
+                if (isChecked) {
+                    advancedDraft.singlesNextUpPlayers = [...new Set([...advancedDraft.singlesNextUpPlayers, player])]
+                } else {
+                    advancedDraft.singlesNextUpPlayers = advancedDraft.singlesNextUpPlayers.filter(
+                        (name) => name !== player,
+                    )
+                }
+                onRequestRender()
+            },
         })
 
-        const label = document.createElement("span")
-        label.textContent = player
-
-        row.appendChild(input)
-        row.appendChild(label)
         singlesNextUpList.appendChild(row)
     }
 }
@@ -129,39 +142,25 @@ function appendDoublesNextUpRow({
     slotCount,
     onRequestRender,
 }) {
-    const row = document.createElement("label")
-    row.className = "advanced-check-item advanced-check-item-bye"
-
-    const input = document.createElement("input")
-    input.type = "checkbox"
-    input.className = "advanced-check-box"
-    input.checked = selectedKeys.has(key)
-    input.disabled = !input.checked && selectedKeys.size >= slotCount
-    input.addEventListener("change", () => {
-        if (input.checked) {
-            selectedKeys.add(key)
-        } else {
-            selectedKeys.delete(key)
-        }
-        syncDoublesNextUpTeams(advancedDraft, selectedKeys, lockedTeamsByKey)
-        onRequestRender()
+    const checked = selectedKeys.has(key)
+    const disabled = !checked && selectedKeys.size >= slotCount
+    const row = createAdvancedCheckCard({
+        title: team.length === 1 ? team[0] : `${team[0]} & ${team[1]}`,
+        meta: team.length === 1 ? "Delay solo lock" : "Delay locked team",
+        checked,
+        disabled,
+        name: `advanced-doubles-next-up-${key}`,
+        onChange: (isChecked) => {
+            if (isChecked) {
+                selectedKeys.add(key)
+            } else {
+                selectedKeys.delete(key)
+            }
+            syncDoublesNextUpTeams(advancedDraft, selectedKeys, lockedTeamsByKey)
+            onRequestRender()
+        },
     })
 
-    const copy = document.createElement("span")
-    copy.className = "advanced-check-copy"
-
-    const title = document.createElement("span")
-    title.className = "advanced-check-title"
-    title.textContent = team.length === 1 ? team[0] : `${team[0]} & ${team[1]}`
-
-    const meta = document.createElement("span")
-    meta.className = "advanced-check-meta"
-    meta.textContent = team.length === 1 ? "Delay solo lock" : "Delay locked team"
-
-    copy.appendChild(title)
-    copy.appendChild(meta)
-    row.appendChild(input)
-    row.appendChild(copy)
     doublesNextUpList.appendChild(row)
 }
 

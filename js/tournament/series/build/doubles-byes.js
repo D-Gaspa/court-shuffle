@@ -1,12 +1,8 @@
 import { shuffleWithRng } from "../../../core/random.js"
 import { nextPowerOf2 } from "../../engine.js"
 import { reorderRoundMatchesForQueue } from "./queue.js"
-import {
-    buildTournamentRunFromTeams,
-    createBracketFirstRoundWithOverrides,
-    markPartnerPairsFromTeams,
-    normalizeTeamKey,
-} from "./shared.js"
+import { buildTournamentRunFromTeams, markPartnerPairsFromTeams, normalizeTeamKey } from "./shared.js"
+import { createBracketFirstRoundWithOverrides } from "./shared-bracket-overrides.js"
 
 function validateRoundRobinByeOverrides(format, normalizedAdvanced) {
     if (format !== "round-robin") {
@@ -212,8 +208,14 @@ function buildBracketDoublesRun({
         teams,
         byeTeamIds: [...requestedByeTeamIds, ...autoByes],
         forcedPairTeamIds: [],
+        delayedTeamIds: requestedNextUpTeamIds,
+        courtCount,
         rng,
     })
+    if (!firstRound) {
+        errors.push("Doubles next-up locks could not be assigned to the available Round 1 queued matches.")
+        return { run: null, errors }
+    }
     const run = buildTournamentRunFromTeams({
         format,
         teamSize: 2,
