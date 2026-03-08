@@ -91,6 +91,39 @@ function formatCountLabel(count, singular, plural) {
     return `${count} ${count === 1 ? singular : plural}`
 }
 
+function nextPowerOf2(value) {
+    let next = 1
+    while (next < value) {
+        next *= 2
+    }
+    return next
+}
+
+function getBracketByeSlotCount({ selectedPlayers, tournamentTeamSize, allowNotStrictDoubles, minRequiredSitOutPool }) {
+    const playerCount = Array.isArray(selectedPlayers) ? selectedPlayers.length : 0
+    let entrants = playerCount
+
+    if (
+        tournamentTeamSize === 2 &&
+        !allowNotStrictDoubles &&
+        playerCount >= minRequiredSitOutPool &&
+        playerCount % 2 !== 0
+    ) {
+        entrants -= 1
+    }
+
+    if (entrants < tournamentTeamSize * 2) {
+        return 0
+    }
+
+    const teamCount = tournamentTeamSize === 1 ? entrants : Math.ceil(entrants / 2)
+    if (teamCount <= 1) {
+        return 0
+    }
+
+    return nextPowerOf2(teamCount) - teamCount
+}
+
 function validateSinglesRows(rows, label) {
     for (const [a, b] of rows) {
         if (!(a || b)) {
@@ -138,6 +171,7 @@ export {
     collectLockedPairKeySet,
     filterByeTeamsToLockedPairs,
     formatCountLabel,
+    getBracketByeSlotCount,
     normalizeByeTeam,
     normalizeTeamKey,
     normalizeTeamPlayers,

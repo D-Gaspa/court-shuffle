@@ -1,5 +1,6 @@
 import { shuffleWithRng } from "../../../core/random.js"
 import { nextPowerOf2 } from "../../engine.js"
+import { reorderRoundMatchesForQueue } from "./queue.js"
 import {
     buildTournamentRunFromTeams,
     createBracketFirstRoundWithOverrides,
@@ -115,40 +116,50 @@ function applySinglesOpeningKeys(run, usedSinglesOpeningMatchups) {
     }
 }
 
-function buildSinglesFirstRun({
-    players,
+function collectSinglesNextUpTeamIds(teams, normalizedAdvanced) {
+    const teamByPlayer = new Map(teams.map((team) => [team.players[0], team.id]))
+    return [...new Set((normalizedAdvanced.singlesNextUpPlayers || []).filter(Boolean))]
+        .map((player) => teamByPlayer.get(player))
+        .filter((id) => Number.isInteger(id))
+}
+
+function applySinglesNextUpQueue({ run, teams, normalizedAdvanced, courtCount, errors }) {
+    reorderRoundMatchesForQueue({
+        run,
+        delayedTeamIds: collectSinglesNextUpTeamIds(teams, normalizedAdvanced),
+        courtCount,
+        label: "Singles next-up locks",
+        errors,
+    })
+}
+
+function buildRoundRobinSinglesRun({ format, teams, players, courtCount, normalizedAdvanced, errors }) {
+    const run = buildTournamentRunFromTeams({
+        format,
+        teamSize: 1,
+        teams,
+        entrants: players,
+        tournamentLevelSitOuts: [],
+        courtCount,
+    })
+    applySinglesNextUpQueue({ run, teams, normalizedAdvanced, courtCount, errors })
+    return errors.length > 0 ? null : run
+}
+
+function buildBracketSinglesRun({
     format,
-    advanced,
-    usedSinglesOpeningMatchups,
+    teams,
+    players,
     courtCount,
-    courtHandling,
+    singlesByePlayers,
+    openingMatchups,
+    normalizedAdvanced,
     rng,
+    errors,
 }) {
-    const errors = []
-    const { singlesByePlayers, openingMatchups } = collectSinglesOverrides(players, advanced, errors)
-    const teams = buildSinglesTeams(players, rng)
-
-    validateRoundRobinSinglesOverrides(format, openingMatchups, singlesByePlayers, errors)
-    if (errors.length > 0) {
-        return { run: null, errors }
-    }
-
-    if (format === "round-robin") {
-        const run = buildTournamentRunFromTeams({
-            format,
-            teamSize: 1,
-            teams,
-            entrants: players,
-            tournamentLevelSitOuts: [],
-            courtCount,
-            courtHandling,
-        })
-        return { run, errors: [] }
-    }
-
     const overrides = resolveSinglesBracketOverrides({ teams, singlesByePlayers, openingMatchups, rng, errors })
     if (!overrides) {
-        return { run: null, errors }
+        return null
     }
 
     const firstRound = createBracketFirstRoundWithOverrides({
@@ -158,7 +169,8 @@ function buildSinglesFirstRun({
         rng,
     })
     if (firstRound.matches.length !== overrides.expectedMatchSlots) {
-        return { run: null, errors: ["Unable to build a valid Round 1 from the selected singles overrides."] }
+        errors.push("Unable to build a valid Round 1 from the selected singles overrides.")
+        return null
     }
 
     const run = buildTournamentRunFromTeams({
@@ -168,22 +180,45 @@ function buildSinglesFirstRun({
         entrants: players,
         tournamentLevelSitOuts: [],
         courtCount,
-        courtHandling,
         firstRoundOverride: firstRound,
     })
+    applySinglesNextUpQueue({ run, teams, normalizedAdvanced, courtCount, errors })
+    return errors.length > 0 ? null : run
+}
+
+function buildSinglesFirstRun({ players, format, advanced, usedSinglesOpeningMatchups, courtCount, rng }) {
+    const errors = []
+    const normalizedAdvanced = normalizeAdvancedSettings(advanced)
+    const { singlesByePlayers, openingMatchups } = collectSinglesOverrides(players, normalizedAdvanced, errors)
+    const teams = buildSinglesTeams(players, rng)
+
+    validateRoundRobinSinglesOverrides(format, openingMatchups, singlesByePlayers, errors)
+    if (errors.length > 0) {
+        return { run: null, errors }
+    }
+
+    const run =
+        format === "round-robin"
+            ? buildRoundRobinSinglesRun({ format, teams, players, courtCount, normalizedAdvanced, errors })
+            : buildBracketSinglesRun({
+                  format,
+                  teams,
+                  players,
+                  courtCount,
+                  singlesByePlayers,
+                  openingMatchups,
+                  normalizedAdvanced,
+                  rng,
+                  errors,
+              })
+    if (!run) {
+        return { run: null, errors }
+    }
     applySinglesOpeningKeys(run, usedSinglesOpeningMatchups)
     return { run, errors: [] }
 }
 
-function buildSinglesTournament({
-    players,
-    format,
-    usedSinglesOpeningMatchups,
-    courtCount,
-    courtHandling,
-    rng,
-    attempts,
-}) {
+function buildSinglesTournament({ players, format, usedSinglesOpeningMatchups, courtCount, rng, attempts }) {
     for (let attempt = 0; attempt < attempts; attempt += 1) {
         const teams = buildSinglesTeams(players, rng)
         const run = buildTournamentRunFromTeams({
@@ -193,7 +228,6 @@ function buildSinglesTournament({
             entrants: players,
             tournamentLevelSitOuts: [],
             courtCount,
-            courtHandling,
         })
         const openingKeys = extractOpeningSinglesMatchupKeys(run)
         if (openingKeys.some((key) => usedSinglesOpeningMatchups.has(key))) {

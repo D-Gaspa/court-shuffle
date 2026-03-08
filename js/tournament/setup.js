@@ -3,8 +3,7 @@ import { getAdvancedSetupDom } from "./setup/advanced-dom.js"
 import {
     getDefaultAdvancedSettings,
     normalizeAdvancedForConfig,
-    reconcileAdvancedForMode,
-    reconcileAdvancedForSelection,
+    reconcileAdvancedDraftForContext,
     validateAdvancedDraft,
 } from "./setup/advanced-model.js"
 
@@ -79,15 +78,16 @@ function reconcileTournamentDraft(tournamentDraft, selectedPlayers) {
         tournamentDraft.allowNotStrictDoubles = false
     }
 
-    reconcileAdvancedForMode({
+    reconcileAdvancedDraftForContext({
         tournamentAdvanced: tournamentDraft.advanced,
         tournamentTeamSize: tournamentDraft.teamSize,
         tournamentFormat: tournamentDraft.format,
         allowNotStrictDoubles: tournamentDraft.allowNotStrictDoubles,
         selectedPlayers: players,
         minRequiredSitOutPool: MIN_REQUIRED_SIT_OUT_POOL,
+        courtCount: tournamentDraft.courtCount,
+        preserveIncompleteRows: false,
     })
-    reconcileAdvancedForSelection(tournamentDraft.advanced, players)
 }
 
 function buildTournamentConfig({ tournamentDraft, players }) {
@@ -110,6 +110,7 @@ function validateTournamentAdvancedState({ tournamentDraft, selectedPlayers }) {
         allowNotStrictDoubles: tournamentDraft.allowNotStrictDoubles,
         selectedPlayers,
         minRequiredSitOutPool: MIN_REQUIRED_SIT_OUT_POOL,
+        courtCount: tournamentDraft.courtCount,
     })
 }
 function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange }) {

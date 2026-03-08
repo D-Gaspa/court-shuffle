@@ -1,21 +1,12 @@
-function getDefaultCardExpansion(teamSize = 1) {
-    return {
-        requiredSitOut: true,
-        singlesOpening: teamSize === 1,
-        doublesPairs: teamSize === 2,
-        singlesByes: false,
-        doublesByes: false,
-    }
-}
-
-function getAdvancedCardKeyBySectionId(cardElements, sectionId) {
-    for (const [key, entry] of Object.entries(cardElements)) {
-        if (entry.section?.id === sectionId) {
-            return key
-        }
-    }
-    return null
-}
+const SECTION_PRIORITY = [
+    "requiredSitOut",
+    "singlesOpening",
+    "doublesPairs",
+    "singlesByes",
+    "doublesByes",
+    "singlesNextUp",
+    "doublesNextUp",
+]
 
 function getErrorSectionKey(errorText) {
     const normalized = String(errorText || "").toLowerCase()
@@ -37,26 +28,42 @@ function getErrorSectionKey(errorText) {
         return "doublesPairs"
     }
     if (normalized.includes("bye")) {
-        return "doublesByes"
+        return normalized.includes("singles") ? "singlesByes" : "doublesByes"
+    }
+    if (normalized.includes("next-up") || normalized.includes("next up") || normalized.includes("queue")) {
+        return normalized.includes("singles") ? "singlesNextUp" : "doublesNextUp"
     }
     return null
 }
 
-function syncCardLayout(cardElements, cardExpansion) {
+function getVisibleSectionKeys(activeSummary) {
+    return SECTION_PRIORITY.filter((key) => activeSummary.sections[key]?.visible)
+}
+
+function resolveActiveSectionKey(activeSectionKey, activeSummary, errorSectionKey) {
+    const visibleKeys = getVisibleSectionKeys(activeSummary)
+    if (visibleKeys.length === 0) {
+        return null
+    }
+    if (errorSectionKey && visibleKeys.includes(errorSectionKey)) {
+        return errorSectionKey
+    }
+    if (activeSectionKey && visibleKeys.includes(activeSectionKey)) {
+        return activeSectionKey
+    }
+    return visibleKeys[0]
+}
+
+function syncPanelVisibility(cardElements, activeSummary, activeSectionKey, advancedEmptyState) {
+    const visibleKeys = new Set(getVisibleSectionKeys(activeSummary))
+    if (advancedEmptyState) {
+        advancedEmptyState.hidden = visibleKeys.size > 0
+    }
     for (const [key, entry] of Object.entries(cardElements)) {
-        if (!(entry.section && entry.toggle && entry.body)) {
+        if (!entry.section) {
             continue
         }
-        const visible = !entry.section.hidden
-        if (!visible) {
-            cardExpansion[key] = false
-        }
-        const expanded = visible && Boolean(cardExpansion[key])
-        entry.section.classList.toggle("advanced-card-collapsed", visible && !expanded)
-        entry.toggle.disabled = !visible
-        entry.toggle.tabIndex = visible ? 0 : -1
-        entry.toggle.setAttribute("aria-expanded", String(expanded))
-        entry.body.hidden = !expanded
+        entry.section.hidden = !(visibleKeys.has(key) && key === activeSectionKey)
     }
 }
 
@@ -77,7 +84,7 @@ function setStatusChipState(statusEl, sectionSummary, hasError) {
     }
 }
 
-function setNavButtonState(button, sectionSummary, hasError) {
+function setNavButtonState(button, sectionSummary, hasError, isSelected) {
     if (!button) {
         return
     }
@@ -88,6 +95,8 @@ function setNavButtonState(button, sectionSummary, hasError) {
     button.classList.toggle("is-disabled", !visible)
     button.classList.toggle("is-active", visible && activeCount > 0)
     button.classList.toggle("is-error", hasError)
+    button.classList.toggle("is-selected", visible && isSelected)
+    button.setAttribute("aria-pressed", String(visible && isSelected))
 }
 
 function setValidationSummaryText(validationSummaryEl, errorText, activeSummary) {
@@ -97,78 +106,68 @@ function setValidationSummaryText(validationSummaryEl, errorText, activeSummary)
     if (errorText) {
         validationSummaryEl.textContent = "Resolve the highlighted issue before applying overrides."
         validationSummaryEl.dataset.state = "error"
-    } else if (activeSummary.totalActive > 0) {
+        return
+    }
+    if (getVisibleSectionKeys(activeSummary).length === 0) {
+        validationSummaryEl.textContent = "No advanced overrides are available for the current setup."
+        validationSummaryEl.dataset.state = "auto"
+        return
+    }
+    if (activeSummary.totalActive > 0) {
         validationSummaryEl.textContent = `${activeSummary.triggerLabel} configured for Tournament 1.`
         validationSummaryEl.dataset.state = "ready"
-    } else {
-        validationSummaryEl.textContent = "No overrides set. Tournament 1 will use automatic pairing rules."
-        validationSummaryEl.dataset.state = "auto"
+        return
     }
+    validationSummaryEl.textContent = "No overrides set. Tournament 1 will use automatic pairing rules."
+    validationSummaryEl.dataset.state = "auto"
 }
 
 function renderMeta({
     advancedModalError,
     advancedValidationSummary,
     tournamentAdvancedState,
+    advancedEmptyState,
     cardElements,
     railButtons,
     committedSummary,
     activeSummary,
+    activeSectionKey,
 }) {
     const errorText = advancedModalError?.hidden ? "" : advancedModalError?.textContent?.trim()
     const errorSectionKey = getErrorSectionKey(errorText)
+    const nextActiveSectionKey = resolveActiveSectionKey(activeSectionKey, activeSummary, errorSectionKey)
+    const hasVisibleSections = getVisibleSectionKeys(activeSummary).length > 0
 
     if (tournamentAdvancedState) {
-        tournamentAdvancedState.textContent = committedSummary.triggerLabel
-        tournamentAdvancedState.dataset.state = committedSummary.totalActive > 0 ? "active" : "auto"
+        tournamentAdvancedState.textContent = hasVisibleSections ? committedSummary.triggerLabel : "N/A"
+        if (hasVisibleSections) {
+            tournamentAdvancedState.dataset.state = committedSummary.totalActive > 0 ? "active" : "auto"
+        } else {
+            tournamentAdvancedState.dataset.state = "muted"
+        }
     }
+
+    syncPanelVisibility(cardElements, activeSummary, nextActiveSectionKey, advancedEmptyState)
 
     for (const [key, entry] of Object.entries(cardElements)) {
         const sectionSummary = activeSummary.sections[key]
         const navButton = railButtons.find((button) => button.dataset.advancedNavTarget === entry.section?.id)
         const hasError = errorSectionKey === key
         setStatusChipState(entry.status, sectionSummary, hasError)
-        setNavButtonState(navButton, sectionSummary, hasError)
+        setNavButtonState(navButton, sectionSummary, hasError, nextActiveSectionKey === key)
     }
 
     setValidationSummaryText(advancedValidationSummary, errorText, activeSummary)
+    return nextActiveSectionKey
 }
 
-function jumpToSection(sectionId, cardElements, cardExpansion) {
-    const key = getAdvancedCardKeyBySectionId(cardElements, sectionId)
-    const entry = key ? cardElements[key] : null
-    if (!(entry?.section && !entry.section.hidden)) {
-        return
+function getSectionKeyById(cardElements, sectionId) {
+    for (const [key, entry] of Object.entries(cardElements)) {
+        if (entry.section?.id === sectionId) {
+            return key
+        }
     }
-    if (!cardExpansion[key]) {
-        cardExpansion[key] = true
-        syncCardLayout(cardElements, cardExpansion)
-    }
-    entry.section.scrollIntoView({ block: "nearest" })
-    entry.toggle?.focus({ preventScroll: true })
-}
-
-function bindInteractions(cardElements, cardExpansion, railButtons) {
-    for (const entry of Object.values(cardElements)) {
-        entry.toggle?.addEventListener("click", () => {
-            const key = entry.toggle?.dataset.advancedToggle
-            if (!(key && cardElements[key]?.section && !cardElements[key].section.hidden)) {
-                return
-            }
-            cardExpansion[key] = !cardExpansion[key]
-            syncCardLayout(cardElements, cardExpansion)
-        })
-    }
-
-    for (const button of railButtons) {
-        button.addEventListener("click", () => {
-            const sectionId = button.dataset.advancedNavTarget
-            if (!sectionId) {
-                return
-            }
-            jumpToSection(sectionId, cardElements, cardExpansion)
-        })
-    }
+    return null
 }
 
 function createAdvancedModalUiController({
@@ -176,29 +175,50 @@ function createAdvancedModalUiController({
     advancedModalError,
     advancedValidationSummary,
     tournamentAdvancedState,
+    advancedEmptyState,
     cardElements,
     getCommittedSummary,
     getActiveSummary,
 }) {
     const railButtons = rootElement ? [...rootElement.querySelectorAll("[data-advanced-nav-target]")] : []
-    let cardExpansion = getDefaultCardExpansion(1)
+    let activeSectionKey = null
+
+    const syncUi = () => {
+        activeSectionKey = renderMeta({
+            advancedModalError,
+            advancedValidationSummary,
+            tournamentAdvancedState,
+            advancedEmptyState,
+            cardElements,
+            railButtons,
+            committedSummary: getCommittedSummary(),
+            activeSummary: getActiveSummary(),
+            activeSectionKey,
+        })
+    }
 
     return {
-        bindInteractions: () => bindInteractions(cardElements, cardExpansion, railButtons),
-        renderMeta: () =>
-            renderMeta({
-                advancedModalError,
-                advancedValidationSummary,
-                tournamentAdvancedState,
-                cardElements,
-                railButtons,
-                committedSummary: getCommittedSummary(),
-                activeSummary: getActiveSummary(),
-            }),
-        resetCardExpansion: (teamSize) => {
-            cardExpansion = getDefaultCardExpansion(teamSize)
+        bindInteractions: () => {
+            for (const button of railButtons) {
+                button.addEventListener("click", () => {
+                    const sectionId = button.dataset.advancedNavTarget
+                    const key = sectionId ? getSectionKeyById(cardElements, sectionId) : null
+                    if (!key) {
+                        return
+                    }
+                    const activeSummary = getActiveSummary()
+                    if (!activeSummary.sections[key]?.visible) {
+                        return
+                    }
+                    activeSectionKey = key
+                    syncUi()
+                })
+            }
         },
-        syncCardLayout: () => syncCardLayout(cardElements, cardExpansion),
+        renderMeta: syncUi,
+        resetActiveSection: () => {
+            activeSectionKey = null
+        },
     }
 }
 

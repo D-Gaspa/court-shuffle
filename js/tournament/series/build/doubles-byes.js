@@ -1,5 +1,6 @@
 import { shuffleWithRng } from "../../../core/random.js"
 import { nextPowerOf2 } from "../../engine.js"
+import { reorderRoundMatchesForQueue } from "./queue.js"
 import {
     buildTournamentRunFromTeams,
     createBracketFirstRoundWithOverrides,
@@ -43,14 +44,26 @@ function hasInactiveByeTeamPlayers(uniquePlayers, entrantsSet, errors) {
     return hasInactivePlayers
 }
 
-function resolveRequestedByeTeamId({ uniquePlayers, teamsByKey, requestedByeIdSet, errors }) {
+function hasInactiveNextUpTeamPlayers(uniquePlayers, entrantsSet, errors) {
+    let hasInactivePlayers = false
+    for (const player of uniquePlayers) {
+        if (entrantsSet.has(player)) {
+            continue
+        }
+        errors.push("Doubles next-up teams must use active entrants for Tournament 1.")
+        hasInactivePlayers = true
+    }
+    return hasInactivePlayers
+}
+
+function resolveRequestedTeamId({ uniquePlayers, teamsByKey, selectedTeamIdSet, errors, label }) {
     const teamId = teamsByKey.get(normalizeTeamKey(uniquePlayers))
     if (!Number.isInteger(teamId)) {
-        errors.push(`Doubles bye team "${uniquePlayers.join(" & ")}" does not match a generated team.`)
+        errors.push(`${label} "${uniquePlayers.join(" & ")}" does not match a generated team.`)
         return null
     }
-    if (requestedByeIdSet.has(teamId)) {
-        errors.push("Doubles bye teams cannot contain duplicates.")
+    if (selectedTeamIdSet.has(teamId)) {
+        errors.push(`${label}s cannot contain duplicates.`)
         return null
     }
     return teamId
@@ -71,7 +84,13 @@ function collectRequestedByeTeamIds({ normalizedAdvanced, allowNotStrictDoubles,
         if (hasInactiveByeTeamPlayers(uniquePlayers, entrantsSet, errors)) {
             continue
         }
-        const teamId = resolveRequestedByeTeamId({ uniquePlayers, teamsByKey, requestedByeIdSet, errors })
+        const teamId = resolveRequestedTeamId({
+            uniquePlayers,
+            teamsByKey,
+            selectedTeamIdSet: requestedByeIdSet,
+            errors,
+            label: "Doubles bye team",
+        })
         if (!Number.isInteger(teamId)) {
             continue
         }
@@ -81,14 +100,46 @@ function collectRequestedByeTeamIds({ normalizedAdvanced, allowNotStrictDoubles,
     return { requestedByeTeamIds, requestedByeIdSet }
 }
 
+function collectRequestedNextUpTeamIds({ normalizedAdvanced, allowNotStrictDoubles, entrantsSet, teams, errors }) {
+    const teamsByKey = new Map(teams.map((team) => [normalizeTeamKey(team.players), team.id]))
+    const selectedTeamIds = []
+    const selectedTeamIdSet = new Set()
+
+    for (const rawTeam of normalizedAdvanced.doublesNextUpTeams) {
+        const uniquePlayers = [...new Set((rawTeam || []).filter(Boolean))]
+        const sizeError = validateByeTeamSize(uniquePlayers, allowNotStrictDoubles)
+        if (sizeError) {
+            errors.push(sizeError.replace("bye team", "next-up team"))
+            continue
+        }
+        if (hasInactiveNextUpTeamPlayers(uniquePlayers, entrantsSet, errors)) {
+            continue
+        }
+        const teamId = resolveRequestedTeamId({
+            uniquePlayers,
+            teamsByKey,
+            selectedTeamIdSet,
+            errors,
+            label: "Doubles next-up team",
+        })
+        if (!Number.isInteger(teamId)) {
+            continue
+        }
+        selectedTeamIdSet.add(teamId)
+        selectedTeamIds.push(teamId)
+    }
+    return selectedTeamIds
+}
+
 function buildRoundRobinDoublesRun({
     format,
     teams,
     entrants,
     tournamentLevelSitOuts,
     courtCount,
-    courtHandling,
     usedDoublesPartnerPairs,
+    normalizedAdvanced,
+    allowNotStrictDoubles,
 }) {
     const run = buildTournamentRunFromTeams({
         format,
@@ -97,8 +148,24 @@ function buildRoundRobinDoublesRun({
         entrants,
         tournamentLevelSitOuts,
         courtCount,
-        courtHandling,
     })
+    const errors = []
+    reorderRoundMatchesForQueue({
+        run,
+        delayedTeamIds: collectRequestedNextUpTeamIds({
+            normalizedAdvanced,
+            allowNotStrictDoubles,
+            entrantsSet: new Set(entrants),
+            teams,
+            errors,
+        }),
+        courtCount,
+        label: "Doubles next-up locks",
+        errors,
+    })
+    if (errors.length > 0) {
+        return { run: null, errors }
+    }
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return { run, errors: [] }
 }
@@ -114,7 +181,6 @@ function buildBracketDoublesRun({
     entrants,
     tournamentLevelSitOuts,
     courtCount,
-    courtHandling,
     usedDoublesPartnerPairs,
 }) {
     const byeCount = nextPowerOf2(teams.length) - teams.length
@@ -128,6 +194,13 @@ function buildBracketDoublesRun({
     if (requestedByeTeamIds.length > byeCount) {
         errors.push(`Doubles bye teams exceed available Round 1 bye slots (${byeCount}).`)
     }
+    const requestedNextUpTeamIds = collectRequestedNextUpTeamIds({
+        normalizedAdvanced,
+        allowNotStrictDoubles,
+        entrantsSet,
+        teams,
+        errors,
+    })
     if (errors.length > 0) {
         return { run: null, errors }
     }
@@ -148,9 +221,18 @@ function buildBracketDoublesRun({
         entrants,
         tournamentLevelSitOuts,
         courtCount,
-        courtHandling,
         firstRoundOverride: firstRound,
     })
+    reorderRoundMatchesForQueue({
+        run,
+        delayedTeamIds: requestedNextUpTeamIds,
+        courtCount,
+        label: "Doubles next-up locks",
+        errors,
+    })
+    if (errors.length > 0) {
+        return { run: null, errors }
+    }
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return { run, errors: [] }
 }

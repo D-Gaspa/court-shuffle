@@ -16,7 +16,7 @@ export function renderTournamentActive({ session, roundInfo, saveState, ui, comm
     ui.roundTotal.textContent = roundInfo.total
 
     const refreshNav = () => {
-        const navState = buildTournamentNavState(session, roundInfo)
+        const navState = buildTournamentNavState(roundInfo)
         updateTournamentNavigation(session, navState, ui)
     }
 

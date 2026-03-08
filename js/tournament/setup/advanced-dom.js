@@ -12,6 +12,10 @@ function getAdvancedSectionElements(root) {
         singlesByesList: root.getElementById("advanced-singles-byes-list"),
         doublesByesSection: root.getElementById("advanced-doubles-byes-section"),
         doublesByesList: root.getElementById("advanced-doubles-byes-list"),
+        singlesNextUpSection: root.getElementById("advanced-singles-next-up-section"),
+        singlesNextUpList: root.getElementById("advanced-singles-next-up-list"),
+        doublesNextUpSection: root.getElementById("advanced-doubles-next-up-section"),
+        doublesNextUpList: root.getElementById("advanced-doubles-next-up-list"),
     }
 }
 
@@ -19,33 +23,31 @@ function getAdvancedCardElements(root, sections) {
     return {
         requiredSitOut: {
             section: sections.requiredSitOutSection,
-            toggle: root.getElementById("advanced-toggle-required-sitout"),
-            body: root.getElementById("advanced-required-sitout-body"),
             status: root.getElementById("advanced-status-required-sitout"),
         },
         singlesOpening: {
             section: sections.singlesOpeningSection,
-            toggle: root.getElementById("advanced-toggle-singles-opening"),
-            body: root.getElementById("advanced-singles-opening-body"),
             status: root.getElementById("advanced-status-singles-opening"),
         },
         doublesPairs: {
             section: sections.doublesPairsSection,
-            toggle: root.getElementById("advanced-toggle-doubles-pairs"),
-            body: root.getElementById("advanced-doubles-pairs-body"),
             status: root.getElementById("advanced-status-doubles-pairs"),
         },
         singlesByes: {
             section: sections.singlesByesSection,
-            toggle: root.getElementById("advanced-toggle-singles-byes"),
-            body: root.getElementById("advanced-singles-byes-body"),
             status: root.getElementById("advanced-status-singles-byes"),
         },
         doublesByes: {
             section: sections.doublesByesSection,
-            toggle: root.getElementById("advanced-toggle-doubles-byes"),
-            body: root.getElementById("advanced-doubles-byes-body"),
             status: root.getElementById("advanced-status-doubles-byes"),
+        },
+        singlesNextUp: {
+            section: sections.singlesNextUpSection,
+            status: root.getElementById("advanced-status-singles-next-up"),
+        },
+        doublesNextUp: {
+            section: sections.doublesNextUpSection,
+            status: root.getElementById("advanced-status-doubles-next-up"),
         },
     }
 }
@@ -62,6 +64,7 @@ function getAdvancedSetupDom(root = document) {
         tournamentAdvancedState: root.getElementById("tournament-advanced-state"),
         advancedModalError: root.getElementById("advanced-modal-error"),
         advancedValidationSummary: root.getElementById("advanced-validation-summary"),
+        advancedEmptyState: root.getElementById("advanced-empty-state"),
         advancedCardElements: getAdvancedCardElements(root, sections),
         ...sections,
     }

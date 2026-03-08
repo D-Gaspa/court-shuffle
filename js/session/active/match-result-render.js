@@ -1,20 +1,13 @@
 import { buildMatchResultSection } from "../../score-editor/index.js"
-import { countSetWins, normalizeSets } from "../../score-editor/sets.js"
+import { normalizeSets } from "../../score-editor/sets.js"
+import { determineMatchWinner } from "../../tournament/utils.js"
 
 function getMatchWinnerIdx(entry) {
     const sets = normalizeSets(entry)
     if (!sets) {
         return null
     }
-    const completeSets = sets.filter(([a, b]) => a !== null && b !== null)
-    if (completeSets.length === 0) {
-        return null
-    }
-    const { winsA, winsB } = countSetWins(completeSets)
-    if (winsA === winsB) {
-        return null
-    }
-    return winsA > winsB ? 0 : 1
+    return determineMatchWinner({ sets })
 }
 
 function applyMatchWinnerUi(card, teamElements, entry) {

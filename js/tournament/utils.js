@@ -9,20 +9,13 @@ function isTiebreakEligibleSetScore(s0, s1) {
     return Math.abs(s0 - s1) === 1
 }
 
-function isTiebreakRequiredSetScore(_s0, _s1) {
-    // House rules may allow 7-6 / 6-7 style set scores without recording a tiebreak.
-    // If a tiebreak is provided we validate it, but we do not require it.
-    return false
-}
-
 function isInvalidTiebreakForSet(setScore) {
     const [s0, s1] = setScore
     const tb = setScore[2]?.tb
     const tiebreakEligible = isTiebreakEligibleSetScore(s0, s1)
-    const tiebreakRequired = isTiebreakRequiredSetScore(s0, s1)
 
     if (!tb) {
-        return tiebreakRequired
+        return false
     }
     if (!tiebreakEligible) {
         return true
@@ -69,15 +62,11 @@ function determineMatchWinner(scoreEntry) {
     }
     let wins0 = 0
     let wins1 = 0
-    let games0 = 0
-    let games1 = 0
     for (const setScore of scoreEntry.sets) {
         if (isInvalidTiebreakForSet(setScore)) {
             return null
         }
         const [s0, s1] = setScore
-        games0 += s0
-        games1 += s1
         if (s0 > s1) {
             wins0 += 1
         } else if (s1 > s0) {
@@ -91,12 +80,6 @@ function determineMatchWinner(scoreEntry) {
         return 0
     }
     if (wins1 > wins0) {
-        return 1
-    }
-    if (games0 > games1) {
-        return 0
-    }
-    if (games1 > games0) {
         return 1
     }
     return null

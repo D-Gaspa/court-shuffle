@@ -236,7 +236,7 @@ function renderByeInfo(round, teams, container) {
 
 function renderTournamentRound({ session, roundInfo, round, saveState, ui, refreshNav, rerenderView, commitScore }) {
     ui.bracketContainer.textContent = ""
-    ensureTournamentCourtSchedule(round, session.courtCount || 1, session.tournamentSeries?.courtHandling || "queue")
+    ensureTournamentCourtSchedule(round, session.courtCount || 1)
     const teamNames = makeTeamNameResolver(session)
     const displayState = getTournamentRoundDisplayState(round)
     const allowScoreEditing = canEditTournamentRoundScores(session, roundInfo?.current)

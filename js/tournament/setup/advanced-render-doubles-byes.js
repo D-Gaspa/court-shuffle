@@ -1,4 +1,5 @@
 import { isBracketFormat } from "./advanced-model.js"
+import { getBracketByeSlotCount } from "./advanced-model-helpers.js"
 import { addPlaceholderRow, getRowValue } from "./advanced-render-utils.js"
 
 function normalizeTeamKey(team) {
@@ -104,28 +105,6 @@ function appendByeCheckboxRow({
     doublesByesList.appendChild(row)
 }
 
-function nextPowerOf2(value) {
-    let next = 1
-    while (next < value) {
-        next *= 2
-    }
-    return next
-}
-
-function getAvailableByeSlots(selectedPlayers, allowNotStrictDoubles, minRequiredSitOutPool) {
-    const selectedCount = selectedPlayers.length
-    const needsSitOut = !allowNotStrictDoubles && selectedCount >= minRequiredSitOutPool && selectedCount % 2 !== 0
-    const entrants = needsSitOut ? selectedCount - 1 : selectedCount
-    if (entrants < 2) {
-        return 0
-    }
-    const teamCount = Math.ceil(entrants / 2)
-    if (teamCount <= 1) {
-        return 0
-    }
-    return nextPowerOf2(teamCount) - teamCount
-}
-
 function appendByeCapacityHint(doublesByesList, selectedCount, byeSlots) {
     const hint = document.createElement("div")
     hint.className = "hint advanced-bye-capacity-hint"
@@ -212,7 +191,13 @@ function renderDoublesByesSection(context) {
         onRequestRender,
     } = getDoublesByesRenderContext(context)
 
-    const visible = tournamentTeamSize === 2 && isBracketFormat(tournamentFormat)
+    const byeSlots = getBracketByeSlotCount({
+        selectedPlayers,
+        tournamentTeamSize,
+        allowNotStrictDoubles,
+        minRequiredSitOutPool,
+    })
+    const visible = tournamentTeamSize === 2 && isBracketFormat(tournamentFormat) && byeSlots > 0
     doublesByesSection.hidden = !visible
     if (!visible) {
         advancedDraft.doublesByeTeams = []
@@ -220,13 +205,6 @@ function renderDoublesByesSection(context) {
     }
 
     doublesByesList.textContent = ""
-    const byeSlots = getAvailableByeSlots(selectedPlayers, allowNotStrictDoubles, minRequiredSitOutPool)
-    if (byeSlots <= 0) {
-        advancedDraft.doublesByeTeams = []
-        addPlaceholderRow(doublesByesList, "No Round 1 bye slots available for this roster.")
-        return
-    }
-
     renderLockedByeOptions({ allowNotStrictDoubles, advancedDraft, doublesByesList, onRequestRender, byeSlots })
 }
 

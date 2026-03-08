@@ -161,18 +161,19 @@ function updateSessionsWithNewName(oldName, newName) {
 }
 
 function openDeletePlayerDialog(index, name) {
-    askConfirm(
-        "Remove Player",
-        `Remove "${name}" from the roster?\nThey'll also be removed from any active session.`,
-        () => {
-            const [removed] = globalState.roster.splice(index, 1)
-            if (globalState.activeSession) {
-                globalState.activeSession.players = globalState.activeSession.players.filter((p) => p !== removed)
-            }
-            saveState()
-            refreshRoster()
-        },
-    )
+    const activeSessionIncludesPlayer = globalState.activeSession?.players.includes(name) === true
+    const message = activeSessionIncludesPlayer
+        ? `Remove "${name}" from the roster?\nThis will also end the active session because its saved schedule can no longer be reconciled safely.`
+        : `Remove "${name}" from the roster?`
+
+    askConfirm("Remove Player", message, () => {
+        const [removed] = globalState.roster.splice(index, 1)
+        if (activeSessionIncludesPlayer && globalState.activeSession?.players.includes(removed)) {
+            globalState.activeSession = null
+        }
+        saveState()
+        refreshRoster()
+    })
 }
 
 export { initRoster, refreshRoster }

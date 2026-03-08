@@ -212,6 +212,16 @@
     border-color: color-mix(in srgb, var(--advanced-accent), var(--advanced-line) 30%);
 }
 
+.advanced-rail-btn.is-selected {
+    border-color: color-mix(in srgb, var(--advanced-accent), #fff 18%);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--advanced-panel-raised), var(--advanced-accent-soft) 36%),
+        color-mix(in srgb, var(--advanced-panel), var(--advanced-accent-soft) 22%)
+    );
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--advanced-accent), transparent 55%);
+}
+
 .advanced-rail-btn.is-error {
     border-color: color-mix(in srgb, var(--advanced-chip-error), var(--advanced-line) 35%);
 }

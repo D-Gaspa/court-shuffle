@@ -34,21 +34,21 @@ function updateCourtHint({ draft, matchMode, courtHint }) {
     }
 
     const maxPerCourt = matchMode === "singles" ? SINGLES_PLAYERS_PER_COURT : STRICT_DOUBLES_PLAYERS_PER_COURT
-    const minPerCourt = getPlayersPerCourt(matchMode, draft.tournament.allowNotStrictDoubles)
-    const activeCap = maxPerCourt * draft.tournament.courtCount
-    const minActive = minPerCourt * draft.tournament.courtCount
-    const activeCount = Math.min(Math.max(minActive, Math.min(activeCap, playerCount)), playerCount)
-    const sitOuts = Math.max(0, playerCount - activeCount)
-    const parts = [`${activeCount} active`]
-    if (sitOuts > 0) {
-        parts.push(`${sitOuts} sitting out`)
+    const onCourtCount = Math.min(maxPerCourt * draft.tournament.courtCount, playerCount)
+    const offCourtCount = Math.max(0, playerCount - onCourtCount)
+    const parts = [`${onCourtCount} on court at once`]
+    if (offCourtCount > 0) {
+        parts.push(`${offCourtCount} off court at the same time`)
+    }
+    if (matchMode === "doubles" && !draft.tournament.allowNotStrictDoubles && playerCount % 2 !== 0) {
+        parts.push("1 tournament sit-out may be required")
     }
     if (
         draft.tournament.allowNotStrictDoubles &&
         matchMode === "doubles" &&
-        activeCount % STRICT_DOUBLES_PLAYERS_PER_COURT !== 0
+        onCourtCount % STRICT_DOUBLES_PLAYERS_PER_COURT !== 0
     ) {
-        parts.push("some 2v1")
+        parts.push("some 2v1 possible")
     }
     courtHint.textContent = parts.join(" · ")
 }

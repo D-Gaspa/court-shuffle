@@ -26,6 +26,10 @@ function normalizeAdvancedSettings(advanced) {
         doublesByeTeams: (advanced?.doublesByeTeams || []).map((team) =>
             Array.isArray(team) ? team.filter((player) => typeof player === "string") : [],
         ),
+        singlesNextUpPlayers: [...(advanced?.singlesNextUpPlayers || [])],
+        doublesNextUpTeams: (advanced?.doublesNextUpTeams || []).map((team) =>
+            Array.isArray(team) ? team.filter((player) => typeof player === "string") : [],
+        ),
     }
 }
 
@@ -36,7 +40,6 @@ function buildTournamentRunFromTeams({
     entrants,
     tournamentLevelSitOuts,
     courtCount,
-    courtHandling,
     firstRoundOverride = null,
 }) {
     let rounds
@@ -50,7 +53,7 @@ function buildTournamentRunFromTeams({
     }
 
     for (const round of rounds) {
-        attachTournamentCourtSchedule(round, courtCount, courtHandling)
+        attachTournamentCourtSchedule(round, courtCount)
     }
 
     return {
@@ -63,7 +66,7 @@ function buildTournamentRunFromTeams({
         tournamentTeamSize: teamSize,
         teams,
         seeding: "random",
-        bracket: createInitialBracket(format),
+        bracket: createInitialBracket(),
         tournamentRound: 0,
         allRoundsGenerated,
     }

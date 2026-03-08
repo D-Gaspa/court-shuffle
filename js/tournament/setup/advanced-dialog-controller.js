@@ -2,8 +2,7 @@ import { hideFieldError, showFieldError } from "../../shared/utils.js"
 import { createAdvancedModalUiController } from "./advanced-modal-ui.js"
 import {
     cloneAdvancedSettings,
-    reconcileAdvancedForMode,
-    reconcileAdvancedForSelection,
+    reconcileAdvancedDraftForContext,
     summarizeAdvancedSettings,
     validateAdvancedDraft,
 } from "./advanced-model.js"
@@ -22,6 +21,7 @@ function buildAdvancedValidationError(config, minRequiredSitOutPool) {
             allowNotStrictDoubles: config.allowNotStrictDoubles,
             selectedPlayers: config.selectedPlayers,
             minRequiredSitOutPool,
+            courtCount: config.courtCount,
         }) || ""
     )
 }
@@ -34,6 +34,10 @@ function setAdvancedModalError(advancedModalError, message) {
     hideFieldError(advancedModalError)
 }
 
+function hasVisibleAdvancedOptions(summary) {
+    return Object.values(summary.sections || {}).some((section) => section.visible)
+}
+
 function renderAdvancedSections(state, tournamentDraft, selectedPlayers, onRequestRender) {
     const { dom } = state
     renderAdvancedModalSections({
@@ -42,6 +46,7 @@ function renderAdvancedSections(state, tournamentDraft, selectedPlayers, onReque
         allowNotStrictDoubles: tournamentDraft.allowNotStrictDoubles,
         selectedPlayers,
         minRequiredSitOutPool: state.minRequiredSitOutPool,
+        courtCount: tournamentDraft.courtCount,
         advancedDraft: tournamentDraft.advanced,
         requiredSitOutSection: dom.requiredSitOutSection,
         requiredSitOutSelect: dom.requiredSitOutSelect,
@@ -54,9 +59,12 @@ function renderAdvancedSections(state, tournamentDraft, selectedPlayers, onReque
         singlesByesList: dom.singlesByesList,
         doublesByesSection: dom.doublesByesSection,
         doublesByesList: dom.doublesByesList,
+        singlesNextUpSection: dom.singlesNextUpSection,
+        singlesNextUpList: dom.singlesNextUpList,
+        doublesNextUpSection: dom.doublesNextUpSection,
+        doublesNextUpList: dom.doublesNextUpList,
         onRequestRender,
     })
-    state.advancedUi.syncCardLayout()
 }
 
 function syncActiveSummaryState(state, tournamentDraft, players) {
@@ -68,6 +76,7 @@ function syncActiveSummaryState(state, tournamentDraft, players) {
                 tournamentTeamSize: tournamentDraft.teamSize,
                 allowNotStrictDoubles: tournamentDraft.allowNotStrictDoubles,
                 selectedPlayers: players,
+                courtCount: tournamentDraft.courtCount,
             },
             state.minRequiredSitOutPool,
         ),
@@ -75,31 +84,38 @@ function syncActiveSummaryState(state, tournamentDraft, players) {
     if (!state.modalState) {
         state.activeAdvancedSummary = state.currentAdvancedSummary
     }
+    if (state.dom.advancedBtn) {
+        const hasVisibleOptions = hasVisibleAdvancedOptions(state.currentAdvancedSummary)
+        state.dom.advancedBtn.disabled = !hasVisibleOptions
+        state.dom.advancedBtn.title = hasVisibleOptions ? "Advanced Settings" : "No advanced overrides available"
+    }
     state.advancedUi.renderMeta()
 }
 
 function resetAdvancedModalState(state) {
     state.modalState = null
     state.activeAdvancedSummary = state.currentAdvancedSummary
+    state.advancedUi.resetActiveSection()
     setAdvancedModalError(state.dom.advancedModalError, "")
     state.advancedUi.renderMeta()
 }
 
-function renderAdvancedModalState(state) {
+function renderAdvancedModalState(state, options = {}) {
     if (!state.modalState) {
         return
     }
 
     const modal = state.modalState
-    reconcileAdvancedForMode({
+    reconcileAdvancedDraftForContext({
         tournamentAdvanced: modal.workingAdvanced,
         tournamentTeamSize: modal.tournamentTeamSize,
         tournamentFormat: modal.tournamentFormat,
         allowNotStrictDoubles: modal.allowNotStrictDoubles,
         selectedPlayers: modal.selectedPlayers,
         minRequiredSitOutPool: state.minRequiredSitOutPool,
+        courtCount: modal.courtCount,
+        preserveIncompleteRows: options.preserveIncompleteRows ?? true,
     })
-    reconcileAdvancedForSelection(modal.workingAdvanced, modal.selectedPlayers)
 
     renderAdvancedSections(
         state,
@@ -108,6 +124,7 @@ function renderAdvancedModalState(state) {
             format: modal.tournamentFormat,
             teamSize: modal.tournamentTeamSize,
             allowNotStrictDoubles: modal.allowNotStrictDoubles,
+            courtCount: modal.courtCount,
         },
         modal.selectedPlayers,
         () => renderAdvancedModalState(state),
@@ -121,6 +138,7 @@ function renderAdvancedModalState(state) {
                 tournamentTeamSize: modal.tournamentTeamSize,
                 allowNotStrictDoubles: modal.allowNotStrictDoubles,
                 selectedPlayers: modal.selectedPlayers,
+                courtCount: modal.courtCount,
             },
             state.minRequiredSitOutPool,
         ),
@@ -134,6 +152,7 @@ function renderAdvancedModalState(state) {
                 tournamentTeamSize: modal.tournamentTeamSize,
                 allowNotStrictDoubles: modal.allowNotStrictDoubles,
                 selectedPlayers: modal.selectedPlayers,
+                courtCount: modal.courtCount,
             },
             state.minRequiredSitOutPool,
         ),
@@ -143,7 +162,7 @@ function renderAdvancedModalState(state) {
 
 function openAdvancedDialog(state, latestRenderState) {
     const { advancedDialog } = state.dom
-    if (!advancedDialog) {
+    if (!(advancedDialog && hasVisibleAdvancedOptions(state.currentAdvancedSummary))) {
         return
     }
 
@@ -153,10 +172,11 @@ function openAdvancedDialog(state, latestRenderState) {
         tournamentFormat: latestRenderState.tournamentDraft.format,
         tournamentTeamSize: latestRenderState.tournamentDraft.teamSize,
         allowNotStrictDoubles: latestRenderState.tournamentDraft.allowNotStrictDoubles,
+        courtCount: latestRenderState.tournamentDraft.courtCount,
         workingAdvanced: cloneAdvancedSettings(latestRenderState.tournamentDraft.advanced),
     }
-    state.advancedUi.resetCardExpansion(latestRenderState.tournamentDraft.teamSize)
-    renderAdvancedModalState(state)
+    state.advancedUi.resetActiveSection()
+    renderAdvancedModalState(state, { preserveIncompleteRows: false })
     if (!advancedDialog.open) {
         advancedDialog.showModal()
     }
@@ -175,6 +195,7 @@ function applyAdvancedDialog(state) {
             tournamentTeamSize: modal.tournamentTeamSize,
             allowNotStrictDoubles: modal.allowNotStrictDoubles,
             selectedPlayers: modal.selectedPlayers,
+            courtCount: modal.courtCount,
         },
         state.minRequiredSitOutPool,
     )
@@ -232,7 +253,8 @@ function renderAdvancedDialogController(state, { tournamentDraft, selectedPlayer
         state.modalState.tournamentFormat = tournamentDraft.format
         state.modalState.tournamentTeamSize = tournamentDraft.teamSize
         state.modalState.allowNotStrictDoubles = tournamentDraft.allowNotStrictDoubles
-        renderAdvancedModalState(state)
+        state.modalState.courtCount = tournamentDraft.courtCount
+        renderAdvancedModalState(state, { preserveIncompleteRows: false })
     } else {
         setAdvancedModalError(state.dom.advancedModalError, "")
     }
@@ -254,6 +276,7 @@ function createAdvancedDialogController({ dom, minRequiredSitOutPool }) {
         advancedModalError: dom.advancedModalError,
         advancedValidationSummary: dom.advancedValidationSummary,
         tournamentAdvancedState: dom.tournamentAdvancedState,
+        advancedEmptyState: dom.advancedEmptyState,
         cardElements: dom.advancedCardElements,
         getCommittedSummary: () => state.currentAdvancedSummary,
         getActiveSummary: () => state.activeAdvancedSummary,

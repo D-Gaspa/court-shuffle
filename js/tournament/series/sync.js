@@ -33,7 +33,7 @@ function syncTournamentSeriesAliases(session) {
     session.tournamentLevelSitOuts = run.tournamentLevelSitOuts || []
     if (Array.isArray(run.rounds)) {
         for (const round of run.rounds) {
-            attachTournamentCourtSchedule(round, series.courtCount, series.courtHandling)
+            attachTournamentCourtSchedule(round, series.courtCount)
         }
     }
     return run

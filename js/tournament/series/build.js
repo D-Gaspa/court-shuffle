@@ -22,7 +22,6 @@ function buildFirstTournamentRun({
     format,
     teamSize,
     courtCount,
-    courtHandling,
     allowNotStrictDoubles,
     advanced,
     usedDoublesPartnerPairs,
@@ -37,7 +36,6 @@ function buildFirstTournamentRun({
             advanced,
             usedSinglesOpeningMatchups,
             courtCount,
-            courtHandling,
             rng,
         })
     }
@@ -50,7 +48,6 @@ function buildFirstTournamentRun({
         usedDoublesPartnerPairs,
         sitOutCounts,
         courtCount,
-        courtHandling,
         rng,
     })
 }
@@ -72,16 +69,7 @@ function buildPreviewDistribution(run, courtCount) {
     }
 }
 
-function buildTournamentPreview({
-    players,
-    format,
-    teamSize,
-    courtCount,
-    courtHandling = "queue",
-    allowNotStrictDoubles,
-    seed,
-    advanced,
-}) {
+function buildTournamentPreview({ players, format, teamSize, courtCount, allowNotStrictDoubles, seed, advanced }) {
     const { rng, usedDoublesPartnerPairs, usedSinglesOpeningMatchups, sitOutCounts } = createSeriesBuildState(
         players,
         seed,
@@ -91,7 +79,6 @@ function buildTournamentPreview({
         format,
         teamSize,
         courtCount,
-        courtHandling,
         allowNotStrictDoubles,
         advanced,
         usedDoublesPartnerPairs,
@@ -121,23 +108,13 @@ function buildTournamentPreview({
     }
 }
 
-function buildSeriesTournaments({
-    players,
-    format,
-    teamSize,
-    courtCount,
-    courtHandling,
-    allowNotStrictDoubles,
-    advanced,
-    state,
-}) {
+function buildSeriesTournaments({ players, format, teamSize, courtCount, allowNotStrictDoubles, advanced, state }) {
     const tournaments = []
     const firstRunResult = buildFirstTournamentRun({
         players,
         format,
         teamSize,
         courtCount,
-        courtHandling,
         allowNotStrictDoubles,
         advanced,
         usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
@@ -160,30 +137,19 @@ function buildSeriesTournaments({
         format,
         teamSize,
         courtCount,
-        courtHandling,
         allowNotStrictDoubles,
         state,
     })
     return tournaments
 }
 
-function appendSeriesRuns({
-    tournaments,
-    players,
-    format,
-    teamSize,
-    courtCount,
-    courtHandling,
-    allowNotStrictDoubles,
-    state,
-}) {
+function appendSeriesRuns({ tournaments, players, format, teamSize, courtCount, allowNotStrictDoubles, state }) {
     for (;;) {
         const run = buildSeriesRun({
             players,
             format,
             teamSize,
             courtCount,
-            courtHandling,
             allowNotStrictDoubles,
             usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
             usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
@@ -217,7 +183,6 @@ function buildTournamentSeries({
         format,
         teamSize,
         courtCount,
-        courtHandling,
         allowNotStrictDoubles,
         advanced,
         state,

@@ -474,7 +474,10 @@
                     <div class="advanced-header-meta">
                         <div>
                             <h2>Advanced Tournament Settings</h2>
-                            <p class="modal-subtitle">Round 1 overrides apply after you press Apply.</p>
+                            <p class="modal-subtitle">
+                                Round 1 overrides apply after you press Apply. Court-limit queues and off-court waiting
+                                are automatic.
+                            </p>
                         </div>
                     </div>
                 </header>
@@ -484,7 +487,7 @@
                         <p class="advanced-rail-kicker">Control Rail</p>
                         <nav class="advanced-control-nav" aria-label="Advanced section navigation">
                             <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-required-sitout-section">
-                                <span class="advanced-rail-label">Required Sit-Out</span>
+                                <span class="advanced-rail-label">Tournament Sit-Out</span>
                                 <span id="advanced-status-required-sitout" class="advanced-status-chip">N/A</span>
                             </button>
                             <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-singles-opening-section">
@@ -503,30 +506,37 @@
                                 <span class="advanced-rail-label">Doubles Byes</span>
                                 <span id="advanced-status-doubles-byes" class="advanced-status-chip">N/A</span>
                             </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-singles-next-up-section">
+                                <span class="advanced-rail-label">Singles Next Up</span>
+                                <span id="advanced-status-singles-next-up" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-doubles-next-up-section">
+                                <span class="advanced-rail-label">Doubles Next Up</span>
+                                <span id="advanced-status-doubles-next-up" class="advanced-status-chip">N/A</span>
+                            </button>
                         </nav>
                     </aside>
 
                     <div class="advanced-card-stack">
+                        <div id="advanced-empty-state" class="advanced-empty-state" hidden>
+                            No advanced overrides are available for this setup.
+                        </div>
                         <section
                             id="advanced-required-sitout-section"
                             class="config-group advanced-card"
                             data-advanced-card="requiredSitOut"
                             hidden
                         >
-                            <button
-                                type="button"
-                                id="advanced-toggle-required-sitout"
-                                class="advanced-card-header"
-                                data-advanced-toggle="requiredSitOut"
-                                aria-expanded="true"
-                                aria-controls="advanced-required-sitout-body"
-                            >
+                            <div class="advanced-card-header">
                                 <span class="advanced-card-kicker">Doubles Guardrail</span>
-                                <span class="advanced-card-title">Required Sit-Out</span>
-                            </button>
-                            <div id="advanced-required-sitout-body" class="advanced-card-body">
+                                <span class="advanced-card-title">Tournament Sit-Out</span>
+                            </div>
+                            <div class="advanced-card-body">
                                 <select id="advanced-required-sitout-select" class="advanced-select"></select>
-                                <p class="advanced-card-hint">Only shown when strict doubles requires one player to sit out.</p>
+                                <p class="advanced-card-hint">
+                                    Only shown when strict doubles requires one player to sit out. This is separate from
+                                    off-court waiting caused by limited courts.
+                                </p>
                             </div>
                         </section>
 
@@ -536,18 +546,11 @@
                             data-advanced-card="singlesOpening"
                             hidden
                         >
-                            <button
-                                type="button"
-                                id="advanced-toggle-singles-opening"
-                                class="advanced-card-header"
-                                data-advanced-toggle="singlesOpening"
-                                aria-expanded="true"
-                                aria-controls="advanced-singles-opening-body"
-                            >
+                            <div class="advanced-card-header">
                                 <span class="advanced-card-kicker">Singles Bracket</span>
                                 <span class="advanced-card-title">Opening Matchups</span>
-                            </button>
-                            <div id="advanced-singles-opening-body" class="advanced-card-body">
+                            </div>
+                            <div class="advanced-card-body">
                                 <div class="advanced-section-header">
                                     <p class="advanced-card-hint">Used for elimination/consolation only.</p>
                                     <button type="button" id="advanced-add-singles-matchup" class="btn btn-ghost btn-sm">Add</button>
@@ -562,18 +565,11 @@
                             data-advanced-card="doublesPairs"
                             hidden
                         >
-                            <button
-                                type="button"
-                                id="advanced-toggle-doubles-pairs"
-                                class="advanced-card-header"
-                                data-advanced-toggle="doublesPairs"
-                                aria-expanded="true"
-                                aria-controls="advanced-doubles-pairs-body"
-                            >
+                            <div class="advanced-card-header">
                                 <span class="advanced-card-kicker">Doubles Bracket</span>
                                 <span class="advanced-card-title">Locked Teams</span>
-                            </button>
-                            <div id="advanced-doubles-pairs-body" class="advanced-card-body">
+                            </div>
+                            <div class="advanced-card-body">
                                 <div class="advanced-section-header">
                                     <p class="advanced-card-hint">Lock full pairs or one solo team when 2v1 is enabled.</p>
                                     <button type="button" id="advanced-add-doubles-pair" class="btn btn-ghost btn-sm">Add</button>
@@ -588,18 +584,11 @@
                             data-advanced-card="singlesByes"
                             hidden
                         >
-                            <button
-                                type="button"
-                                id="advanced-toggle-singles-byes"
-                                class="advanced-card-header"
-                                data-advanced-toggle="singlesByes"
-                                aria-expanded="false"
-                                aria-controls="advanced-singles-byes-body"
-                            >
+                            <div class="advanced-card-header">
                                 <span class="advanced-card-kicker">Singles Bracket</span>
                                 <span class="advanced-card-title">Bye Players</span>
-                            </button>
-                            <div id="advanced-singles-byes-body" class="advanced-card-body">
+                            </div>
+                            <div class="advanced-card-body">
                                 <div id="advanced-singles-byes-list" class="advanced-check-list"></div>
                                 <p class="advanced-card-hint">Leave empty to auto-assign byes.</p>
                             </div>
@@ -611,20 +600,47 @@
                             data-advanced-card="doublesByes"
                             hidden
                         >
-                            <button
-                                type="button"
-                                id="advanced-toggle-doubles-byes"
-                                class="advanced-card-header"
-                                data-advanced-toggle="doublesByes"
-                                aria-expanded="false"
-                                aria-controls="advanced-doubles-byes-body"
-                            >
+                            <div class="advanced-card-header">
                                 <span class="advanced-card-kicker">Doubles Bracket</span>
                                 <span class="advanced-card-title">Bye Teams</span>
-                            </button>
-                            <div id="advanced-doubles-byes-body" class="advanced-card-body">
+                            </div>
+                            <div class="advanced-card-body">
                                 <div id="advanced-doubles-byes-list" class="advanced-check-list"></div>
                                 <p class="advanced-card-hint">Choose from locked teams only. Leave empty to auto-assign.</p>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-singles-next-up-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="singlesNextUp"
+                            hidden
+                        >
+                            <div class="advanced-card-header">
+                                <span class="advanced-card-kicker">Singles Queue</span>
+                                <span class="advanced-card-title">Next Up Players</span>
+                            </div>
+                            <div class="advanced-card-body">
+                                <div id="advanced-singles-next-up-list" class="advanced-check-list"></div>
+                                <p class="advanced-card-hint">Choose who should wait off court for queued Round 1 matches.</p>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-doubles-next-up-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="doublesNextUp"
+                            hidden
+                        >
+                            <div class="advanced-card-header">
+                                <span class="advanced-card-kicker">Doubles Queue</span>
+                                <span class="advanced-card-title">Next Up Teams</span>
+                            </div>
+                            <div class="advanced-card-body">
+                                <div id="advanced-doubles-next-up-list" class="advanced-check-list"></div>
+                                <p class="advanced-card-hint">
+                                    Choose from locked teams only. Selected teams stay off court until queued matches.
+                                </p>
                             </div>
                         </section>
                     </div>

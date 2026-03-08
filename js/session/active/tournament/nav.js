@@ -152,7 +152,7 @@ function updateTournamentNavigation(session, navState, ui) {
     updatePreGeneratedTournamentNavigation({ session, navState, ui, round: session.rounds[navState.current] })
 }
 
-function buildTournamentNavState(_session, roundInfo) {
+function buildTournamentNavState(roundInfo) {
     const scoreBlockReason = getRoundScoreBlockReason(roundInfo.round)
     const scoresComplete = scoreBlockReason === null
     const canGoPrev = roundInfo.current > 0

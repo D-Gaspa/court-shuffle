@@ -3,6 +3,16 @@
     gap: var(--space-sm);
 }
 
+.advanced-empty-state {
+    border: 1px dashed var(--advanced-line-soft);
+    border-radius: var(--radius-lg);
+    padding: 18px 16px;
+    background: color-mix(in srgb, var(--advanced-panel-raised), transparent 12%);
+    color: var(--advanced-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
 .advanced-card {
     border: 1px solid var(--advanced-line-soft);
     border-radius: var(--radius-lg);
@@ -14,40 +24,12 @@
 }
 
 .advanced-card-header {
-    width: 100%;
-    border: 0;
-    background: transparent;
     color: inherit;
     display: grid;
     justify-items: start;
     gap: 2px;
     text-align: left;
-    padding: 11px 42px 11px 14px;
-    cursor: pointer;
-    position: relative;
-}
-
-.advanced-card-header::after {
-    content: "";
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    width: 9px;
-    height: 9px;
-    border-right: 2px solid var(--advanced-muted);
-    border-bottom: 2px solid var(--advanced-muted);
-    transform: translateY(-65%) rotate(45deg);
-    transition: transform var(--duration-fast) var(--ease-out);
-}
-
-.advanced-card-collapsed .advanced-card-header::after {
-    transform: translateY(-30%) rotate(-45deg);
-}
-
-.advanced-card-header:focus-visible {
-    outline: none;
-    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--advanced-accent), transparent 45%);
-    border-radius: inherit;
+    padding: 14px 14px 0;
 }
 
 .advanced-card-kicker {
@@ -69,11 +51,12 @@
 .advanced-card-body {
     display: grid;
     gap: var(--space-sm);
-    padding: 0 14px 14px;
+    padding: 12px 14px 14px;
 }
 
 .advanced-card-hint {
     margin: 0;
+    max-width: 62ch;
     font-size: 0.78rem;
     color: var(--advanced-muted);
     line-height: 1.45;
@@ -87,9 +70,8 @@
 }
 
 .advanced-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    justify-items: start;
     gap: var(--space-sm);
 }
 
@@ -160,6 +142,7 @@
 }
 
 .session-advanced-step .advanced-section-header .btn-ghost {
+    justify-self: start;
     color: color-mix(in srgb, var(--advanced-accent), #fff 8%);
 }
 
@@ -249,8 +232,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .advanced-rail-btn,
-    .advanced-card-header::after {
+    .advanced-rail-btn {
         transition: none;
     }
 }

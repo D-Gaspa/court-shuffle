@@ -3,7 +3,6 @@ function buildSeriesRun({
     format,
     teamSize,
     courtCount,
-    courtHandling,
     allowNotStrictDoubles,
     usedDoublesPartnerPairs,
     usedSinglesOpeningMatchups,
@@ -18,7 +17,6 @@ function buildSeriesRun({
             format,
             usedSinglesOpeningMatchups,
             courtCount,
-            courtHandling,
             rng,
         })
     }
@@ -29,7 +27,6 @@ function buildSeriesRun({
         usedDoublesPartnerPairs,
         sitOutCounts,
         courtCount,
-        courtHandling,
         rng,
     })
 }

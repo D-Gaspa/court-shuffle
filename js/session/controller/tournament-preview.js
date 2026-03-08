@@ -13,36 +13,50 @@ function formatDoublesTeamLabel(team) {
     return `${members[0]} & ${members[1]}`
 }
 
-function collectRoundOneOverrideLines(config) {
-    const advanced = config?.advanced || {}
+function pushOverrideLine(lines, label, values) {
+    if (values.length > 0) {
+        lines.push(`${label}: ${values.join(", ")}`)
+    }
+}
+
+function collectSinglesOverrideLines(advanced) {
     const lines = []
+    pushOverrideLine(
+        lines,
+        "Singles opening locks",
+        (advanced.singlesOpeningMatchups || []).filter(([a, b]) => a && b).map(([a, b]) => `${a} vs ${b}`),
+    )
+    pushOverrideLine(lines, "Singles bye locks", [...new Set((advanced.singlesByePlayers || []).filter(Boolean))])
+    pushOverrideLine(lines, "Singles next up", [...new Set((advanced.singlesNextUpPlayers || []).filter(Boolean))])
+    return lines
+}
 
-    if (config?.teamSize === 1) {
-        const opening = (advanced.singlesOpeningMatchups || [])
-            .filter(([a, b]) => a && b)
-            .map(([a, b]) => `${a} vs ${b}`)
-        if (opening.length > 0) {
-            lines.push(`Singles opening locks: ${opening.join(", ")}`)
-        }
-        const byePlayers = [...new Set((advanced.singlesByePlayers || []).filter(Boolean))]
-        if (byePlayers.length > 0) {
-            lines.push(`Singles bye locks: ${byePlayers.join(", ")}`)
-        }
-        return lines
-    }
-
-    const lockedTeams = (advanced.doublesLockedPairs || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean)
-    if (lockedTeams.length > 0) {
-        lines.push(`Doubles team locks: ${lockedTeams.join(", ")}`)
-    }
-    const byeTeams = (advanced.doublesByeTeams || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean)
-    if (byeTeams.length > 0) {
-        lines.push(`Doubles bye locks: ${byeTeams.join(", ")}`)
-    }
+function collectDoublesOverrideLines(advanced) {
+    const lines = []
+    pushOverrideLine(
+        lines,
+        "Doubles team locks",
+        (advanced.doublesLockedPairs || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean),
+    )
+    pushOverrideLine(
+        lines,
+        "Doubles bye locks",
+        (advanced.doublesByeTeams || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean),
+    )
+    pushOverrideLine(
+        lines,
+        "Doubles next up",
+        (advanced.doublesNextUpTeams || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean),
+    )
     if (advanced.forcedSitOutPlayer) {
         lines.push(`Forced sit-out: ${advanced.forcedSitOutPlayer}`)
     }
     return lines
+}
+
+function collectRoundOneOverrideLines(config) {
+    const advanced = config?.advanced || {}
+    return config?.teamSize === 1 ? collectSinglesOverrideLines(advanced) : collectDoublesOverrideLines(advanced)
 }
 
 function buildTournamentSeed(players, config, courtCount) {

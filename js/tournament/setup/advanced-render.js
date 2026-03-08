@@ -1,5 +1,8 @@
+import { getAdvancedEntrants } from "./advanced-context.js"
 import { isBracketFormat, requiresForcedSitOut } from "./advanced-model.js"
+import { getBracketByeSlotCount } from "./advanced-model-helpers.js"
 import { renderDoublesByesSection, renderDoublesPairsSection } from "./advanced-render-doubles.js"
+import { renderDoublesNextUpSection, renderSinglesNextUpSection } from "./advanced-render-next-up.js"
 import {
     addPlaceholderRow,
     createRemoveRowButton,
@@ -49,14 +52,24 @@ function renderRequiredSitOutSection(context) {
     }
 }
 
-function appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList, onRequestRender) {
+function getSelectedSinglesByePlayers(advancedDraft, byeSlots) {
+    advancedDraft.singlesByePlayers = [...new Set((advancedDraft.singlesByePlayers || []).filter(Boolean))].slice(
+        0,
+        byeSlots,
+    )
+    return new Set(advancedDraft.singlesByePlayers)
+}
+
+function appendSinglesByeCheckboxes({ selectedPlayers, advancedDraft, singlesByesList, onRequestRender, byeSlots }) {
+    const selectedByePlayers = getSelectedSinglesByePlayers(advancedDraft, byeSlots)
     for (const player of selectedPlayers) {
         const row = document.createElement("label")
         row.className = "advanced-check-item"
 
         const input = document.createElement("input")
         input.type = "checkbox"
-        input.checked = advancedDraft.singlesByePlayers.includes(player)
+        input.checked = selectedByePlayers.has(player)
+        input.disabled = !input.checked && selectedByePlayers.size >= byeSlots
         input.addEventListener("change", () => {
             if (input.checked) {
                 advancedDraft.singlesByePlayers = [...new Set([...advancedDraft.singlesByePlayers, player])]
@@ -80,13 +93,20 @@ function renderSinglesByesSection(context) {
         tournamentTeamSize,
         tournamentFormat,
         selectedPlayers,
+        minRequiredSitOutPool,
         advancedDraft,
         singlesByesSection,
         singlesByesList,
         onRequestRender,
     } = context
 
-    const visible = tournamentTeamSize === 1 && isBracketFormat(tournamentFormat)
+    const byeSlots = getBracketByeSlotCount({
+        selectedPlayers,
+        tournamentTeamSize,
+        allowNotStrictDoubles: true,
+        minRequiredSitOutPool,
+    })
+    const visible = tournamentTeamSize === 1 && isBracketFormat(tournamentFormat) && byeSlots > 0
     singlesByesSection.hidden = !visible
     if (!visible) {
         advancedDraft.singlesByePlayers = []
@@ -94,7 +114,13 @@ function renderSinglesByesSection(context) {
     }
 
     singlesByesList.textContent = ""
-    appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList, onRequestRender)
+    appendSinglesByeCheckboxes({
+        selectedPlayers,
+        advancedDraft,
+        singlesByesList,
+        onRequestRender,
+        byeSlots,
+    })
 }
 
 function renderSinglesOpeningSection(context) {
@@ -148,11 +174,29 @@ function renderSinglesOpeningSection(context) {
 }
 
 function renderAdvancedModalSections(context) {
+    const activeDoublesPlayers = getAdvancedEntrants({
+        selectedPlayers: context.selectedPlayers,
+        tournamentTeamSize: context.tournamentTeamSize,
+        allowNotStrictDoubles: context.allowNotStrictDoubles,
+        minRequiredSitOutPool: context.minRequiredSitOutPool,
+        forcedSitOutPlayer: context.advancedDraft.forcedSitOutPlayer,
+    })
     renderRequiredSitOutSection(context)
     renderSinglesOpeningSection(context)
-    renderDoublesPairsSection(context)
+    renderDoublesPairsSection({ ...context, selectedPlayers: activeDoublesPlayers })
     renderSinglesByesSection(context)
     renderDoublesByesSection(context)
+    renderSinglesNextUpSection({
+        ...context,
+        courtCount: context.courtCount,
+        minRequiredSitOutPool: context.minRequiredSitOutPool,
+    })
+    renderDoublesNextUpSection({
+        ...context,
+        selectedPlayers: context.selectedPlayers,
+        courtCount: context.courtCount,
+        minRequiredSitOutPool: context.minRequiredSitOutPool,
+    })
 }
 
 export { renderAdvancedModalSections }

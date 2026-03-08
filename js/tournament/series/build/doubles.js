@@ -32,7 +32,6 @@ function resolveDoublesEntrants({ players, allowNotStrictDoubles, normalizedAdva
             return { entrants, tournamentLevelSitOuts }
         }
         tournamentLevelSitOuts.push(sitOut)
-        sitOutCounts[sitOut] = (sitOutCounts[sitOut] || 0) + 1
         const idx = entrants.indexOf(sitOut)
         if (idx !== -1) {
             entrants.splice(idx, 1)
@@ -135,7 +134,6 @@ function buildDoublesFirstRun({
     usedDoublesPartnerPairs,
     sitOutCounts,
     courtCount,
-    courtHandling,
     rng,
 }) {
     const errors = []
@@ -178,8 +176,9 @@ function buildDoublesFirstRun({
             entrants,
             tournamentLevelSitOuts,
             courtCount,
-            courtHandling,
             usedDoublesPartnerPairs,
+            normalizedAdvanced,
+            allowNotStrictDoubles,
         })
     }
     return buildBracketDoublesRun({
@@ -193,7 +192,6 @@ function buildDoublesFirstRun({
         entrants,
         tournamentLevelSitOuts,
         courtCount,
-        courtHandling,
         usedDoublesPartnerPairs,
     })
 }
@@ -205,7 +203,6 @@ function buildDoublesTournament({
     usedDoublesPartnerPairs,
     sitOutCounts,
     courtCount,
-    courtHandling,
     rng,
 }) {
     const entrants = [...players]
@@ -234,7 +231,6 @@ function buildDoublesTournament({
         entrants,
         tournamentLevelSitOuts,
         courtCount,
-        courtHandling,
     })
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return run

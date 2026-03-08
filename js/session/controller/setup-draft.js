@@ -10,11 +10,11 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
     }
 }
 
-function getVisibleStepIds(_gameMode) {
+function getVisibleStepIds() {
     return ["roster", "mode", "setup"]
 }
 
-function getFinalStepId(_gameMode) {
+function getFinalStepId() {
     return "setup"
 }
 

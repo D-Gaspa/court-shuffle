@@ -4,25 +4,12 @@
  * Teams are objects: { id: number, name: string, players: string[] }
  */
 
-// ── Utilities ──────────────────────────────────────────────────
-
 function nextPowerOf2(n) {
     let v = 1
     while (v < n) {
         v *= 2
     }
     return v
-}
-
-function shuffleArray(arr, rng = Math.random) {
-    const a = [...arr]
-    for (let i = a.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(rng() * (i + 1))
-        const tmp = a[i]
-        a[i] = a[j]
-        a[j] = tmp
-    }
-    return a
 }
 
 // ── First round generation ─────────────────────────────────────
@@ -77,10 +64,15 @@ function generateRoundRobinSchedule(teams) {
 
     for (let r = 0; r < totalRounds; r += 1) {
         const matches = []
+        const sitOuts = []
         for (let i = 0; i < list.length / 2; i += 1) {
             const home = list[i]
             const away = list.at(-(i + 1))
             if (home === null || away === null) {
+                const sitOutTeam = home ?? away
+                if (sitOutTeam) {
+                    sitOuts.push(sitOutTeam.name)
+                }
                 continue
             }
             matches.push({
@@ -91,7 +83,7 @@ function generateRoundRobinSchedule(teams) {
         }
         rounds.push({
             matches,
-            sitOuts: [],
+            sitOuts,
             scores: null,
             tournamentRoundLabel: `Round ${r + 1}`,
         })
@@ -105,7 +97,7 @@ function generateRoundRobinSchedule(teams) {
 
 // ── Bracket initialization ─────────────────────────────────────
 
-function createInitialBracket(_format) {
+function createInitialBracket() {
     return {
         pools: { winners: [], losers: [] },
         eliminated: [],
@@ -114,25 +106,4 @@ function createInitialBracket(_format) {
     }
 }
 
-// ── Team formation helpers ─────────────────────────────────────
-
-function autoFormTeams(players, teamSize, rng = Math.random) {
-    const shuffled = shuffleArray(players, rng)
-    const teams = []
-    let id = 0
-    for (let i = 0; i < shuffled.length; i += teamSize) {
-        const teamPlayers = shuffled.slice(i, i + teamSize)
-        if (teamPlayers.length === 0) {
-            break
-        }
-        teams.push({
-            id,
-            name: teamPlayers.join(" & "),
-            players: teamPlayers,
-        })
-        id += 1
-    }
-    return teams
-}
-
-export { nextPowerOf2, generateBracketFirstRound, generateRoundRobinSchedule, createInitialBracket, autoFormTeams }
+export { nextPowerOf2, generateBracketFirstRound, generateRoundRobinSchedule, createInitialBracket }
