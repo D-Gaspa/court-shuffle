@@ -172,7 +172,7 @@ function bindInteractions(cardElements, cardExpansion, railButtons) {
 }
 
 function createAdvancedModalUiController({
-    advancedDialog,
+    rootElement,
     advancedModalError,
     advancedValidationSummary,
     tournamentAdvancedState,
@@ -180,7 +180,7 @@ function createAdvancedModalUiController({
     getCommittedSummary,
     getActiveSummary,
 }) {
-    const railButtons = advancedDialog ? [...advancedDialog.querySelectorAll("[data-advanced-nav-target]")] : []
+    const railButtons = rootElement ? [...rootElement.querySelectorAll("[data-advanced-nav-target]")] : []
     let cardExpansion = getDefaultCardExpansion(1)
 
     return {

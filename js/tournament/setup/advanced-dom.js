@@ -52,12 +52,14 @@ function getAdvancedCardElements(root, sections) {
 
 function getAdvancedSetupDom(root = document) {
     const sections = getAdvancedSectionElements(root)
+    const advancedDialog = root.getElementById("tournament-advanced-dialog")
     return {
+        advancedDialog,
+        advancedRoot: advancedDialog?.querySelector(".advanced-modal") || advancedDialog,
         advancedBtn: root.getElementById("tournament-advanced-btn"),
-        tournamentAdvancedState: root.getElementById("tournament-advanced-state"),
-        advancedDialog: root.getElementById("tournament-advanced-dialog"),
         advancedCancelBtn: root.getElementById("advanced-cancel"),
         advancedApplyBtn: root.getElementById("advanced-apply"),
+        tournamentAdvancedState: root.getElementById("tournament-advanced-state"),
         advancedModalError: root.getElementById("advanced-modal-error"),
         advancedValidationSummary: root.getElementById("advanced-validation-summary"),
         advancedCardElements: getAdvancedCardElements(root, sections),

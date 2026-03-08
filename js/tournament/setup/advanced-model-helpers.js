@@ -93,6 +93,9 @@ function formatCountLabel(count, singular, plural) {
 
 function validateSinglesRows(rows, label) {
     for (const [a, b] of rows) {
+        if (!(a || b)) {
+            continue
+        }
         if (!(a && b)) {
             return `Every ${label} row must select two players.`
         }

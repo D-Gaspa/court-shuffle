@@ -34,22 +34,57 @@ function collectLockedPlayers(usedPlayers, teamPlayers) {
     return true
 }
 
+function getLockedRowValues(row) {
+    return [typeof row?.[0] === "string" ? row[0] : "", typeof row?.[1] === "string" ? row[1] : ""]
+}
+
+function isBlankLockedRow(row) {
+    const [left, right] = getLockedRowValues(row)
+    return !(left || right)
+}
+
+function validateLockedTeamPlayers(row, allowNotStrictDoubles) {
+    const teamPlayers = toLockedTeamPlayers(row, allowNotStrictDoubles)
+    const rowError = getLockedTeamSizeError(teamPlayers, allowNotStrictDoubles)
+    if (rowError) {
+        return { error: rowError, teamPlayers: null }
+    }
+    return { error: null, teamPlayers }
+}
+
+function updateLockedRowStats({ row, allowNotStrictDoubles, usedPlayers, soloLocks }) {
+    if (isBlankLockedRow(row)) {
+        return { error: null, soloLocks }
+    }
+
+    const { error, teamPlayers } = validateLockedTeamPlayers(row, allowNotStrictDoubles)
+    if (error) {
+        return { error, soloLocks }
+    }
+    if (teamPlayers.length === 1) {
+        soloLocks += 1
+    }
+    if (!collectLockedPlayers(usedPlayers, teamPlayers)) {
+        return { error: "A player cannot be assigned to multiple locked doubles teams.", soloLocks }
+    }
+    return { error: null, soloLocks }
+}
+
 function validateDoublesLockedRows(rows, allowNotStrictDoubles) {
     const usedPlayers = new Set()
     let soloLocks = 0
 
     for (const row of rows || []) {
-        const teamPlayers = toLockedTeamPlayers(row, allowNotStrictDoubles)
-        const rowError = getLockedTeamSizeError(teamPlayers, allowNotStrictDoubles)
-        if (rowError) {
-            return rowError
+        const { error, soloLocks: nextSoloLocks } = updateLockedRowStats({
+            row,
+            allowNotStrictDoubles,
+            usedPlayers,
+            soloLocks,
+        })
+        if (error) {
+            return error
         }
-        if (teamPlayers.length === 1) {
-            soloLocks += 1
-        }
-        if (!collectLockedPlayers(usedPlayers, teamPlayers)) {
-            return "A player cannot be assigned to multiple locked doubles teams."
-        }
+        soloLocks = nextSoloLocks
     }
 
     if (allowNotStrictDoubles && soloLocks > 1) {

@@ -43,13 +43,13 @@ function cloneAdvancedSettings(value = getDefaultAdvancedSettings()) {
 function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers) {
     const selected = new Set(selectedPlayers)
 
-    tournamentAdvanced.singlesOpeningMatchups = reconcilePairRows(tournamentAdvanced.singlesOpeningMatchups)
-        .map(([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""])
-        .filter(([a, b]) => a || b)
+    tournamentAdvanced.singlesOpeningMatchups = reconcilePairRows(tournamentAdvanced.singlesOpeningMatchups, true).map(
+        ([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""],
+    )
 
-    tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs)
-        .map(([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""])
-        .filter(([a, b]) => a || b)
+    tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs, true).map(
+        ([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""],
+    )
 
     const lockedPairKeySet = collectLockedPairKeySet(tournamentAdvanced.doublesLockedPairs, true)
 
@@ -91,9 +91,9 @@ function reconcileAdvancedForMode({
     tournamentAdvanced.singlesOpeningMatchups = []
     tournamentAdvanced.singlesByePlayers = []
     if (!allowNotStrictDoubles) {
-        tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs)
-            .filter(([a, b]) => a && b && a !== b)
-            .map(([a, b]) => [a, b])
+        tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs, true).map(
+            ([a, b]) => [a, a && a === b ? "" : b],
+        )
         tournamentAdvanced.doublesByeTeams = reconcileByeTeams(tournamentAdvanced.doublesByeTeams)
             .filter((team) => team.length === 2)
             .map((team) => [...team])

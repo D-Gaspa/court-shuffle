@@ -1,7 +1,7 @@
 .tournament-advanced-actions {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: var(--space-sm);
     margin-top: var(--space-xs);
 }
@@ -9,6 +9,7 @@
 .tournament-advanced-state {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     border-radius: var(--radius-full);
     border: 1px solid color-mix(in srgb, var(--court), var(--border) 45%);
     padding: 4px 10px;
@@ -40,7 +41,7 @@
     -webkit-backdrop-filter: blur(8px);
 }
 
-#tournament-advanced-dialog .advanced-modal {
+.session-advanced-step {
     --advanced-bg-0: #11161a;
     --advanced-bg-1: #151d22;
     --advanced-panel: #19222a;
@@ -58,19 +59,21 @@
     --advanced-chip-error: #ff6d5e;
 
     position: relative;
-    overflow: auto;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
     background:
         linear-gradient(140deg, color-mix(in srgb, var(--court), #121920 78%), transparent 38%),
         linear-gradient(163deg, transparent 55%, color-mix(in srgb, var(--clay), transparent 86%) 100%),
         linear-gradient(180deg, var(--advanced-bg-0), var(--advanced-bg-1));
     border: 1px solid color-mix(in srgb, var(--court), var(--border) 50%);
     box-shadow:
-        0 28px 80px #000b,
+        0 18px 40px #0004,
         inset 0 0 0 1px color-mix(in srgb, var(--court), transparent 85%);
     color: var(--advanced-text);
+    padding: clamp(1rem, 2vw, 1.5rem);
 }
 
-#tournament-advanced-dialog .advanced-modal::before {
+.session-advanced-step::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -90,7 +93,7 @@
     opacity: 0.55;
 }
 
-#tournament-advanced-dialog .advanced-modal > * {
+.session-advanced-step > * {
     position: relative;
     z-index: 1;
 }
@@ -102,7 +105,29 @@
     letter-spacing: 0.04em;
 }
 
-#tournament-advanced-dialog .advanced-modal-header .modal-subtitle {
+.advanced-header-meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.tournament-advanced-summary {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+}
+
+.advanced-header-kicker {
+    font-size: 0.67rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--advanced-accent);
+}
+
+.session-advanced-step .advanced-modal-header .modal-subtitle {
     color: var(--advanced-muted);
 }
 
@@ -111,6 +136,16 @@
     display: grid;
     grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
     gap: var(--space-md);
+}
+
+@media (max-width: 640px) {
+    .tournament-advanced-summary {
+        justify-items: start;
+    }
+
+    #tournament-advanced-dialog.modal-advanced {
+        width: calc(100vw - 1rem);
+    }
 }
 
 .advanced-control-rail {

@@ -159,19 +159,19 @@
     accent-color: var(--advanced-accent);
 }
 
-#tournament-advanced-dialog .advanced-section-header .btn-ghost {
+.session-advanced-step .advanced-section-header .btn-ghost {
     color: color-mix(in srgb, var(--advanced-accent), #fff 8%);
 }
 
-#tournament-advanced-dialog .advanced-section-header .btn-ghost:hover:not(:disabled) {
+.session-advanced-step .advanced-section-header .btn-ghost:hover:not(:disabled) {
     background: color-mix(in srgb, var(--advanced-accent), transparent 88%);
 }
 
-#tournament-advanced-dialog .advanced-row .btn-danger {
+.session-advanced-step .advanced-row .btn-danger {
     color: var(--advanced-warning);
 }
 
-#tournament-advanced-dialog .advanced-row .btn-danger:hover:not(:disabled) {
+.session-advanced-step .advanced-row .btn-danger:hover:not(:disabled) {
     background: color-mix(in srgb, var(--advanced-warning), transparent 88%);
     color: color-mix(in srgb, var(--advanced-warning), #fff 18%);
 }
@@ -211,14 +211,6 @@
     color: color-mix(in srgb, var(--advanced-chip-error), #fff 8%);
 }
 
-#tournament-advanced-dialog .advanced-modal-actions {
-    margin-top: 0;
-}
-
-#tournament-advanced-dialog .advanced-modal-actions .btn {
-    min-width: 108px;
-}
-
 @media (max-width: 860px) {
     .advanced-control-shell {
         grid-template-columns: 1fr;
@@ -234,15 +226,6 @@
 }
 
 @media (max-width: 640px) {
-    #tournament-advanced-dialog.modal-advanced {
-        width: calc(100vw - 0.75rem);
-        max-height: calc(100dvh - 0.75rem);
-    }
-
-    #tournament-advanced-dialog .advanced-modal {
-        padding: var(--space-lg);
-    }
-
     .advanced-control-nav {
         grid-template-columns: 1fr;
     }
@@ -262,16 +245,6 @@
     .advanced-modal-footer {
         grid-template-columns: 1fr;
         margin-inline: 0;
-    }
-
-    #tournament-advanced-dialog .advanced-modal-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    #tournament-advanced-dialog .advanced-modal-actions .btn {
-        flex: 1 1 auto;
-        min-width: 0;
     }
 }
 

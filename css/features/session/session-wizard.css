@@ -1,0 +1,191 @@
+.session-config {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.session-wizard-header {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.session-stepper {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.session-step-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    padding: 12px;
+    min-height: 84px;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        border-color var(--duration-fast) var(--ease-out),
+        background-color var(--duration-fast) var(--ease-out),
+        transform var(--duration-fast) var(--ease-out);
+}
+
+.session-step-btn:hover:not(:disabled),
+.session-step-btn:focus-visible {
+    border-color: var(--border-light);
+    background: var(--bg-elevated);
+}
+
+.session-step-btn.is-active {
+    border-color: var(--court);
+    background: color-mix(in srgb, var(--court-glow), transparent 20%);
+}
+
+.session-step-btn.is-complete {
+    border-color: color-mix(in srgb, var(--clay), var(--border) 35%);
+}
+
+.session-step-btn.is-locked {
+    opacity: 0.48;
+}
+
+.session-step-btn:disabled {
+    cursor: not-allowed;
+}
+
+.session-step-index {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    border: 1px solid var(--border-light);
+    background: color-mix(in srgb, var(--bg-elevated), transparent 15%);
+}
+
+.session-step-btn.is-active .session-step-index {
+    border-color: var(--court);
+    background: color-mix(in srgb, var(--court), transparent 72%);
+}
+
+.session-step-btn.is-complete .session-step-index {
+    border-color: var(--clay);
+    background: color-mix(in srgb, var(--clay), transparent 78%);
+}
+
+.session-step-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+    align-content: start;
+}
+
+.session-step-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.session-step-meta {
+    font-size: 0.74rem;
+    line-height: 1.35;
+    min-height: calc(1.35em * 2);
+    color: var(--text-muted);
+}
+
+.session-step-caption {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.session-step-panels {
+    display: grid;
+}
+
+.session-step-panel {
+    display: grid;
+    gap: var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background:
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--bg-card), transparent 5%),
+            color-mix(in srgb, var(--bg-card), #000 4%)
+        ),
+        var(--bg-card);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-light), transparent 80%);
+}
+
+.session-step-panel[hidden] {
+    display: none;
+}
+
+.session-step-intro {
+    display: grid;
+    gap: 6px;
+}
+
+.session-step-intro h2 {
+    margin: 0;
+}
+
+.session-step-intro p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.session-tournament-panel {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.session-wizard-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.session-wizard-actions .btn-accent,
+.session-wizard-actions .btn-primary {
+    min-width: 180px;
+}
+
+@media (max-width: 900px) {
+    .session-stepper {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .session-stepper {
+        grid-template-columns: 1fr;
+    }
+
+    .session-step-btn {
+        padding: 10px 12px;
+        min-height: 0;
+    }
+
+    .session-wizard-actions {
+        justify-content: stretch;
+    }
+
+    .session-wizard-actions .btn {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+}

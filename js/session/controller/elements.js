@@ -5,9 +5,14 @@ const sessionConfig = document.getElementById("session-config")
 const playerSelection = document.getElementById("player-selection")
 const selectAllBtn = document.getElementById("select-all-btn")
 const deselectAllBtn = document.getElementById("deselect-all-btn")
+const sessionStepper = document.getElementById("session-stepper")
+const sessionStepCaption = document.getElementById("session-step-caption")
+const sessionBackBtn = document.getElementById("session-back-btn")
+const sessionNextBtn = document.getElementById("session-next-btn")
 const modeSelector = document.getElementById("mode-selector")
 const modeHint = document.getElementById("mode-hint")
 const teamsConfig = document.getElementById("teams-config")
+const tournamentSetupPanel = document.getElementById("tournament-setup-panel")
 const teamsDecBtn = document.getElementById("teams-dec")
 const teamsIncBtn = document.getElementById("teams-inc")
 const teamCountValue = document.getElementById("team-count-value")
@@ -18,6 +23,18 @@ const allow2v1Checkbox = document.getElementById("allow-2v1")
 const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
 const tournamentDistributionHint = document.getElementById("tournament-distribution-hint")
 const tournamentAdvancedError = document.getElementById("tournament-advanced-error")
+const formatSelector = document.getElementById("format-selector")
+const teamSizeSelector = document.getElementById("tournament-team-size")
+const tournamentHint = document.getElementById("tournament-hint")
+const courtsConfig = document.getElementById("courts-config")
+const courtsDecBtn = document.getElementById("courts-dec")
+const courtsIncBtn = document.getElementById("courts-inc")
+const courtCountValue = document.getElementById("court-count-value")
+const courtCountLabel = document.getElementById("court-count-label")
+const courtHint = document.getElementById("court-hint")
+
+const sessionStepButtons = [...document.querySelectorAll("[data-session-step]")]
+const sessionStepPanels = [...document.querySelectorAll("[data-session-step-panel]")]
 
 const uiState = {
     roundPrefix: document.getElementById("round-prefix"),
@@ -45,23 +62,39 @@ const tournamentSeriesNavToggleBtn = document.getElementById("tournament-series-
 
 export {
     allow2v1Checkbox,
+    courtCountLabel,
+    courtCountValue,
+    courtHint,
+    courtsConfig,
+    courtsDecBtn,
+    courtsIncBtn,
     deselectAllBtn,
     endSessionBtn,
+    formatSelector,
     modeHint,
     modeSelector,
     noRosterWarning,
     notStrictDoublesGroup,
     playerSelection,
     selectAllBtn,
+    sessionBackBtn,
     sessionActive,
     sessionConfig,
+    sessionNextBtn,
+    sessionStepButtons,
+    sessionStepCaption,
+    sessionStepPanels,
+    sessionStepper,
     sessionSetup,
     startSessionBtn,
     teamCountValue,
     teamSizeHint,
+    teamSizeSelector,
     tournamentAdvancedError,
     tournamentDistributionGroup,
     tournamentDistributionHint,
+    tournamentHint,
+    tournamentSetupPanel,
     teamsConfig,
     teamsDecBtn,
     teamsIncBtn,

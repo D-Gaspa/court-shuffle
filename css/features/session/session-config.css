@@ -23,11 +23,6 @@
     flex-wrap: wrap;
 }
 
-.session-config {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-}
 .section-label {
     font-size: 0.8rem;
     font-weight: 700;
@@ -143,6 +138,7 @@
 .hint-distribution {
     white-space: pre-line;
     line-height: 1.5;
+    text-align: left;
 }
 
 /* Mode Selector */

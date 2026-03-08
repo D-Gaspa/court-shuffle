@@ -17,6 +17,7 @@ function renderRequiredSitOutSection(context) {
         requiredSitOutSection,
         requiredSitOutSelect,
         advancedDraft,
+        onRequestRender,
     } = context
 
     const visible =
@@ -42,9 +43,13 @@ function renderRequiredSitOutSection(context) {
         requiredSitOutSelect.appendChild(optionEl)
     }
     requiredSitOutSelect.value = advancedDraft.forcedSitOutPlayer || ""
+    requiredSitOutSelect.onchange = () => {
+        advancedDraft.forcedSitOutPlayer = requiredSitOutSelect.value || null
+        onRequestRender()
+    }
 }
 
-function appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList) {
+function appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList, onRequestRender) {
     for (const player of selectedPlayers) {
         const row = document.createElement("label")
         row.className = "advanced-check-item"
@@ -55,9 +60,10 @@ function appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesL
         input.addEventListener("change", () => {
             if (input.checked) {
                 advancedDraft.singlesByePlayers = [...new Set([...advancedDraft.singlesByePlayers, player])]
-                return
+            } else {
+                advancedDraft.singlesByePlayers = advancedDraft.singlesByePlayers.filter((name) => name !== player)
             }
-            advancedDraft.singlesByePlayers = advancedDraft.singlesByePlayers.filter((name) => name !== player)
+            onRequestRender()
         })
 
         const label = document.createElement("span")
@@ -77,6 +83,7 @@ function renderSinglesByesSection(context) {
         advancedDraft,
         singlesByesSection,
         singlesByesList,
+        onRequestRender,
     } = context
 
     const visible = tournamentTeamSize === 1 && isBracketFormat(tournamentFormat)
@@ -87,7 +94,7 @@ function renderSinglesByesSection(context) {
     }
 
     singlesByesList.textContent = ""
-    appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList)
+    appendSinglesByeCheckboxes(selectedPlayers, advancedDraft, singlesByesList, onRequestRender)
 }
 
 function renderSinglesOpeningSection(context) {
@@ -120,9 +127,11 @@ function renderSinglesOpeningSection(context) {
 
         const left = createSelect(options, rows[i][0], (next) => {
             advancedDraft.singlesOpeningMatchups[i][0] = next
+            onRequestRender()
         })
         const right = createSelect(options, rows[i][1], (next) => {
             advancedDraft.singlesOpeningMatchups[i][1] = next
+            onRequestRender()
         })
 
         row.appendChild(left)

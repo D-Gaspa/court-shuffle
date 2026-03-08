@@ -127,109 +127,210 @@
                         </div>
 
                         <div id="session-config" class="session-config">
-                            <h2 class="section-label">Select Players</h2>
-                            <div class="select-actions">
-                                <button type="button" id="select-all-btn" class="btn btn-ghost btn-sm">Select All</button>
-                                <button type="button" id="deselect-all-btn" class="btn btn-ghost btn-sm">Deselect All</button>
-                            </div>
-                            <div id="player-selection" class="player-selection-grid">
-                                <!-- Populated by JS -->
-                            </div>
-
-                            <div class="config-group">
-                                <h2 class="section-label">Mode</h2>
-                                <div id="mode-selector" class="mode-selector mode-selector-2">
-                                    <button type="button" class="mode-btn selected" data-mode="free">Free</button>
-                                    <button type="button" class="mode-btn" data-mode="tournament">Tournament</button>
-                                </div>
-                                <div id="mode-hint" class="hint"></div>
-                            </div>
-
-                            <div id="tournament-config" class="config-group tournament-settings" hidden>
-                                <div class="tournament-settings-header">
-                                    <span class="tournament-settings-badge">Tournament Settings</span>
-                                </div>
-                                <h2 class="section-label">Format</h2>
-                                <div id="format-selector" class="mode-selector">
-                                    <button type="button" class="format-btn mode-btn selected" data-format="consolation">Consolation</button>
-                                    <button type="button" class="format-btn mode-btn" data-format="elimination">Elimination</button>
-                                    <button type="button" class="format-btn mode-btn" data-format="round-robin">Round Robin</button>
-                                </div>
-
-                                <h2 class="section-label">Match Type</h2>
-                                <div id="tournament-team-size" class="mode-selector mode-selector-2">
-                                    <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
-                                    <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
-                                </div>
-
-                                <div id="tournament-hint" class="hint"></div>
-                                <div class="tournament-advanced-actions">
-                                    <span id="tournament-advanced-state" class="tournament-advanced-state" aria-live="polite">Auto</span>
-                                    <button type="button" id="tournament-advanced-btn" class="btn btn-ghost btn-sm">Advanced Settings</button>
-                                </div>
-                            </div>
-
-                            <div id="courts-config" class="config-group" hidden>
-                                <h2 class="section-label">Courts</h2>
-                                <div class="team-count-control">
-                                    <button type="button" id="courts-dec" class="btn btn-icon" aria-label="Decrease courts">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                            <div class="session-wizard-header">
+                                <div id="session-stepper" class="session-stepper" role="tablist" aria-label="Session setup steps">
+                                    <button
+                                        type="button"
+                                        id="session-step-btn-roster"
+                                        class="session-step-btn is-active"
+                                        data-session-step="roster"
+                                        role="tab"
+                                        aria-selected="true"
+                                        aria-controls="session-step-panel-roster"
+                                    >
+                                        <span class="session-step-index">1</span>
+                                        <span class="session-step-copy">
+                                            <span class="session-step-label">Roster</span>
+                                            <span class="session-step-meta">Who is playing</span>
+                                        </span>
                                     </button>
-                                    <div class="team-count-display">
-                                        <span id="court-count-value">1</span>
-                                        <small id="court-count-label">court</small>
+                                    <button
+                                        type="button"
+                                        id="session-step-btn-mode"
+                                        class="session-step-btn"
+                                        data-session-step="mode"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="session-step-panel-mode"
+                                    >
+                                        <span class="session-step-index">2</span>
+                                        <span class="session-step-copy">
+                                            <span class="session-step-label">Mode</span>
+                                            <span class="session-step-meta">Free or tournament</span>
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="session-step-btn-setup"
+                                        class="session-step-btn"
+                                        data-session-step="setup"
+                                        role="tab"
+                                        aria-selected="false"
+                                        aria-controls="session-step-panel-setup"
+                                    >
+                                        <span class="session-step-index">3</span>
+                                        <span class="session-step-copy">
+                                            <span class="session-step-label">Setup</span>
+                                            <span class="session-step-meta">Configure the session</span>
+                                        </span>
+                                    </button>
+                                </div>
+                                <p id="session-step-caption" class="session-step-caption"></p>
+                            </div>
+
+                            <div class="session-step-panels">
+                                <section
+                                    id="session-step-panel-roster"
+                                    class="session-step-panel is-active"
+                                    data-session-step-panel="roster"
+                                    role="tabpanel"
+                                    aria-labelledby="session-step-btn-roster"
+                                >
+                                    <div class="session-step-intro">
+                                        <h2>Select Players</h2>
+                                        <p>Choose the roster for this session before moving into format details.</p>
                                     </div>
-                                    <button type="button" id="courts-inc" class="btn btn-icon" aria-label="Increase courts">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                                    </button>
-                                </div>
-                                <div id="court-hint" class="hint"></div>
-                            </div>
-
-                            <div id="not-strict-doubles" class="config-group" hidden>
-                                <label class="toggle-row" for="allow-2v1">
-                                    <span class="toggle-switch">
-                                        <input type="checkbox" id="allow-2v1" />
-                                        <span class="toggle-track"></span>
-                                    </span>
-                                    <span class="toggle-label">Allow 2v1 matchups</span>
-                                </label>
-                                <div class="hint">Lets courts run with 3 players instead of requiring 4.</div>
-                            </div>
-
-                            <div id="tournament-distribution-group" class="config-group" hidden>
-                                <h2 class="section-label">Round 1 Preview</h2>
-                                <div id="tournament-distribution-hint" class="hint hint-distribution"></div>
-                                <div id="tournament-advanced-error" class="field-error" hidden></div>
-                            </div>
-
-                            <div id="teams-config" class="config-group">
-                                <h2 class="section-label">Teams</h2>
-                                <div class="team-count-control">
-                                    <button type="button" id="teams-dec" class="btn btn-icon" aria-label="Decrease teams">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                                    </button>
-                                    <div class="team-count-display">
-                                        <span id="team-count-value">2</span>
-                                        <small>teams</small>
+                                    <div class="select-actions">
+                                        <button type="button" id="select-all-btn" class="btn btn-ghost btn-sm">Select All</button>
+                                        <button type="button" id="deselect-all-btn" class="btn btn-ghost btn-sm">Deselect All</button>
                                     </div>
-                                    <button type="button" id="teams-inc" class="btn btn-icon" aria-label="Increase teams">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                                    </button>
-                                </div>
-                                <div id="team-size-hint" class="hint"></div>
+                                    <div id="player-selection" class="player-selection-grid">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </section>
+
+                                <section
+                                    id="session-step-panel-mode"
+                                    class="session-step-panel"
+                                    data-session-step-panel="mode"
+                                    role="tabpanel"
+                                    aria-labelledby="session-step-btn-mode"
+                                    hidden
+                                >
+                                    <div class="session-step-intro">
+                                        <h2>Choose Session Mode</h2>
+                                        <p>Free mode builds quick rotating teams. Tournament mode builds a mini-tournament series.</p>
+                                    </div>
+                                    <div class="config-group">
+                                        <h2 class="section-label">Mode</h2>
+                                        <div id="mode-selector" class="mode-selector mode-selector-2">
+                                            <button type="button" class="mode-btn selected" data-mode="free">Free</button>
+                                            <button type="button" class="mode-btn" data-mode="tournament">Tournament</button>
+                                        </div>
+                                        <div id="mode-hint" class="hint"></div>
+                                    </div>
+                                </section>
+
+                                <section
+                                    id="session-step-panel-setup"
+                                    class="session-step-panel"
+                                    data-session-step-panel="setup"
+                                    role="tabpanel"
+                                    aria-labelledby="session-step-btn-setup"
+                                    hidden
+                                >
+                                    <div id="teams-config" class="config-group">
+                                        <div class="session-step-intro">
+                                            <h2>Free Session Setup</h2>
+                                            <p>Balance the selected roster across as many teams as you want to rotate through.</p>
+                                        </div>
+                                        <h2 class="section-label">Teams</h2>
+                                        <div class="team-count-control">
+                                            <button type="button" id="teams-dec" class="btn btn-icon" aria-label="Decrease teams">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                            </button>
+                                            <div class="team-count-display">
+                                                <span id="team-count-value">2</span>
+                                                <small>teams</small>
+                                            </div>
+                                            <button type="button" id="teams-inc" class="btn btn-icon" aria-label="Increase teams">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                            </button>
+                                        </div>
+                                        <div id="team-size-hint" class="hint"></div>
+                                    </div>
+
+                                    <div id="tournament-setup-panel" class="session-tournament-panel" hidden>
+                                        <div id="tournament-config" class="config-group tournament-settings">
+                                            <div class="session-step-intro">
+                                                <h2>Tournament Setup</h2>
+                                                <p>Define the tournament shape before drilling into Round 1 overrides.</p>
+                                            </div>
+                                            <div class="tournament-settings-header">
+                                                <span class="tournament-settings-badge">Tournament Settings</span>
+                                            </div>
+                                            <h2 class="section-label">Format</h2>
+                                            <div id="format-selector" class="mode-selector">
+                                                <button type="button" class="format-btn mode-btn selected" data-format="consolation">Consolation</button>
+                                                <button type="button" class="format-btn mode-btn" data-format="elimination">Elimination</button>
+                                                <button type="button" class="format-btn mode-btn" data-format="round-robin">Round Robin</button>
+                                            </div>
+
+                                            <h2 class="section-label">Match Type</h2>
+                                            <div id="tournament-team-size" class="mode-selector mode-selector-2">
+                                                <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
+                                                <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
+                                            </div>
+
+                                            <div id="tournament-hint" class="hint"></div>
+                                            <div class="tournament-advanced-actions">
+                                                <span id="tournament-advanced-state" class="tournament-advanced-state" aria-live="polite">Auto</span>
+                                                <button type="button" id="tournament-advanced-btn" class="btn btn-ghost btn-sm">Advanced Settings</button>
+                                            </div>
+                                        </div>
+
+                                        <div id="courts-config" class="config-group">
+                                            <h2 class="section-label">Courts</h2>
+                                            <div class="team-count-control">
+                                                <button type="button" id="courts-dec" class="btn btn-icon" aria-label="Decrease courts">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                                </button>
+                                                <div class="team-count-display">
+                                                    <span id="court-count-value">1</span>
+                                                    <small id="court-count-label">court</small>
+                                                </div>
+                                                <button type="button" id="courts-inc" class="btn btn-icon" aria-label="Increase courts">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                                </button>
+                                            </div>
+                                            <div id="court-hint" class="hint"></div>
+                                        </div>
+
+                                        <div id="not-strict-doubles" class="config-group" hidden>
+                                            <label class="toggle-row" for="allow-2v1">
+                                                <span class="toggle-switch">
+                                                    <input type="checkbox" id="allow-2v1" />
+                                                    <span class="toggle-track"></span>
+                                                </span>
+                                                <span class="toggle-label">Allow 2v1 matchups</span>
+                                            </label>
+                                            <div class="hint">Lets courts run with 3 players instead of requiring 4.</div>
+                                        </div>
+
+                                        <div id="tournament-distribution-group" class="config-group">
+                                            <h2 class="section-label">Round 1 Preview</h2>
+                                            <div id="tournament-distribution-hint" class="hint hint-distribution"></div>
+                                            <div id="tournament-advanced-error" class="field-error" hidden></div>
+                                        </div>
+                                    </div>
+                                </section>
+
                             </div>
 
-                            <button type="button" id="start-session-btn" class="btn btn-accent btn-lg btn-full" disabled>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-                                    <polyline points="16 3 21 3 21 8" />
-                                    <line x1="4" y1="20" x2="21" y2="3" />
-                                    <polyline points="21 16 21 21 16 21" />
-                                    <line x1="15" y1="15" x2="21" y2="21" />
-                                    <line x1="4" y1="4" x2="9" y2="9" />
-                                </svg>
-                                Shuffle &amp; Start
-                            </button>
+                            <div class="session-wizard-actions">
+                                <button type="button" id="session-back-btn" class="btn btn-ghost btn-lg">Back</button>
+                                <button type="button" id="session-next-btn" class="btn btn-primary btn-lg">Next</button>
+                                <button type="button" id="start-session-btn" class="btn btn-accent btn-lg" disabled>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                                        <polyline points="16 3 21 3 21 8" />
+                                        <line x1="4" y1="20" x2="21" y2="3" />
+                                        <polyline points="21 16 21 21 16 21" />
+                                        <line x1="15" y1="15" x2="21" y2="21" />
+                                        <line x1="4" y1="4" x2="9" y2="9" />
+                                    </svg>
+                                    Shuffle &amp; Start
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -367,15 +468,18 @@
             </div>
         </dialog>
 
-        <!-- Tournament Advanced Modal -->
         <dialog id="tournament-advanced-dialog" class="modal modal-advanced">
-            <div class="modal-content modal-content-lg advanced-modal">
+            <div class="modal-content modal-content-lg advanced-modal session-advanced-step">
                 <header class="advanced-modal-header">
-                    <h2>Advanced Tournament Settings</h2>
-                    <p class="modal-subtitle">Tournament Control Rail · overrides apply to Tournament 1 only.</p>
+                    <div class="advanced-header-meta">
+                        <div>
+                            <h2>Advanced Tournament Settings</h2>
+                            <p class="modal-subtitle">Round 1 overrides apply after you press Apply.</p>
+                        </div>
+                    </div>
                 </header>
 
-                <div class="advanced-control-shell">
+                <div id="tournament-advanced-panel" class="advanced-control-shell">
                     <aside class="advanced-control-rail" aria-label="Control rail">
                         <p class="advanced-rail-kicker">Control Rail</p>
                         <nav class="advanced-control-nav" aria-label="Advanced section navigation">
