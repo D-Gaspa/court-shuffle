@@ -102,6 +102,12 @@ function markPartnerPairsFromTeams(teams, usedPartnerPairs) {
     }
 }
 
+function markDoublesTeamKeysFromTeams(teams, usedTeamKeys) {
+    for (const team of teams) {
+        usedTeamKeys.add(normalizeTeamKey(team.players))
+    }
+}
+
 function chooseTournamentSitOut(players, sitOutCounts, rng) {
     const sorted = [...players].sort((a, b) => {
         const diff = (sitOutCounts[a] || 0) - (sitOutCounts[b] || 0)
@@ -117,14 +123,18 @@ function chooseTournamentSitOut(players, sitOutCounts, rng) {
     return selected
 }
 
-function canJoinDoublesBucket(player, bucket, capacity, usedPartnerPairs) {
+function canJoinDoublesBucket({ player, bucket, capacity, usedPartnerPairs, usedTeamKeys }) {
     if (bucket.length >= capacity) {
         return false
     }
+    const nextBucket = [...bucket, player]
     for (const mate of bucket) {
         if (usedPartnerPairs.has(pairKey(player, mate))) {
             return false
         }
+    }
+    if (nextBucket.length === capacity && usedTeamKeys.has(normalizeTeamKey(nextBucket))) {
+        return false
     }
     return true
 }
@@ -161,11 +171,27 @@ function allocateSeedBuckets(seedBuckets, capacities) {
     return buckets
 }
 
-function buildDoublesTeamPartition(players, usedPartnerPairs, rng, seedBuckets = []) {
+function hasUsedSeededTeam(seededBuckets, capacities, usedTeamKeys) {
+    for (let i = 0; i < seededBuckets.length; i += 1) {
+        const bucket = seededBuckets[i]
+        if (bucket.length !== capacities[i]) {
+            continue
+        }
+        if (usedTeamKeys.has(normalizeTeamKey(bucket))) {
+            return true
+        }
+    }
+    return false
+}
+
+function buildDoublesTeamPartition({ players, usedPartnerPairs, usedTeamKeys, rng, seedBuckets = [] }) {
     const teamCount = Math.ceil(players.length / 2)
     const capacities = computeCapacities(players.length, teamCount)
     const seededBuckets = allocateSeedBuckets(seedBuckets, capacities)
     if (!seededBuckets) {
+        return null
+    }
+    if (hasUsedSeededTeam(seededBuckets, capacities, usedTeamKeys)) {
         return null
     }
 
@@ -183,7 +209,15 @@ function buildDoublesTeamPartition(players, usedPartnerPairs, rng, seedBuckets =
             rng,
         )
         for (const teamIndex of teamOrder) {
-            if (!canJoinDoublesBucket(player, buckets[teamIndex], capacities[teamIndex], usedPartnerPairs)) {
+            if (
+                !canJoinDoublesBucket({
+                    player,
+                    bucket: buckets[teamIndex],
+                    capacity: capacities[teamIndex],
+                    usedPartnerPairs,
+                    usedTeamKeys,
+                })
+            ) {
                 continue
             }
             buckets[teamIndex].push(player)
@@ -226,6 +260,7 @@ export {
     chooseTournamentSitOut,
     extractOpeningSinglesMatchupKeys,
     makeTeamObject,
+    markDoublesTeamKeysFromTeams,
     markPartnerPairsFromTeams,
     normalizeAdvancedSettings,
     normalizeTeamKey,

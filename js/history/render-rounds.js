@@ -197,7 +197,29 @@ function appendTournamentRun(body, run, index, total) {
     }
 }
 
-function buildHistoryCardBody(session, onDelete) {
+function appendActionButton(row, action, session) {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = action.className
+    button.textContent = action.label
+    button.addEventListener("click", () => action.onClick(session))
+    row.appendChild(button)
+}
+
+function buildHistoryActionRow(session, actions) {
+    if (!Array.isArray(actions) || actions.length === 0) {
+        return null
+    }
+
+    const row = document.createElement("div")
+    row.className = "history-actions"
+    for (const action of actions) {
+        appendActionButton(row, action, session)
+    }
+    return row
+}
+
+function buildHistoryCardBody(session, actions = []) {
     const body = document.createElement("div")
     body.className = "history-card-body"
 
@@ -212,15 +234,10 @@ function buildHistoryCardBody(session, onDelete) {
         }
     }
 
-    const deleteRow = document.createElement("div")
-    deleteRow.className = "history-delete"
-    const deleteBtn = document.createElement("button")
-    deleteBtn.type = "button"
-    deleteBtn.className = "btn btn-ghost btn-sm btn-danger"
-    deleteBtn.textContent = "Delete Session"
-    deleteBtn.addEventListener("click", () => onDelete(session.id))
-    deleteRow.appendChild(deleteBtn)
-    body.appendChild(deleteRow)
+    const actionRow = buildHistoryActionRow(session, actions)
+    if (actionRow) {
+        body.appendChild(actionRow)
+    }
 
     return body
 }

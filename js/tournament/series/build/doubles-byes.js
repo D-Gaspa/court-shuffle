@@ -1,7 +1,12 @@
 import { shuffleWithRng } from "../../../core/random.js"
 import { nextPowerOf2 } from "../../engine.js"
 import { reorderRoundMatchesForQueue } from "./queue.js"
-import { buildTournamentRunFromTeams, markPartnerPairsFromTeams, normalizeTeamKey } from "./shared.js"
+import {
+    buildTournamentRunFromTeams,
+    markDoublesTeamKeysFromTeams,
+    markPartnerPairsFromTeams,
+    normalizeTeamKey,
+} from "./shared.js"
 import { createBracketFirstRoundWithOverrides } from "./shared-bracket-overrides.js"
 
 function validateRoundRobinByeOverrides(format, normalizedAdvanced) {
@@ -134,6 +139,7 @@ function buildRoundRobinDoublesRun({
     tournamentLevelSitOuts,
     courtCount,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
     normalizedAdvanced,
     allowNotStrictDoubles,
 }) {
@@ -162,6 +168,7 @@ function buildRoundRobinDoublesRun({
     if (errors.length > 0) {
         return { run: null, errors }
     }
+    markDoublesTeamKeysFromTeams(teams, usedDoublesTeamKeys)
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return { run, errors: [] }
 }
@@ -178,6 +185,7 @@ function buildBracketDoublesRun({
     tournamentLevelSitOuts,
     courtCount,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
 }) {
     const byeCount = nextPowerOf2(teams.length) - teams.length
     const { requestedByeTeamIds, requestedByeIdSet } = collectRequestedByeTeamIds({
@@ -235,6 +243,7 @@ function buildBracketDoublesRun({
     if (errors.length > 0) {
         return { run: null, errors }
     }
+    markDoublesTeamKeysFromTeams(teams, usedDoublesTeamKeys)
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return { run, errors: [] }
 }

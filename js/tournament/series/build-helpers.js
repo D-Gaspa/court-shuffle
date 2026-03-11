@@ -5,6 +5,7 @@ function buildSeriesRun({
     courtCount,
     allowNotStrictDoubles,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
     usedSinglesOpeningMatchups,
     sitOutCounts,
     rng,
@@ -25,6 +26,7 @@ function buildSeriesRun({
         format,
         allowNotStrictDoubles,
         usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
         sitOutCounts,
         courtCount,
         rng,
@@ -40,6 +42,7 @@ function buildTournamentSeriesResult({
     allowNotStrictDoubles,
     seed,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
     usedSinglesOpeningMatchups,
     sitOutCounts,
 }) {
@@ -55,6 +58,7 @@ function buildTournamentSeriesResult({
         tournaments,
         constraints: {
             usedDoublesPartnerPairs: [...usedDoublesPartnerPairs],
+            usedDoublesTeamKeys: [...usedDoublesTeamKeys],
             usedSinglesOpeningMatchups: [...usedSinglesOpeningMatchups],
             tournamentSitOutCounts: sitOutCounts,
         },

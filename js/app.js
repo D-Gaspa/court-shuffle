@@ -104,12 +104,50 @@ function setupConfirmDialog() {
 }
 
 function refreshHistory() {
-    renderHistory(state.history, historyList, historyEmpty, (sessionId) => {
-        showConfirmDialog("Delete Session", "Permanently delete this session from history?", () => {
-            state.history = state.history.filter((s) => s.id !== sessionId)
-            persist()
-            refreshHistory()
-        })
+    renderHistory({
+        history: state.history,
+        archivedHistory: state.archivedHistory,
+        container: historyList,
+        emptyState: historyEmpty,
+        actions: {
+            active: [
+                {
+                    label: "Archive Session",
+                    className: "btn btn-ghost btn-sm btn-danger",
+                    onClick: (session) => {
+                        showConfirmDialog("Archive Session", "Move this session into the archive?", () => {
+                            state.history = state.history.filter((entry) => entry.id !== session.id)
+                            state.archivedHistory.unshift(session)
+                            persist()
+                            refreshHistory()
+                        })
+                    },
+                },
+            ],
+            archived: [
+                {
+                    label: "Restore",
+                    className: "btn btn-ghost btn-sm",
+                    onClick: (session) => {
+                        state.archivedHistory = state.archivedHistory.filter((entry) => entry.id !== session.id)
+                        state.history.push(session)
+                        persist()
+                        refreshHistory()
+                    },
+                },
+                {
+                    label: "Delete Permanently",
+                    className: "btn btn-ghost btn-sm btn-danger",
+                    onClick: (session) => {
+                        showConfirmDialog("Delete Permanently", "Remove this archived session for good?", () => {
+                            state.archivedHistory = state.archivedHistory.filter((entry) => entry.id !== session.id)
+                            persist()
+                            refreshHistory()
+                        })
+                    },
+                },
+            ],
+        },
     })
 }
 

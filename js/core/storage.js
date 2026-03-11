@@ -9,6 +9,7 @@ const DEFAULT_STATE = {
     roster: [],
     activeSession: null,
     history: [],
+    archivedHistory: [],
 }
 
 export function loadState() {
@@ -22,6 +23,7 @@ export function loadState() {
             roster: Array.isArray(parsed.roster) ? parsed.roster : [],
             activeSession: parsed.activeSession ?? null,
             history: Array.isArray(parsed.history) ? parsed.history : [],
+            archivedHistory: Array.isArray(parsed.archivedHistory) ? parsed.archivedHistory : [],
         }
     } catch {
         return structuredClone(DEFAULT_STATE)

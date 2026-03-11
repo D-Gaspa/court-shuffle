@@ -12,6 +12,7 @@ function createSeriesBuildState(players, seed) {
     return {
         rng: createSeededRng(seed),
         usedDoublesPartnerPairs: new Set(),
+        usedDoublesTeamKeys: new Set(),
         usedSinglesOpeningMatchups: new Set(),
         sitOutCounts: Object.fromEntries(players.map((player) => [player, 0])),
     }
@@ -25,6 +26,7 @@ function buildFirstTournamentRun({
     allowNotStrictDoubles,
     advanced,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
     usedSinglesOpeningMatchups,
     sitOutCounts,
     rng,
@@ -46,6 +48,7 @@ function buildFirstTournamentRun({
         allowNotStrictDoubles,
         advanced,
         usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
         sitOutCounts,
         courtCount,
         rng,
@@ -70,10 +73,8 @@ function buildPreviewDistribution(run, courtCount) {
 }
 
 function buildTournamentPreview({ players, format, teamSize, courtCount, allowNotStrictDoubles, seed, advanced }) {
-    const { rng, usedDoublesPartnerPairs, usedSinglesOpeningMatchups, sitOutCounts } = createSeriesBuildState(
-        players,
-        seed,
-    )
+    const { rng, usedDoublesPartnerPairs, usedDoublesTeamKeys, usedSinglesOpeningMatchups, sitOutCounts } =
+        createSeriesBuildState(players, seed)
     const firstRunResult = buildFirstTournamentRun({
         players,
         format,
@@ -82,6 +83,7 @@ function buildTournamentPreview({ players, format, teamSize, courtCount, allowNo
         allowNotStrictDoubles,
         advanced,
         usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
         usedSinglesOpeningMatchups,
         sitOutCounts,
         rng,
@@ -118,6 +120,7 @@ function buildSeriesTournaments({ players, format, teamSize, courtCount, allowNo
         allowNotStrictDoubles,
         advanced,
         usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+        usedDoublesTeamKeys: state.usedDoublesTeamKeys,
         usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
         sitOutCounts: state.sitOutCounts,
         rng: state.rng,
@@ -152,6 +155,7 @@ function appendSeriesRuns({ tournaments, players, format, teamSize, courtCount, 
             courtCount,
             allowNotStrictDoubles,
             usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+            usedDoublesTeamKeys: state.usedDoublesTeamKeys,
             usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
             sitOutCounts: state.sitOutCounts,
             rng: state.rng,
@@ -199,6 +203,7 @@ function buildTournamentSeries({
         allowNotStrictDoubles,
         seed,
         usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+        usedDoublesTeamKeys: state.usedDoublesTeamKeys,
         usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
         sitOutCounts: state.sitOutCounts,
     })

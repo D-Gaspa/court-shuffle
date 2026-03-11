@@ -4,30 +4,42 @@ import { buildTournamentNavState, updateTournamentNavigation } from "./nav.js"
 import { renderTournamentRound } from "./round-render.js"
 import { renderTournamentLevelSitOuts } from "./round-state.js"
 
-export function renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection }) {
-    ensureTournamentCourtSchedule(roundInfo.round, session.courtCount || 1)
+function getCurrentRoundInfo(session) {
+    const current = session.currentRound ?? 0
+    const total = session.rounds.length
+    return {
+        current,
+        total,
+        isLast: current >= total - 1,
+        round: session.rounds[current],
+    }
+}
 
-    const roundLabel = roundInfo.round.tournamentRoundLabel || `Round ${roundInfo.current + 1}`
+export function renderTournamentActive({ session, saveState, ui, commitScore, renderSitOutsSection }) {
+    const activeRoundInfo = getCurrentRoundInfo(session)
+    ensureTournamentCourtSchedule(activeRoundInfo.round, session.courtCount || 1)
+
+    const roundLabel = activeRoundInfo.round.tournamentRoundLabel || `Round ${activeRoundInfo.current + 1}`
 
     if (ui.roundPrefix) {
         ui.roundPrefix.hidden = true
     }
     ui.roundNumber.textContent = roundLabel
-    ui.roundTotal.textContent = roundInfo.total
+    ui.roundTotal.textContent = activeRoundInfo.total
 
     const refreshNav = () => {
-        const navState = buildTournamentNavState(roundInfo)
+        const navState = buildTournamentNavState(getCurrentRoundInfo(session))
         updateTournamentNavigation(session, navState, ui)
     }
 
     const rerenderView = () => {
-        renderTournamentActive({ session, roundInfo, saveState, ui, commitScore, renderSitOutsSection })
+        renderTournamentActive({ session, saveState, ui, commitScore, renderSitOutsSection })
     }
 
     renderTournamentRound({
         session,
-        roundInfo,
-        round: roundInfo.round,
+        roundInfo: activeRoundInfo,
+        round: activeRoundInfo.round,
         saveState,
         ui,
         refreshNav,
@@ -41,7 +53,7 @@ export function renderTournamentActive({ session, roundInfo, saveState, ui, comm
         renderTournamentOverview(session, ui.bracketContainer)
     }
 
-    renderSitOutsSection(roundInfo.round, ui)
+    renderSitOutsSection(activeRoundInfo.round, ui)
     renderTournamentLevelSitOuts(session, ui)
     refreshNav()
 }

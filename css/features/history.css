@@ -1,7 +1,24 @@
-.history-list {
+.history-list,
+.history-section,
+.history-round-content,
+.history-match-list,
+.history-round-meta,
+.history-chip-group {
     display: flex;
     flex-direction: column;
+}
+
+.history-list,
+.history-section {
     gap: var(--space-md);
+}
+
+.history-section-header {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
 }
 
 .history-card {
@@ -78,15 +95,8 @@
     border-bottom: 1px solid var(--border);
 }
 
-.history-round-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
-
+.history-round-content,
 .history-match-list {
-    display: flex;
-    flex-direction: column;
     gap: var(--space-sm);
 }
 
@@ -231,16 +241,12 @@
     font-weight: 500;
 }
 
-.history-round-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.history-chip-group {
+    gap: 6px;
 }
 
-.history-chip-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.history-round-meta {
+    gap: 8px;
 }
 
 .history-chip-label {
@@ -266,9 +272,11 @@
     color: var(--text-secondary);
 }
 
-.history-delete {
+.history-actions {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
     padding-top: var(--space-sm);
     border-top: 1px solid var(--border);
     margin-top: var(--space-md);

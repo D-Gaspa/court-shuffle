@@ -3,10 +3,12 @@ import {
     getCurrentTournamentRun,
     hasMultipleTournamentsInSeries,
     isSeriesTournamentSession,
+    persistTournamentSeriesAliases,
     syncTournamentSeriesAliases,
 } from "../../tournament/series/sync.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament/active.js"
+import { reconcileTournamentRoundsAfterScoreChange } from "./tournament/score-editing.js"
 
 function renderSessionRoundView({ session, roundInfo, saveState, ui, commitScoreForSession }) {
     if (session.mode === "tournament") {
@@ -103,6 +105,15 @@ function commitScore({ round, matchIndex, sets, saveState, onAfterSave, session,
         }
     } else {
         round.scores[matchIndex] = null
+    }
+    if (session.mode === "tournament") {
+        const roundIndex = session.rounds.indexOf(round)
+        if (roundIndex !== -1) {
+            reconcileTournamentRoundsAfterScoreChange(session, roundIndex)
+        }
+        if (isSeriesTournamentSession(session)) {
+            persistTournamentSeriesAliases(session)
+        }
     }
     saveState()
     onAfterSave?.(options)

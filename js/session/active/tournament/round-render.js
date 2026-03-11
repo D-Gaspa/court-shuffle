@@ -10,6 +10,7 @@ import {
 } from "./round-render-helpers.js"
 import { renderSingleMatch } from "./round-render-match.js"
 import { appendExecutionInfo, getTournamentRoundDisplayState } from "./round-state.js"
+import { canEditTournamentRoundScores } from "./score-editing.js"
 
 const noopRefreshNav = () => undefined
 const noopCommitScore = () => undefined
@@ -19,15 +20,6 @@ function makeTeamNameResolver(session) {
         const team = teamByPlayers(session.teams, players)
         return team ? team.name : players.join(", ")
     }
-}
-
-function canEditTournamentRoundScores(session, roundIndex) {
-    const format = session?.tournamentFormat
-    if (format !== "elimination" && format !== "consolation") {
-        return true
-    }
-    const lastRoundIndex = Math.max(0, (session?.rounds?.length || 1) - 1)
-    return roundIndex === lastRoundIndex
 }
 
 function renderMatchGroup({

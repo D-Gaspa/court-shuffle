@@ -5,6 +5,7 @@ import {
     buildTournamentRunFromTeams,
     chooseTournamentSitOut,
     makeTeamObject,
+    markDoublesTeamKeysFromTeams,
     markPartnerPairsFromTeams,
     normalizeAdvancedSettings,
 } from "./shared.js"
@@ -118,24 +119,21 @@ function validateLockedPairs(entrants, normalizedAdvanced, allowNotStrictDoubles
     }
 }
 
-function buildTeamsFromLockedPairs({ entrants, validLockedPairs, usedDoublesPartnerPairs, rng }) {
-    const partition = buildDoublesTeamPartition(entrants, usedDoublesPartnerPairs, rng, validLockedPairs)
+function buildTeamsFromLockedPairs({ entrants, validLockedPairs, usedDoublesPartnerPairs, usedDoublesTeamKeys, rng }) {
+    const partition = buildDoublesTeamPartition({
+        players: entrants,
+        usedPartnerPairs: usedDoublesPartnerPairs,
+        usedTeamKeys: usedDoublesTeamKeys,
+        rng,
+        seedBuckets: validLockedPairs,
+    })
     if (!partition) {
         return null
     }
     return toShuffledTeams(partition, rng)
 }
 
-function buildDoublesFirstRun({
-    players,
-    format,
-    allowNotStrictDoubles,
-    advanced,
-    usedDoublesPartnerPairs,
-    sitOutCounts,
-    courtCount,
-    rng,
-}) {
+function prepareDoublesFirstRun({ players, allowNotStrictDoubles, advanced, sitOutCounts, rng }) {
     const errors = []
     const normalizedAdvanced = normalizeAdvancedSettings(advanced)
     const { entrants, tournamentLevelSitOuts } = resolveDoublesEntrants({
@@ -156,11 +154,48 @@ function buildDoublesFirstRun({
     if (entrants.length < 2) {
         errors.push("Not enough active entrants to build a doubles tournament.")
     }
+
+    return {
+        entrants,
+        entrantsSet,
+        errors,
+        normalizedAdvanced,
+        tournamentLevelSitOuts,
+        validLockedPairs,
+    }
+}
+
+function buildDoublesFirstRun({
+    players,
+    format,
+    allowNotStrictDoubles,
+    advanced,
+    usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
+    sitOutCounts,
+    courtCount,
+    rng,
+}) {
+    const { entrants, entrantsSet, errors, normalizedAdvanced, tournamentLevelSitOuts, validLockedPairs } =
+        prepareDoublesFirstRun({
+            players,
+            allowNotStrictDoubles,
+            advanced,
+            sitOutCounts,
+            rng,
+        })
+
     if (errors.length > 0) {
         return { run: null, errors }
     }
 
-    const teams = buildTeamsFromLockedPairs({ entrants, validLockedPairs, usedDoublesPartnerPairs, rng })
+    const teams = buildTeamsFromLockedPairs({
+        entrants,
+        validLockedPairs,
+        usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
+        rng,
+    })
     if (!teams) {
         return { run: null, errors: ["Unable to build doubles teams from the selected locked pairs."] }
     }
@@ -177,6 +212,7 @@ function buildDoublesFirstRun({
             tournamentLevelSitOuts,
             courtCount,
             usedDoublesPartnerPairs,
+            usedDoublesTeamKeys,
             normalizedAdvanced,
             allowNotStrictDoubles,
         })
@@ -193,6 +229,7 @@ function buildDoublesFirstRun({
         tournamentLevelSitOuts,
         courtCount,
         usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
     })
 }
 
@@ -201,6 +238,7 @@ function buildDoublesTournament({
     format,
     allowNotStrictDoubles,
     usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
     sitOutCounts,
     courtCount,
     rng,
@@ -219,7 +257,12 @@ function buildDoublesTournament({
         return null
     }
 
-    const partition = buildDoublesTeamPartition(entrants, usedDoublesPartnerPairs, rng)
+    const partition = buildDoublesTeamPartition({
+        players: entrants,
+        usedPartnerPairs: usedDoublesPartnerPairs,
+        usedTeamKeys: usedDoublesTeamKeys,
+        rng,
+    })
     if (!partition) {
         return null
     }
@@ -232,6 +275,7 @@ function buildDoublesTournament({
         tournamentLevelSitOuts,
         courtCount,
     })
+    markDoublesTeamKeysFromTeams(teams, usedDoublesTeamKeys)
     markPartnerPairsFromTeams(teams, usedDoublesPartnerPairs)
     return run
 }
