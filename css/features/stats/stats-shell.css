@@ -57,9 +57,9 @@
 
 .stats-hero {
     position: relative;
-    padding: 1.2rem;
-    border-radius: 22px;
-    border: 1px solid color-mix(in srgb, var(--border), var(--ball) 15%);
+    padding: 1.35rem;
+    border-radius: 28px;
+    border: 1px solid color-mix(in srgb, var(--border), var(--ball) 26%);
     background:
         linear-gradient(160deg, #34261f, #211b16 52%, #171612), linear-gradient(180deg, var(--bg-card), var(--bg-card));
     box-shadow:
@@ -124,6 +124,16 @@
     opacity: 0.45;
 }
 
+.stats-dossier-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(90deg, #ffffff07 1px, transparent 1px), linear-gradient(180deg, #ffffff06 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.16;
+    mix-blend-mode: screen;
+}
+
 .stats-kicker {
     margin-bottom: 6px;
     color: var(--ball);
@@ -138,14 +148,24 @@
     margin-bottom: 0.35rem;
 }
 
+.stats-hero-layout {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.stats-hero-headline {
+    font-size: 1.9rem;
+    margin-bottom: 0.35rem;
+    max-width: 12ch;
+}
+
 .stats-hero-copy {
-    max-width: 34ch;
+    max-width: 42ch;
     color: var(--text-secondary);
-    font-size: 0.92rem;
+    font-size: 0.95rem;
 }
 
 .stats-hero-counts {
-    margin-top: var(--space-md);
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -170,6 +190,29 @@
     font-family: "Syne", system-ui, sans-serif;
 }
 
+.stats-hero-stat-meta {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+.stats-hero-strip {
+    margin-top: var(--space-md);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.stats-trust-chip {
+    border-radius: 999px;
+    padding: 0.32rem 0.6rem;
+    background: #0000001f;
+    border: 1px solid #ffffff14;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+}
+
 .stats-panel {
     position: relative;
     border-radius: var(--radius-lg);
@@ -186,4 +229,17 @@
     inset: 0;
     background: radial-gradient(circle at 110% -10%, #fff1, transparent 45%);
     pointer-events: none;
+}
+
+@media (width >= 768px) {
+    .stats-hero-layout {
+        grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.9fr);
+        align-items: start;
+    }
+}
+
+@media (width <= 640px) {
+    .stats-hero-headline {
+        font-size: 1.6rem;
+    }
 }

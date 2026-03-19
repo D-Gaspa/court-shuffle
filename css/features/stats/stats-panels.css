@@ -90,6 +90,10 @@
     align-items: baseline;
 }
 
+.stats-relationship-player {
+    color: var(--text);
+}
+
 .stats-relationship-name span {
     color: var(--text-muted);
     font-size: 0.78rem;
@@ -110,21 +114,10 @@
     color: var(--text-secondary);
 }
 
-.stats-rivalry-dialog.modal {
-    width: min(720px, calc(100vw - 2rem));
-}
-
-.stats-rivalry-modal {
-    display: grid;
-    gap: var(--space-md);
-}
-
-.stats-rivalry-copy {
-    margin-top: -0.25rem;
-}
-
-.stats-rivalry-list {
-    margin-top: 0.25rem;
+.stats-pill.is-warning {
+    color: #f3c38d;
+    border-color: #f3c38d24;
+    background: #f3c38d10;
 }
 
 @media (width >= 768px) {

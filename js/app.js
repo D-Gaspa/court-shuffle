@@ -1,3 +1,4 @@
+import { createDefaultAnalyticsQuery, resolveAnalyticsContext, updateAnalyticsQuery } from "./analytics/query.js"
 import { loadState, saveState } from "./core/storage.js"
 import { renderHistory } from "./history/render.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
@@ -28,6 +29,8 @@ const confirmOkBtn = document.getElementById("confirm-ok")
 
 let confirmCallback = null
 let confirmExtraCallback = null
+let analyticsQuery = createDefaultAnalyticsQuery()
+let historyPlayerFilter = "all"
 
 function persist() {
     saveState(state)
@@ -104,11 +107,18 @@ function setupConfirmDialog() {
 }
 
 function refreshHistory() {
+    const analytics = resolveAnalyticsContext(state.history, {
+        ...analyticsQuery,
+        player: historyPlayerFilter,
+    })
     renderHistory({
         history: state.history,
         archivedHistory: state.archivedHistory,
         container: historyList,
         emptyState: historyEmpty,
+        analytics,
+        onQueryChange: handleHistoryQueryChange,
+        onResetQuery: resetHistoryQuery,
         actions: {
             active: [
                 {
@@ -152,7 +162,44 @@ function refreshHistory() {
 }
 
 function refreshStats() {
-    renderStats(state.history, statsRoot)
+    const analytics = resolveAnalyticsContext(state.history, analyticsQuery)
+    renderStats({
+        analytics,
+        root: statsRoot,
+        onQueryChange: handleSharedAnalyticsQueryChange,
+        onResetQuery: resetSharedAnalyticsQuery,
+    })
+}
+
+function handleSharedAnalyticsQueryChange(patch) {
+    analyticsQuery = updateAnalyticsQuery(analyticsQuery, patch)
+    refreshHistory()
+    refreshStats()
+}
+
+function handleHistoryQueryChange(patch) {
+    if (Object.hasOwn(patch, "player")) {
+        historyPlayerFilter = patch.player || "all"
+    }
+    const { player: _player, ...sharedPatch } = patch
+    if (Object.keys(sharedPatch).length > 0) {
+        analyticsQuery = updateAnalyticsQuery(analyticsQuery, sharedPatch)
+    }
+    refreshHistory()
+    refreshStats()
+}
+
+function resetSharedAnalyticsQuery() {
+    analyticsQuery = createDefaultAnalyticsQuery()
+    refreshHistory()
+    refreshStats()
+}
+
+function resetHistoryQuery() {
+    analyticsQuery = createDefaultAnalyticsQuery()
+    historyPlayerFilter = "all"
+    refreshHistory()
+    refreshStats()
 }
 
 function init() {

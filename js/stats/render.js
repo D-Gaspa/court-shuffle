@@ -1,96 +1,119 @@
-import { buildStatsModel, STATS_SCOPE_OPTIONS } from "./model/index.js"
+import { createAnalyticsQueryPanel } from "../analytics/view.js"
+import { buildStatsModel } from "./model/index.js"
+import { createEmptyState, createShell, createStatsIcon } from "./view/dom.js"
+import { createStatsSectionNav } from "./view/overview.js"
 import {
-    createEmptyState,
-    createHero,
-    createPlayerSummaryPanel,
-    createRelationshipsGrid,
-    createRivalryModalContent,
-    createShell,
-    createStatsIcon,
-} from "./view/dom.js"
-import { buildHeatmapCard } from "./view/heatmap.js"
-import { createGlobalHighlightsPanel, createGlobalLeaderboardsPanel, createScopeFilterPanel } from "./view/overview.js"
-import { createPlayerListPanel } from "./view/player-list.js"
+    buildMatchupsSection,
+    buildOverviewSection,
+    buildPlayersSection,
+    buildSessionsSection,
+} from "./view/sections.js"
+
+const STATS_SECTIONS = [
+    { key: "overview", label: "Overview" },
+    { key: "players", label: "Players" },
+    { key: "matchups", label: "Matchups" },
+    { key: "sessions", label: "Sessions" },
+]
 
 let selectedPlayerName = null
-let selectedScopeKey = STATS_SCOPE_OPTIONS[0].key
-let lastStatsHistory = []
-let lastStatsRoot = null
+let selectedStatsSection = STATS_SECTIONS[0].key
 let heatmapMetricByKind = {
     partner: "frequency",
     opponent: "frequency",
 }
-let rivalryDialogBindingsReady = false
+let lastRenderArgs = null
 
-function renderStats(history, root) {
+function renderStats({ analytics, root, onQueryChange, onResetQuery }) {
     if (!root) {
         return
     }
-    closeRivalryDialog()
-    ensureRivalryDialogBindings()
-    lastStatsHistory = history
-    lastStatsRoot = root
+    lastRenderArgs = { analytics, root, onQueryChange, onResetQuery }
     root.textContent = ""
-    const model = buildStatsModel(history, { scopeKey: selectedScopeKey })
     const shell = createShell()
+    appendQueryUi(shell, analytics, onQueryChange, onResetQuery)
+    const model = buildStatsModel(analytics.filteredSessions, { queryMeta: analytics.summary })
     shell.appendChild(buildStatsBody(model))
     root.appendChild(shell)
 }
 
+function appendQueryUi(shell, analytics, onQueryChange, onResetQuery) {
+    if (analytics.summary.totalSessionCount <= 0) {
+        return
+    }
+    shell.appendChild(
+        createAnalyticsQueryPanel({
+            title: "Dossier Query",
+            subtitle: "Time, mode, and format stay in sync with History. Player focus lives inside the dossier.",
+            query: analytics.query,
+            options: analytics.options,
+            summary: analytics.summary,
+            onQueryChange,
+            onResetQuery,
+            showPlayerFilter: false,
+        }),
+    )
+    shell.appendChild(
+        createStatsSectionNav({
+            sections: STATS_SECTIONS,
+            activeKey: selectedStatsSection,
+            onSelect: handleSectionChange,
+        }),
+    )
+}
+
 function buildStatsBody(model) {
-    if (!model.hasHistory) {
-        return createEmptyState({
-            title: "No sessions yet",
-            subtitle: "Play and save a session to unlock crew analytics.",
-            icon: createStatsIcon(),
-        })
+    if (!model.hasSourceHistory) {
+        return createStatsEmptyState("No sessions yet", "Play and save a session to unlock the scouting dossier.")
+    }
+    if (!model.hasQueryResults) {
+        return createStatsEmptyState(
+            "No sessions match this query",
+            "Adjust the shared query above to bring sessions back into scope.",
+        )
     }
     if (!model.hasPlayedMatches) {
-        return buildNoScoredMatchesBoard(model)
+        return createStatsEmptyState(
+            "No scored matches in this query",
+            "This filter window has sessions, but none with saved scores yet.",
+        )
     }
     return buildDashboard(model)
+}
+
+function createStatsEmptyState(title, subtitle) {
+    return createEmptyState({
+        title,
+        subtitle,
+        icon: createStatsIcon(),
+    })
 }
 
 function buildDashboard(model) {
     const selectedPlayer = resolveSelectedPlayer(model)
     const board = document.createElement("div")
     board.className = "stats-board"
-    board.appendChild(buildScopeFilter(model))
-    board.appendChild(createHero(model))
-    board.appendChild(createGlobalHighlightsPanel(model.global))
-    board.appendChild(createGlobalLeaderboardsPanel(model.global))
-    board.appendChild(
-        createPlayerListPanel(model.players, selectedPlayer, model.playerSummariesByName, handlePlayerSelection()),
-    )
-    board.appendChild(
-        createPlayerSummaryPanel(selectedPlayer, model.playerSummariesByName[selectedPlayer], model.global.scope.label),
-    )
-    board.appendChild(buildRelationshipPanels(selectedPlayer, model))
-    board.appendChild(buildHeatmaps(model, selectedPlayer))
+    board.appendChild(buildSectionBody(selectedStatsSection, model, selectedPlayer))
     return board
 }
 
-function buildNoScoredMatchesBoard(model) {
-    const board = document.createElement("div")
-    board.className = "stats-board"
-    board.appendChild(buildScopeFilter(model))
-    board.appendChild(
-        createEmptyState({
-            title: "No scored matches in this window",
-            subtitle: "Try a wider time window or save sessions with entered scores.",
-            icon: createStatsIcon(),
-        }),
-    )
-    return board
-}
-
-function buildScopeFilter(model) {
-    return createScopeFilterPanel({
-        options: STATS_SCOPE_OPTIONS,
-        selectedKey: selectedScopeKey,
-        scopeMeta: model.global.scope,
-        onSelect: handleScopeSelection(),
-    })
+function buildSectionBody(sectionKey, model, selectedPlayer) {
+    if (sectionKey === "players") {
+        return buildPlayersSection(model, selectedPlayer, handlePlayerSelection)
+    }
+    if (sectionKey === "matchups") {
+        return buildMatchupsSection({
+            model,
+            selectedPlayer,
+            onSelectPlayer: handlePlayerSelection,
+            heatmapMetricByKind,
+            onHeatmapMetricChange: handleHeatmapMetricChange,
+        })
+    }
+    if (sectionKey === "sessions") {
+        return buildSessionsSection(model)
+    }
+    return buildOverviewSection(model)
 }
 
 function resolveSelectedPlayer(model) {
@@ -101,61 +124,9 @@ function resolveSelectedPlayer(model) {
     return selectedPlayerName
 }
 
-function handlePlayerSelection() {
-    return (name) => {
-        selectedPlayerName = name
-        rerenderStats()
-    }
-}
-
-function handleScopeSelection() {
-    return (scopeKey) => {
-        if (selectedScopeKey === scopeKey) {
-            return
-        }
-        selectedScopeKey = scopeKey
-        rerenderStats()
-    }
-}
-
-function rerenderStats() {
-    renderStats(lastStatsHistory, lastStatsRoot)
-}
-
-function buildRelationshipPanels(selectedPlayer, model) {
-    const grid = createRelationshipsGrid(selectedPlayer, {
-        partners: model.relationshipsByPlayer.partners[selectedPlayer],
-        opponents: model.relationshipsByPlayer.opponents[selectedPlayer],
-        onViewRivalries: () =>
-            openRivalryDialog({
-                playerName: selectedPlayer,
-                scopeLabel: model.global.scope.label,
-                rivals: model.relationshipsByPlayer.opponents[selectedPlayer],
-            }),
-    })
-    grid.classList.add("stagger-4")
-    return grid
-}
-
-function buildHeatmaps(model, selectedPlayer) {
-    const wrap = document.createElement("div")
-    wrap.className = "stats-heatmap-grid"
-    wrap.appendChild(buildHeatmapCardForKind("partner", "Partner", model, selectedPlayer))
-    wrap.appendChild(buildHeatmapCardForKind("opponent", "Opponent", model, selectedPlayer))
-    return wrap
-}
-
-function buildHeatmapCardForKind(kind, labelPrefix, model, selectedPlayer) {
-    const metricKey = heatmapMetricByKind[kind] || "frequency"
-    return buildHeatmapCard({
-        kind,
-        title: `${labelPrefix} Matrix`,
-        subtitle: kind === "partner" ? "Pair synergy and frequency" : "Head-to-head volume and win rate",
-        heatmapSet: model.heatmaps[kind],
-        selectedPlayer,
-        metricKey,
-        onMetricChange: handleHeatmapMetricChange(kind),
-    })
+function handlePlayerSelection(name) {
+    selectedPlayerName = name
+    rerenderStats()
 }
 
 function handleHeatmapMetricChange(kind) {
@@ -171,37 +142,19 @@ function handleHeatmapMetricChange(kind) {
     }
 }
 
-function ensureRivalryDialogBindings() {
-    if (rivalryDialogBindingsReady) {
+function handleSectionChange(nextSection) {
+    if (selectedStatsSection === nextSection) {
         return
     }
-    const dialog = getRivalryDialog()
-    const closeButton = document.getElementById("stats-rivalry-close")
-    closeButton?.addEventListener("click", () => dialog?.close())
-    rivalryDialogBindingsReady = true
+    selectedStatsSection = nextSection
+    rerenderStats()
 }
 
-function getRivalryDialog() {
-    return document.getElementById("stats-rivalry-dialog")
-}
-
-function closeRivalryDialog() {
-    const dialog = getRivalryDialog()
-    if (dialog?.open) {
-        dialog.close()
-    }
-}
-
-function openRivalryDialog({ playerName, scopeLabel, rivals }) {
-    const dialog = getRivalryDialog()
-    const body = document.getElementById("stats-rivalry-body")
-    if (!(dialog && body)) {
+function rerenderStats() {
+    if (!lastRenderArgs) {
         return
     }
-    body.replaceChildren(createRivalryModalContent(playerName, scopeLabel, rivals))
-    if (!dialog.open) {
-        dialog.showModal()
-    }
+    renderStats(lastRenderArgs)
 }
 
 export { renderStats }

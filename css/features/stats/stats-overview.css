@@ -165,6 +165,11 @@
     color: var(--text);
     cursor: pointer;
     text-align: left;
+    animation: none;
+    transition:
+        background-color var(--duration-fast) ease,
+        border-color var(--duration-fast) ease,
+        box-shadow var(--duration-fast) ease;
 }
 
 .stats-player-row:hover {

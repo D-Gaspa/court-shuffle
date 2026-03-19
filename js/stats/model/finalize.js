@@ -1,11 +1,13 @@
 import { buildGlobalLeaders, buildHeatmapSet } from "./derived.js"
+import { buildSessionInsights } from "./session-insights.js"
 
 const MIN_RELATIONSHIP_MATCHES = 2
 const CHEMISTRY_PRIOR_WINS = 2
 const CHEMISTRY_PRIOR_MATCHES = 4
 const CHEMISTRY_SCORE_SCALE = 100
+const SMALL_SAMPLE_MATCH_THRESHOLD = 4
 
-function finalizeStatsModel({ sessions, acc, scope }) {
+function finalizeStatsModel({ sessions, acc, queryMeta }) {
     const playerSummariesByName = finalizePlayerSummaries(acc.playerSummaries)
     const players = sortPlayersForSelector(Object.keys(playerSummariesByName))
     const partnerLists = finalizeRelationLists(acc.partnerRelations, "partner")
@@ -13,14 +15,20 @@ function finalizeStatsModel({ sessions, acc, scope }) {
     fillMissingRelationshipKeys(players, partnerLists)
     fillMissingRelationshipKeys(players, opponentLists)
     return {
-        hasHistory: sessions.length > 0,
+        hasSourceHistory: (queryMeta?.totalSessionCount ?? 0) > 0,
+        hasQueryResults: sessions.length > 0,
         hasPlayedMatches: acc.playedMatchCount > 0,
         players,
         defaultSelectedPlayer: getDefaultSelectedPlayer(playerSummariesByName, players),
         global: {
-            scope,
+            queryMeta,
             playedMatchCount: acc.playedMatchCount,
             decidedMatchCount: acc.decidedMatchCount,
+            uniquePlayerCount: players.length,
+            rosterCoverage: {
+                filtered: players.length,
+                total: queryMeta?.totalPlayerCount ?? players.length,
+            },
             leaders: buildGlobalLeaders(playerSummariesByName),
         },
         playerSummariesByName,
@@ -32,6 +40,7 @@ function finalizeStatsModel({ sessions, acc, scope }) {
             partner: buildHeatmapSet(players, acc.partnerMatrix, acc.partnerRelations),
             opponent: buildHeatmapSet(players, acc.opponentMatrix, acc.opponentRelations),
         },
+        sessionInsights: buildSessionInsights(sessions),
     }
 }
 
@@ -69,10 +78,7 @@ function shouldIncludeRelationship(stats, kind) {
     if (stats.matches < MIN_RELATIONSHIP_MATCHES) {
         return false
     }
-    if (kind === "partner") {
-        return stats.wins > 0
-    }
-    return stats.losses > 0
+    return kind === "partner" ? stats.wins > 0 : stats.losses > 0
 }
 
 function finalizeRelationRow(name, stats, kind) {
@@ -85,6 +91,7 @@ function finalizeRelationRow(name, stats, kind) {
         totalGameDiff: stats.totalGameDiff,
         winRate: matches > 0 ? stats.wins / matches : null,
         avgGameDiff: matches > 0 ? stats.totalGameDiff / matches : null,
+        isSmallSample: matches < SMALL_SAMPLE_MATCH_THRESHOLD,
     }
     if (kind === "partner") {
         row.chemistryScore = Math.round(

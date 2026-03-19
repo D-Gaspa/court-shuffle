@@ -13,8 +13,8 @@ function createEl(tag, className, text) {
 }
 
 function createPlayerListPanel(players, selectedPlayer, playerSummariesByName, onSelectPlayer) {
-    const section = createEl("section", "stats-panel stats-panel-rail stagger-2")
-    section.appendChild(createHeader())
+    const section = createEl("section", "stats-panel stats-panel-rail")
+    section.appendChild(createHeader("Players", "Choose a player to load their dossier."))
     const list = createEl("div", "roster-list stats-player-list")
     for (let index = 0; index < players.length; index += 1) {
         const player = players[index]
@@ -33,10 +33,26 @@ function createPlayerListPanel(players, selectedPlayer, playerSummariesByName, o
     return section
 }
 
-function createHeader() {
+function createCompactPlayerSwitcher(players, selectedPlayer, onSelectPlayer) {
+    const section = createEl("section", "stats-panel stats-panel-switcher")
+    section.appendChild(createHeader("Player Focus", "Switch context for heatmaps, rivalries, and chemistry."))
+    const rail = createEl("div", "stats-player-chip-rail")
+    for (const player of players) {
+        const button = createEl("button", `stats-player-chip${player === selectedPlayer ? " is-selected" : ""}`)
+        button.type = "button"
+        button.appendChild(createEl("span", "stats-player-chip-avatar", getInitials(player).toUpperCase()))
+        button.appendChild(createEl("span", "stats-player-chip-name", player))
+        button.addEventListener("click", () => onSelectPlayer(player))
+        rail.appendChild(button)
+    }
+    section.appendChild(rail)
+    return section
+}
+
+function createHeader(title, subtitle) {
     const header = createEl("div", "stats-panel-header")
-    header.appendChild(createEl("h3", "stats-panel-title", "Players"))
-    header.appendChild(createEl("p", "stats-panel-subtitle", "Roster-style list with quick stats"))
+    header.appendChild(createEl("h3", "stats-panel-title", title))
+    header.appendChild(createEl("p", "stats-panel-subtitle", subtitle))
     return header
 }
 
@@ -72,8 +88,7 @@ function createQuickMeta(summary) {
 }
 
 function createPill(text, tone) {
-    const pill = createEl("span", `stats-player-row-pill stats-player-row-pill-${tone}`, text)
-    return pill
+    return createEl("span", `stats-player-row-pill stats-player-row-pill-${tone}`, text)
 }
 
-export { createPlayerListPanel }
+export { createCompactPlayerSwitcher, createPlayerListPanel }

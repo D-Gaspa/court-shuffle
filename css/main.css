@@ -1,6 +1,8 @@
 @import url("./foundation/base.css");
 @import url("./shared/components.css");
+@import url("./features/analytics.css");
 @import url("./features/history.css");
+@import url("./features/history-query.css");
 @import url("./features/roster.css");
 @import url("./features/session/session-config.css");
 @import url("./features/session/session-wizard.css");

@@ -11,36 +11,109 @@ function createEl(tag, className, text) {
     return el
 }
 
-function createScopeFilterPanel({ options, selectedKey, scopeMeta, onSelect }) {
-    const section = createEl("section", "stats-panel stats-scope-panel stagger-1")
-    const top = createEl("div", "stats-scope-header")
-    const titleWrap = createEl("div", "")
-    titleWrap.appendChild(createEl("h3", "stats-panel-title", "Time Window"))
-    titleWrap.appendChild(createEl("p", "stats-panel-subtitle", "Switch between all-time and recent history"))
-    top.appendChild(titleWrap)
-    top.appendChild(
-        createEl("span", "stats-scope-meta", `${scopeMeta.sessionCount}/${scopeMeta.totalSessionCount} sessions`),
-    )
-    section.appendChild(top)
-    const controls = createEl("div", "stats-toggle-row")
-    for (const option of options) {
-        controls.appendChild(createToggleButton(option, option.key === selectedKey, onSelect))
+function createStatsSectionNav({ sections, activeKey, onSelect }) {
+    const nav = createEl("nav", "stats-subnav")
+    nav.setAttribute("aria-label", "Stats sections")
+    for (const section of sections) {
+        const button = createEl(
+            "button",
+            `stats-subnav-btn${section.key === activeKey ? " is-active" : ""}`,
+            section.label,
+        )
+        button.type = "button"
+        button.setAttribute("aria-pressed", String(section.key === activeKey))
+        button.addEventListener("click", () => onSelect(section.key))
+        nav.appendChild(button)
     }
-    section.appendChild(controls)
-    return section
+    return nav
 }
 
-function createToggleButton(option, selected, onSelect) {
-    const button = createEl("button", `stats-toggle-btn${selected ? " is-selected" : ""}`, option.label)
-    button.type = "button"
-    button.setAttribute("aria-pressed", String(selected))
-    button.addEventListener("click", () => onSelect(option.key))
-    return button
+function createBriefingHero(globalStats) {
+    const hero = createEl("section", "stats-hero stats-hero-dossier stagger-1")
+    hero.appendChild(createHeroBackdrop())
+
+    const content = createEl("div", "stats-hero-layout")
+    const intro = createEl("div", "stats-hero-intro")
+    intro.appendChild(createEl("p", "stats-kicker", "Scouting Dossier"))
+    intro.appendChild(createEl("h2", "stats-hero-headline", buildHeroHeadline(globalStats.queryMeta)))
+    intro.appendChild(
+        createEl(
+            "p",
+            "stats-hero-copy",
+            `A tactical snapshot of ${globalStats.queryMeta.filteredSessionCount} saved sessions, ${globalStats.playedMatchCount} scored matches, and ${globalStats.decidedMatchCount} decided outcomes.`,
+        ),
+    )
+    content.appendChild(intro)
+    content.appendChild(createHeroCounts(globalStats))
+    hero.appendChild(content)
+    hero.appendChild(createHeroTrustStrip(globalStats))
+    return hero
+}
+
+function createHeroBackdrop() {
+    const deco = createEl("div", "stats-hero-deco")
+    deco.appendChild(createEl("span", "stats-orb stats-orb-clay"))
+    deco.appendChild(createEl("span", "stats-orb stats-orb-court"))
+    deco.appendChild(createEl("span", "stats-line stats-line-a"))
+    deco.appendChild(createEl("span", "stats-line stats-line-b"))
+    deco.appendChild(createEl("span", "stats-dossier-grid"))
+    return deco
+}
+
+function buildHeroHeadline(queryMeta) {
+    const playerChip = queryMeta.activeChips.find((chip) => chip.startsWith("Player: "))
+    if (playerChip) {
+        return `${playerChip.replace("Player: ", "")} briefing`
+    }
+    return "Crew briefing"
+}
+
+function createHeroCounts(globalStats) {
+    const grid = createEl("div", "stats-hero-counts")
+    grid.appendChild(
+        createHeroStat(
+            "Sessions",
+            String(globalStats.queryMeta.filteredSessionCount),
+            globalStats.queryMeta.shortTimeLabel,
+        ),
+    )
+    grid.appendChild(createHeroStat("Scored", String(globalStats.playedMatchCount), "Scored matches"))
+    grid.appendChild(createHeroStat("Decided", String(globalStats.decidedMatchCount), "Decided only"))
+    grid.appendChild(
+        createHeroStat(
+            "Coverage",
+            `${globalStats.rosterCoverage.filtered}/${globalStats.rosterCoverage.total}`,
+            "Players in scope",
+        ),
+    )
+    return grid
+}
+
+function createHeroStat(label, value, meta) {
+    const card = createEl("div", "stats-hero-stat")
+    card.appendChild(createEl("span", "stats-hero-stat-label", label))
+    card.appendChild(createEl("strong", "stats-hero-stat-value", value))
+    card.appendChild(createEl("span", "stats-hero-stat-meta", meta))
+    return card
+}
+
+function createHeroTrustStrip(globalStats) {
+    const strip = createEl("div", "stats-hero-strip")
+    const chips = [
+        globalStats.queryMeta.shortTimeLabel,
+        "Active history only",
+        "Decided matches only",
+        `${globalStats.uniquePlayerCount} players in query`,
+    ]
+    for (const chip of chips) {
+        strip.appendChild(createEl("span", "stats-trust-chip", chip))
+    }
+    return strip
 }
 
 function createGlobalHighlightsPanel(globalStats) {
     const section = createEl("section", "stats-panel stats-panel-highlights stagger-2")
-    section.appendChild(createPanelHeader("Global Highlights", `${globalStats.scope.label} leaderboard snapshots`))
+    section.appendChild(createPanelHeader("Signals", "Thresholded snapshots from the current scouting query"))
     const grid = createEl("div", "stats-highlight-grid")
     for (const highlight of globalStats.leaders.highlights) {
         grid.appendChild(createHighlightCard(highlight))
@@ -60,14 +133,16 @@ function createHighlightCard(highlight) {
 
 function createGlobalLeaderboardsPanel(globalStats) {
     const section = createEl("section", "stats-panel stats-panel-leaderboards stagger-3")
-    section.appendChild(createPanelHeader("Global Leaderboards", "Best performers in the selected window"))
+    section.appendChild(
+        createPanelHeader("Leaderboards", "Small samples are called out; rankings use only in-scope sessions"),
+    )
     const grid = createEl("div", "stats-columns")
     grid.appendChild(
         createLeaderboardList({
             title: "Most Wins",
             rows: globalStats.leaders.leaderboards.mostWins,
             valueFormatter: (row) => `${row.wins}W`,
-            metaFormatter: (row) => `${row.decidedMatches} matches`,
+            metaFormatter: (row) => `${row.decidedMatches} decided matches`,
         }),
     )
     grid.appendChild(
@@ -75,7 +150,7 @@ function createGlobalLeaderboardsPanel(globalStats) {
             title: "Best Win Rate",
             rows: globalStats.leaders.leaderboards.bestWinRate,
             valueFormatter: (row) => formatPercent(row.winRate),
-            metaFormatter: (row) => `${row.decidedMatches} matches`,
+            metaFormatter: (row) => `${row.decidedMatches} decided matches`,
         }),
     )
     grid.appendChild(
@@ -91,7 +166,7 @@ function createGlobalLeaderboardsPanel(globalStats) {
             title: "Best Avg Diff",
             rows: globalStats.leaders.leaderboards.bestAvgDiff,
             valueFormatter: (row) => formatSignedNumber(row.avgGameDiff),
-            metaFormatter: (row) => `${row.decidedMatches} matches`,
+            metaFormatter: (row) => `${row.decidedMatches} decided matches`,
         }),
     )
     section.appendChild(grid)
@@ -128,4 +203,4 @@ function createPanelHeader(title, subtitle) {
     return header
 }
 
-export { createScopeFilterPanel, createGlobalHighlightsPanel, createGlobalLeaderboardsPanel }
+export { createBriefingHero, createGlobalHighlightsPanel, createGlobalLeaderboardsPanel, createStatsSectionNav }

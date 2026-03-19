@@ -1,8 +1,5 @@
 import { formatCountLabel, formatPercent, formatRecord, formatSignedNumber } from "./format.js"
 
-const NAME_WORD_SPLIT_RE = /\s+/
-const INLINE_RELATIONSHIP_LIMIT = 3
-
 function createEl(tag, className, text) {
     const el = document.createElement(tag)
     if (className) {
@@ -16,8 +13,8 @@ function createEl(tag, className, text) {
 
 function createViewHeader() {
     const header = createEl("div", "view-header stats-view-header")
-    header.appendChild(createEl("h1", "", "Player Stats"))
-    header.appendChild(createEl("p", "", "Analytics from scored matches in your session history."))
+    header.appendChild(createEl("h1", "", "Scouting Dossier"))
+    header.appendChild(createEl("p", "", "Filter once. Read the whole crew like a match briefing."))
     return header
 }
 
@@ -63,97 +60,14 @@ function createShell() {
     return shell
 }
 
-function createHero(model) {
-    const hero = createEl("section", "stats-hero stagger-1")
-    hero.appendChild(createHeroBackdrop())
-    hero.appendChild(createHeroTitle(model.global.scope))
-    hero.appendChild(createHeroCounts(model.global))
-    return hero
-}
-
-function createHeroBackdrop() {
-    const deco = createEl("div", "stats-hero-deco")
-    deco.appendChild(createEl("span", "stats-orb stats-orb-clay"))
-    deco.appendChild(createEl("span", "stats-orb stats-orb-court"))
-    deco.appendChild(createEl("span", "stats-line stats-line-a"))
-    deco.appendChild(createEl("span", "stats-line stats-line-b"))
-    return deco
-}
-
-function createHeroTitle(scope) {
-    const titleWrap = createEl("div", "stats-hero-title")
-    titleWrap.appendChild(createEl("p", "stats-kicker", "Scoreboard Lab"))
-    titleWrap.appendChild(createEl("h2", "", "Patterns in your crew"))
-    titleWrap.appendChild(
-        createEl(
-            "p",
-            "stats-hero-copy",
-            `Track who wins, who clicks, and who keeps showing up as the toughest draw (${scope.label.toLowerCase()}).`,
-        ),
-    )
-    return titleWrap
-}
-
-function createHeroCounts(globalStats) {
-    const grid = createEl("div", "stats-hero-counts")
-    grid.appendChild(createHeroStat("Scored Matches", globalStats.playedMatchCount))
-    grid.appendChild(createHeroStat("Decided Matches", globalStats.decidedMatchCount))
-    return grid
-}
-
-function createHeroStat(label, value) {
-    const card = createEl("div", "stats-hero-stat")
-    card.appendChild(createEl("span", "stats-hero-stat-label", label))
-    card.appendChild(createEl("strong", "stats-hero-stat-value", String(value)))
-    return card
-}
-
-function createPlayerRail(players, selectedPlayer, onSelectPlayer) {
-    const section = createEl("section", "stats-panel stats-panel-rail stagger-2")
-    const header = createPanelHeader("Players", "Tap a card to load detail stats")
-    section.appendChild(header)
-    const rail = createEl("div", "stats-player-rail")
-    for (const player of players) {
-        rail.appendChild(createPlayerChip(player, selectedPlayer === player, onSelectPlayer))
-    }
-    section.appendChild(rail)
-    return section
-}
-
-function createPlayerChip(name, selected, onSelectPlayer) {
-    const button = createEl("button", "stats-player-chip")
-    button.type = "button"
-    button.classList.toggle("is-selected", selected)
-    const initials = name
-        .split(NAME_WORD_SPLIT_RE)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join("")
-        .toUpperCase()
-    button.appendChild(createEl("span", "stats-player-chip-avatar", initials || "?"))
-    button.appendChild(createEl("span", "stats-player-chip-name", name))
-    button.addEventListener("click", () => onSelectPlayer(name))
-    return button
-}
-
-function createPanelHeader(title, subtitle) {
-    const header = createEl("div", "stats-panel-header")
-    header.appendChild(createEl("h3", "stats-panel-title", title))
-    if (subtitle) {
-        header.appendChild(createEl("p", "stats-panel-subtitle", subtitle))
-    }
-    return header
-}
-
-function createPlayerSummaryPanel(playerName, summary, scopeLabel = "Selected window") {
-    const section = createEl("section", "stats-panel stats-panel-summary stagger-3")
-    section.appendChild(createPanelHeader(playerName, `${scopeLabel} scored matches`))
+function createPlayerSummaryPanel(playerName, summary, queryLabel) {
+    const section = createEl("section", "stats-panel stats-panel-summary")
+    section.appendChild(createPanelHeader(playerName, `${queryLabel} · decided matches only`))
     const grid = createEl("div", "stats-summary-grid")
     grid.appendChild(createMetricCard("Win Rate", formatPercent(summary.winRate), "Competitive edge"))
     grid.appendChild(createMetricCard("Record", formatRecord(summary.wins, summary.losses), "Wins-Losses"))
     grid.appendChild(createMetricCard("Avg Game Diff", formatSignedNumber(summary.avgGameDiff), "Per decided match"))
-    grid.appendChild(createMetricCard("Matches", String(summary.decidedMatches), "Decided scored matches"))
+    grid.appendChild(createMetricCard("Matches", String(summary.decidedMatches), "Based on decided matches"))
     section.appendChild(grid)
     return section
 }
@@ -166,36 +80,6 @@ function createMetricCard(label, value, caption) {
     return card
 }
 
-function createRelationshipsPanel(config) {
-    const section = createEl("section", `stats-panel stats-panel-relationship ${config.toneClass}`)
-    section.appendChild(createRelationshipHeader(config))
-    if (!config.rows || config.rows.length === 0) {
-        section.appendChild(createEl("p", "stats-relationship-empty", config.emptyMessage))
-        return section
-    }
-    section.appendChild(createRelationshipList(config.rows.slice(0, INLINE_RELATIONSHIP_LIMIT)))
-    return section
-}
-
-function createRelationshipHeader(config) {
-    const header = createEl("div", "stats-panel-header")
-    const bar = createEl("div", "stats-panel-header-bar")
-    const titleWrap = createEl("div", "")
-    titleWrap.appendChild(createEl("h3", "stats-panel-title", config.title))
-    if (config.subtitle) {
-        titleWrap.appendChild(createEl("p", "stats-panel-subtitle", config.subtitle))
-    }
-    bar.appendChild(titleWrap)
-    if (typeof config.onAction === "function" && config.actionLabel) {
-        const button = createEl("button", "btn btn-ghost btn-sm", config.actionLabel)
-        button.type = "button"
-        button.addEventListener("click", config.onAction)
-        bar.appendChild(button)
-    }
-    header.appendChild(bar)
-    return header
-}
-
 function createRelationshipList(rows, className = "stats-relationship-list") {
     const list = createEl("ol", className)
     for (const row of rows) {
@@ -206,69 +90,112 @@ function createRelationshipList(rows, className = "stats-relationship-list") {
 
 function createRelationshipRow(row) {
     const item = createEl("li", "stats-relationship-row")
-    const nameWrap = createEl("div", "stats-relationship-name")
-    nameWrap.appendChild(createEl("strong", "", row.name))
-    nameWrap.appendChild(createEl("span", "", formatCountLabel(row.matches, "match")))
+    const top = createEl("div", "stats-relationship-name")
+    top.appendChild(createEl("strong", "stats-relationship-player", row.name))
+    top.appendChild(createEl("span", "", formatCountLabel(row.matches, "match")))
     const meta = createEl("div", "stats-relationship-meta")
     if (Number.isFinite(row.chemistryScore)) {
-        meta.appendChild(createEl("span", "stats-pill", `Chem ${row.chemistryScore}`))
+        meta.appendChild(createTrustPill(`Chem ${row.chemistryScore}`))
     }
-    meta.appendChild(createEl("span", "stats-pill", formatPercent(row.winRate)))
-    meta.appendChild(createEl("span", "stats-pill", formatRecord(row.wins, row.losses)))
-    meta.appendChild(createEl("span", "stats-pill", formatSignedNumber(row.avgGameDiff)))
-    item.appendChild(nameWrap)
+    meta.appendChild(createTrustPill(formatPercent(row.winRate)))
+    meta.appendChild(createTrustPill(formatRecord(row.wins, row.losses)))
+    meta.appendChild(createTrustPill(formatSignedNumber(row.avgGameDiff)))
+    meta.appendChild(createTrustPill(`Based on ${row.matches}`))
+    if (row.isSmallSample) {
+        meta.appendChild(createTrustPill("Small sample", "is-warning"))
+    }
+    item.appendChild(top)
     item.appendChild(meta)
     return item
 }
 
-function createRelationshipsGrid(playerName, relationships) {
-    const grid = createEl("div", "stats-columns")
-    const favoriteEmpty = `Need at least 2 decided matches with the same partner for ${playerName}.`
-    const nemesisEmpty = `Need at least 2 decided matches against the same opponent for ${playerName}.`
-    grid.appendChild(
-        createRelationshipsPanel({
-            title: "Favorite Partners",
-            subtitle: "Ranked by chemistry (min 2 matches)",
-            rows: relationships.partners,
-            emptyMessage: favoriteEmpty,
-            toneClass: "stats-tone-court",
-        }),
-    )
-    grid.appendChild(
-        createRelationshipsPanel({
-            title: "Nemesis Opponents",
-            subtitle: "Worst matchups by win rate (min 2 matches)",
-            rows: relationships.opponents,
-            emptyMessage: nemesisEmpty,
-            toneClass: "stats-tone-clay",
-            actionLabel: relationships.opponents.length > 0 ? "View Rivalries" : null,
-            onAction: relationships.onViewRivalries,
-        }),
-    )
-    return grid
+function createMatchupTablePanel(config) {
+    const section = createEl("section", `stats-panel stats-panel-relationship ${config.toneClass}`)
+    section.appendChild(createPanelHeader(config.title, config.subtitle))
+    const meta = createEl("div", "stats-table-meta")
+    meta.appendChild(createTrustPill(`${config.rows.length} results`))
+    meta.appendChild(createTrustPill("Decided matches only"))
+    if (config.rows.some((row) => row.isSmallSample)) {
+        meta.appendChild(createTrustPill("Small samples flagged", "is-warning"))
+    }
+    section.appendChild(meta)
+    if (config.rows.length === 0) {
+        section.appendChild(createEl("p", "stats-relationship-empty", config.emptyMessage))
+        return section
+    }
+    section.appendChild(createRelationshipList(config.rows))
+    return section
 }
 
-function createRivalryModalContent(playerName, scopeLabel, rows) {
-    const fragment = document.createDocumentFragment()
-    fragment.appendChild(createEl("h2", "", `${playerName} Rivalries`))
-    fragment.appendChild(
-        createEl("p", "stats-rivalry-copy", `All qualifying opponent matchups in ${scopeLabel.toLowerCase()}.`),
-    )
-    if (!rows || rows.length === 0) {
-        fragment.appendChild(createEl("p", "stats-relationship-empty", "No qualifying rivalries in this window."))
-        return fragment
+function createSessionTablePanel(config) {
+    const section = createEl("section", "stats-panel")
+    section.appendChild(createPanelHeader(config.title, config.subtitle))
+    if (config.rows.length === 0) {
+        section.appendChild(createEl("p", "stats-relationship-empty", config.emptyMessage))
+        return section
     }
-    fragment.appendChild(createRelationshipList(rows, "stats-relationship-list stats-rivalry-list"))
-    return fragment
+    const list = createEl("ol", "stats-mini-list")
+    for (const row of config.rows) {
+        const item = createEl("li", "stats-mini-row")
+        item.appendChild(createEl("span", "stats-mini-name", row.name))
+        item.appendChild(createEl("span", "stats-mini-value", config.valueFormatter(row)))
+        item.appendChild(createEl("span", "stats-mini-meta", row.meta))
+        list.appendChild(item)
+    }
+    section.appendChild(list)
+    return section
+}
+
+function createSessionResumePanel(cards) {
+    const section = createEl("section", "stats-panel")
+    section.appendChild(createPanelHeader("Tournament Resume", "Only uses fields already saved in session history."))
+    const grid = createEl("div", "stats-summary-grid")
+    for (const card of cards) {
+        grid.appendChild(createMetricCard(card.label, card.value, card.meta))
+    }
+    section.appendChild(grid)
+    return section
+}
+
+function createRecapFactsPanel(facts) {
+    const section = createEl("section", "stats-panel")
+    section.appendChild(createPanelHeader("Recap Facts", "Quick truths pulled from the filtered session set."))
+    if (facts.length === 0) {
+        section.appendChild(createEl("p", "stats-relationship-empty", "No recap facts available yet."))
+        return section
+    }
+    const list = createEl("div", "stats-fact-list")
+    for (const fact of facts) {
+        const item = createEl("div", "stats-fact-row")
+        item.appendChild(createEl("span", "stats-fact-label", fact.label))
+        item.appendChild(createEl("strong", "stats-fact-value", fact.value))
+        item.appendChild(createEl("span", "stats-fact-meta", fact.meta))
+        list.appendChild(item)
+    }
+    section.appendChild(list)
+    return section
+}
+
+function createPanelHeader(title, subtitle) {
+    const header = createEl("div", "stats-panel-header")
+    header.appendChild(createEl("h3", "stats-panel-title", title))
+    if (subtitle) {
+        header.appendChild(createEl("p", "stats-panel-subtitle", subtitle))
+    }
+    return header
+}
+
+function createTrustPill(text, toneClass = "") {
+    return createEl("span", `stats-pill${toneClass ? ` ${toneClass}` : ""}`, text)
 }
 
 export {
-    createShell,
-    createHero,
     createEmptyState,
-    createStatsIcon,
-    createPlayerRail,
+    createMatchupTablePanel,
     createPlayerSummaryPanel,
-    createRelationshipsGrid,
-    createRivalryModalContent,
+    createRecapFactsPanel,
+    createSessionResumePanel,
+    createSessionTablePanel,
+    createShell,
+    createStatsIcon,
 }
