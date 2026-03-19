@@ -2,6 +2,13 @@
     margin-bottom: 0.8rem;
 }
 
+.stats-panel-header-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
 .stats-panel-title {
     font-size: 1.05rem;
     margin-bottom: 2px;
@@ -101,6 +108,23 @@
     border: 1px solid #ffffff14;
     background: #0000001a;
     color: var(--text-secondary);
+}
+
+.stats-rivalry-dialog.modal {
+    width: min(720px, calc(100vw - 2rem));
+}
+
+.stats-rivalry-modal {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.stats-rivalry-copy {
+    margin-top: -0.25rem;
+}
+
+.stats-rivalry-list {
+    margin-top: 0.25rem;
 }
 
 @media (width >= 768px) {

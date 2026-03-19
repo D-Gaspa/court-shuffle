@@ -1,4 +1,4 @@
-import { formatPercent } from "./format.js"
+import { formatPercent, formatSignedNumber } from "./format.js"
 
 const LABEL_WORD_SPLIT_RE = /\s+/
 const HEAT_PRECISION_DIGITS = 3
@@ -7,9 +7,12 @@ const HEAT_RANGE = 0.9
 const COMPACT_NAME_MAX_LENGTH = 10
 const COMPACT_NAME_SLICE_LENGTH = 9
 const INITIALS_WORD_LIMIT = 2
+const FULL_CONFIDENCE_MATCH_COUNT = 5
+const PERCENT_SCALE = 100
 const HEATMAP_METRICS = [
     { key: "frequency", label: "Frequency" },
     { key: "winRate", label: "Win Rate" },
+    { key: "avgGameDiff", label: "Avg Diff" },
 ]
 
 function createEl(tag, className, text) {
@@ -44,6 +47,7 @@ function buildHeader(title, subtitle, activeMetric, onMetricChange) {
     header.appendChild(createEl("h3", "stats-panel-title", title))
     header.appendChild(createEl("p", "stats-panel-subtitle", subtitle))
     header.appendChild(buildMetricToggle(activeMetric, onMetricChange))
+    header.appendChild(createEl("p", "stats-heatmap-note", "Dimmer rate and diff cells mean smaller samples."))
     return header
 }
 
@@ -133,6 +137,7 @@ function buildValueCell({ heatmap, rowIndex, colIndex, selectedPlayer, kind, met
     const td = createEl("td", "stats-heatmap-cell")
     const rowPlayer = heatmap.players[rowIndex]
     const colPlayer = heatmap.players[colIndex]
+    const sampleCount = heatmap.sampleMatrix?.[rowIndex]?.[colIndex] ?? 0
     if (rowPlayer === colPlayer) {
         td.classList.add("is-diagonal")
         td.textContent = "—"
@@ -143,8 +148,11 @@ function buildValueCell({ heatmap, rowIndex, colIndex, selectedPlayer, kind, met
     }
     const value = heatmap.matrix[rowIndex][colIndex]
     if (metricKey === "winRate") {
-        paintWinRateCell(td, value)
+        paintWinRateCell(td, value, sampleCount)
         td.textContent = typeof value === "number" ? formatPercent(value) : "—"
+    } else if (metricKey === "avgGameDiff") {
+        paintAvgDiffCell(td, value, heatmap.max, sampleCount)
+        td.textContent = typeof value === "number" ? formatSignedNumber(value) : "—"
     } else {
         paintCountCell(td, value, heatmap.max)
         td.textContent = String(value ?? 0)
@@ -159,24 +167,59 @@ function paintCountCell(td, value, max) {
     td.style.setProperty("--heat", getHeatIntensity(numeric, max).toFixed(HEAT_PRECISION_DIGITS))
 }
 
-function paintWinRateCell(td, value) {
+function paintWinRateCell(td, value, sampleCount) {
     td.classList.add("metric-win-rate")
     if (typeof value !== "number") {
         td.classList.add("is-no-data")
         return
     }
     td.style.setProperty("--win-rate", value.toFixed(HEAT_PRECISION_DIGITS))
+    td.style.setProperty("--sample-tint", formatTintPercent(getConfidence(sampleCount)))
+}
+
+function paintAvgDiffCell(td, value, maxAbsValue, sampleCount) {
+    td.classList.add("metric-avg-diff")
+    if (typeof value !== "number") {
+        td.classList.add("is-no-data")
+        return
+    }
+    if (value > 0) {
+        td.classList.add("is-positive")
+    } else if (value < 0) {
+        td.classList.add("is-negative")
+    } else {
+        td.classList.add("is-neutral")
+    }
+    const tintStrength = getConfidence(sampleCount) * getNormalizedDiffStrength(value, maxAbsValue)
+    td.style.setProperty("--diff-tint", formatTintPercent(tintStrength))
 }
 
 function buildCellTitle({ heatmap, rowPlayer, colPlayer, rowIndex, colIndex, kind, metricKey, value }) {
-    if (metricKey === "winRate") {
+    if (metricKey === "winRate" || metricKey === "avgGameDiff") {
         const sampleCount = heatmap.sampleMatrix?.[rowIndex]?.[colIndex] ?? 0
-        const valueText = typeof value === "number" ? formatPercent(value) : "No decided matches"
-        const perspective =
-            kind === "opponent" ? `${rowPlayer} win rate vs ${colPlayer}` : `${rowPlayer} & ${colPlayer}`
+        const valueText = formatMetricValue(metricKey, value)
+        const perspective = buildMetricPerspective(kind, rowPlayer, colPlayer, metricKey)
         return `${perspective}: ${valueText} (${sampleCount} decided matches)`
     }
     return `${rowPlayer} × ${colPlayer}: ${value ?? 0} scored matches`
+}
+
+function formatMetricValue(metricKey, value) {
+    if (typeof value !== "number") {
+        return "No decided matches"
+    }
+    if (metricKey === "winRate") {
+        return formatPercent(value)
+    }
+    return formatSignedNumber(value)
+}
+
+function buildMetricPerspective(kind, rowPlayer, colPlayer, metricKey) {
+    const base =
+        kind === "opponent"
+            ? `${rowPlayer} ${metricKey === "winRate" ? "win rate" : "avg diff"} vs ${colPlayer}`
+            : `${rowPlayer} & ${colPlayer} ${metricKey === "winRate" ? "win rate" : "avg diff"}`
+    return base
 }
 
 function getHeatIntensity(value, max) {
@@ -184,6 +227,24 @@ function getHeatIntensity(value, max) {
         return 0
     }
     return HEAT_BASELINE + (value / max) * HEAT_RANGE
+}
+
+function getConfidence(sampleCount) {
+    if (!sampleCount || sampleCount <= 0) {
+        return 0
+    }
+    return Math.min(sampleCount / FULL_CONFIDENCE_MATCH_COUNT, 1)
+}
+
+function getNormalizedDiffStrength(value, maxAbsValue) {
+    if (!maxAbsValue || typeof value !== "number") {
+        return 0
+    }
+    return Math.min(Math.abs(value) / maxAbsValue, 1)
+}
+
+function formatTintPercent(value) {
+    return `${(value * PERCENT_SCALE).toFixed(HEAT_PRECISION_DIGITS)}%`
 }
 
 function compactLabel(name) {

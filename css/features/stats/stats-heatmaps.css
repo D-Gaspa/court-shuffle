@@ -60,6 +60,8 @@
 .stats-heatmap-cell {
     --heat: 0;
     --win-rate: 0.5;
+    --sample-tint: 100%;
+    --diff-tint: 0%;
     min-width: 42px;
     text-align: center;
     padding: 0.45rem 0.35rem;
@@ -80,10 +82,32 @@
 
 .stats-heatmap-cell.metric-win-rate {
     color: color-mix(in srgb, #fff, transparent 8%);
-    background: linear-gradient(180deg, #ffffff08, #00000016), hsl(calc(var(--win-rate) * 120) 52% 26%);
+    background:
+        linear-gradient(180deg, #ffffff08, #00000016),
+        color-mix(in srgb, hsl(calc(var(--win-rate) * 120) 52% 26%) var(--sample-tint), #14120f);
 }
 
 .stats-heatmap-cell.metric-win-rate.is-no-data {
+    color: var(--text-muted);
+    background: #14120f;
+}
+
+.stats-heatmap-cell.metric-avg-diff {
+    color: color-mix(in srgb, #fff, transparent 8%);
+}
+
+.stats-heatmap-cell.metric-avg-diff.is-positive {
+    background:
+        linear-gradient(180deg, #ffffff08, #00000016), color-mix(in srgb, hsl(138 48% 24%) var(--diff-tint), #14120f);
+}
+
+.stats-heatmap-cell.metric-avg-diff.is-negative {
+    background:
+        linear-gradient(180deg, #ffffff08, #00000016), color-mix(in srgb, hsl(12 58% 28%) var(--diff-tint), #14120f);
+}
+
+.stats-heatmap-cell.metric-avg-diff.is-neutral,
+.stats-heatmap-cell.metric-avg-diff.is-no-data {
     color: var(--text-muted);
     background: #14120f;
 }
@@ -116,6 +140,12 @@
 
 .stats-heatmap-cell:hover {
     transform: translateY(-1px);
+}
+
+.stats-heatmap-note {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: 0.55rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

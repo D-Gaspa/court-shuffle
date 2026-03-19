@@ -1,7 +1,9 @@
 import { buildGlobalLeaders, buildHeatmapSet } from "./derived.js"
 
 const MIN_RELATIONSHIP_MATCHES = 2
-const TOP_RELATIONSHIPS = 3
+const CHEMISTRY_PRIOR_WINS = 2
+const CHEMISTRY_PRIOR_MATCHES = 4
+const CHEMISTRY_SCORE_SCALE = 100
 
 function finalizeStatsModel({ sessions, acc, scope }) {
     const playerSummariesByName = finalizePlayerSummaries(acc.playerSummaries)
@@ -52,20 +54,30 @@ function finalizeRelationLists(relationMap, kind) {
     for (const [player, others] of relationMap) {
         const rows = []
         for (const [name, stats] of others) {
-            if (stats.matches < MIN_RELATIONSHIP_MATCHES) {
+            if (!shouldIncludeRelationship(stats, kind)) {
                 continue
             }
-            rows.push(finalizeRelationRow(name, stats))
+            rows.push(finalizeRelationRow(name, stats, kind))
         }
         rows.sort(kind === "partner" ? compareFavoritePartners : compareNemesisOpponents)
-        result[player] = rows.slice(0, TOP_RELATIONSHIPS)
+        result[player] = rows
     }
     return result
 }
 
-function finalizeRelationRow(name, stats) {
+function shouldIncludeRelationship(stats, kind) {
+    if (stats.matches < MIN_RELATIONSHIP_MATCHES) {
+        return false
+    }
+    if (kind === "partner") {
+        return stats.wins > 0
+    }
+    return stats.losses > 0
+}
+
+function finalizeRelationRow(name, stats, kind) {
     const matches = stats.wins + stats.losses
-    return {
+    const row = {
         name,
         matches,
         wins: stats.wins,
@@ -74,12 +86,18 @@ function finalizeRelationRow(name, stats) {
         winRate: matches > 0 ? stats.wins / matches : null,
         avgGameDiff: matches > 0 ? stats.totalGameDiff / matches : null,
     }
+    if (kind === "partner") {
+        row.chemistryScore = Math.round(
+            CHEMISTRY_SCORE_SCALE * ((stats.wins + CHEMISTRY_PRIOR_WINS) / (matches + CHEMISTRY_PRIOR_MATCHES)),
+        )
+    }
+    return row
 }
 
 function compareFavoritePartners(a, b) {
-    const winRateGap = (b.winRate ?? -1) - (a.winRate ?? -1)
-    if (winRateGap !== 0) {
-        return winRateGap
+    const chemistryGap = (b.chemistryScore ?? -1) - (a.chemistryScore ?? -1)
+    if (chemistryGap !== 0) {
+        return chemistryGap
     }
     if (b.matches !== a.matches) {
         return b.matches - a.matches

@@ -4,6 +4,7 @@ import {
     createHero,
     createPlayerSummaryPanel,
     createRelationshipsGrid,
+    createRivalryModalContent,
     createShell,
     createStatsIcon,
 } from "./view/dom.js"
@@ -19,11 +20,14 @@ let heatmapMetricByKind = {
     partner: "frequency",
     opponent: "frequency",
 }
+let rivalryDialogBindingsReady = false
 
 function renderStats(history, root) {
     if (!root) {
         return
     }
+    closeRivalryDialog()
+    ensureRivalryDialogBindings()
     lastStatsHistory = history
     lastStatsRoot = root
     root.textContent = ""
@@ -122,6 +126,12 @@ function buildRelationshipPanels(selectedPlayer, model) {
     const grid = createRelationshipsGrid(selectedPlayer, {
         partners: model.relationshipsByPlayer.partners[selectedPlayer],
         opponents: model.relationshipsByPlayer.opponents[selectedPlayer],
+        onViewRivalries: () =>
+            openRivalryDialog({
+                playerName: selectedPlayer,
+                scopeLabel: model.global.scope.label,
+                rivals: model.relationshipsByPlayer.opponents[selectedPlayer],
+            }),
     })
     grid.classList.add("stagger-4")
     return grid
@@ -158,6 +168,39 @@ function handleHeatmapMetricChange(kind) {
             [kind]: metricKey,
         }
         rerenderStats()
+    }
+}
+
+function ensureRivalryDialogBindings() {
+    if (rivalryDialogBindingsReady) {
+        return
+    }
+    const dialog = getRivalryDialog()
+    const closeButton = document.getElementById("stats-rivalry-close")
+    closeButton?.addEventListener("click", () => dialog?.close())
+    rivalryDialogBindingsReady = true
+}
+
+function getRivalryDialog() {
+    return document.getElementById("stats-rivalry-dialog")
+}
+
+function closeRivalryDialog() {
+    const dialog = getRivalryDialog()
+    if (dialog?.open) {
+        dialog.close()
+    }
+}
+
+function openRivalryDialog({ playerName, scopeLabel, rivals }) {
+    const dialog = getRivalryDialog()
+    const body = document.getElementById("stats-rivalry-body")
+    if (!(dialog && body)) {
+        return
+    }
+    body.replaceChildren(createRivalryModalContent(playerName, scopeLabel, rivals))
+    if (!dialog.open) {
+        dialog.showModal()
     }
 }
 

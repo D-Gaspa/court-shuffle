@@ -1,6 +1,7 @@
 import { formatCountLabel, formatPercent, formatRecord, formatSignedNumber } from "./format.js"
 
 const NAME_WORD_SPLIT_RE = /\s+/
+const INLINE_RELATIONSHIP_LIMIT = 3
 
 function createEl(tag, className, text) {
     const el = document.createElement(tag)
@@ -167,17 +168,40 @@ function createMetricCard(label, value, caption) {
 
 function createRelationshipsPanel(config) {
     const section = createEl("section", `stats-panel stats-panel-relationship ${config.toneClass}`)
-    section.appendChild(createPanelHeader(config.title, config.subtitle))
+    section.appendChild(createRelationshipHeader(config))
     if (!config.rows || config.rows.length === 0) {
         section.appendChild(createEl("p", "stats-relationship-empty", config.emptyMessage))
         return section
     }
-    const list = createEl("ol", "stats-relationship-list")
-    for (const row of config.rows) {
+    section.appendChild(createRelationshipList(config.rows.slice(0, INLINE_RELATIONSHIP_LIMIT)))
+    return section
+}
+
+function createRelationshipHeader(config) {
+    const header = createEl("div", "stats-panel-header")
+    const bar = createEl("div", "stats-panel-header-bar")
+    const titleWrap = createEl("div", "")
+    titleWrap.appendChild(createEl("h3", "stats-panel-title", config.title))
+    if (config.subtitle) {
+        titleWrap.appendChild(createEl("p", "stats-panel-subtitle", config.subtitle))
+    }
+    bar.appendChild(titleWrap)
+    if (typeof config.onAction === "function" && config.actionLabel) {
+        const button = createEl("button", "btn btn-ghost btn-sm", config.actionLabel)
+        button.type = "button"
+        button.addEventListener("click", config.onAction)
+        bar.appendChild(button)
+    }
+    header.appendChild(bar)
+    return header
+}
+
+function createRelationshipList(rows, className = "stats-relationship-list") {
+    const list = createEl("ol", className)
+    for (const row of rows) {
         list.appendChild(createRelationshipRow(row))
     }
-    section.appendChild(list)
-    return section
+    return list
 }
 
 function createRelationshipRow(row) {
@@ -186,6 +210,9 @@ function createRelationshipRow(row) {
     nameWrap.appendChild(createEl("strong", "", row.name))
     nameWrap.appendChild(createEl("span", "", formatCountLabel(row.matches, "match")))
     const meta = createEl("div", "stats-relationship-meta")
+    if (Number.isFinite(row.chemistryScore)) {
+        meta.appendChild(createEl("span", "stats-pill", `Chem ${row.chemistryScore}`))
+    }
     meta.appendChild(createEl("span", "stats-pill", formatPercent(row.winRate)))
     meta.appendChild(createEl("span", "stats-pill", formatRecord(row.wins, row.losses)))
     meta.appendChild(createEl("span", "stats-pill", formatSignedNumber(row.avgGameDiff)))
@@ -201,7 +228,7 @@ function createRelationshipsGrid(playerName, relationships) {
     grid.appendChild(
         createRelationshipsPanel({
             title: "Favorite Partners",
-            subtitle: "Ranked by win rate (min 2 matches)",
+            subtitle: "Ranked by chemistry (min 2 matches)",
             rows: relationships.partners,
             emptyMessage: favoriteEmpty,
             toneClass: "stats-tone-court",
@@ -214,9 +241,25 @@ function createRelationshipsGrid(playerName, relationships) {
             rows: relationships.opponents,
             emptyMessage: nemesisEmpty,
             toneClass: "stats-tone-clay",
+            actionLabel: relationships.opponents.length > 0 ? "View Rivalries" : null,
+            onAction: relationships.onViewRivalries,
         }),
     )
     return grid
+}
+
+function createRivalryModalContent(playerName, scopeLabel, rows) {
+    const fragment = document.createDocumentFragment()
+    fragment.appendChild(createEl("h2", "", `${playerName} Rivalries`))
+    fragment.appendChild(
+        createEl("p", "stats-rivalry-copy", `All qualifying opponent matchups in ${scopeLabel.toLowerCase()}.`),
+    )
+    if (!rows || rows.length === 0) {
+        fragment.appendChild(createEl("p", "stats-relationship-empty", "No qualifying rivalries in this window."))
+        return fragment
+    }
+    fragment.appendChild(createRelationshipList(rows, "stats-relationship-list stats-rivalry-list"))
+    return fragment
 }
 
 export {
@@ -227,4 +270,5 @@ export {
     createPlayerRail,
     createPlayerSummaryPanel,
     createRelationshipsGrid,
+    createRivalryModalContent,
 }

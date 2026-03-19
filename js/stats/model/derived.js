@@ -6,6 +6,7 @@ function buildHeatmapSet(players, countMatrixMap, relationMap) {
     return {
         frequency: buildCountHeatmap(countMatrixMap, players),
         winRate: buildRelationMetricHeatmap(relationMap, players, "winRate"),
+        avgGameDiff: buildRelationMetricHeatmap(relationMap, players, "avgGameDiff"),
     }
 }
 
@@ -37,6 +38,7 @@ function buildCountHeatmap(matrixMap, players) {
 function buildRelationMetricHeatmap(relationMap, players, metricName) {
     const matrix = []
     const sampleMatrix = []
+    let maxAbsDiff = 0
     for (const rowPlayer of players) {
         const row = []
         const sampleRow = []
@@ -50,7 +52,11 @@ function buildRelationMetricHeatmap(relationMap, players, metricName) {
             const stats = source?.get(colPlayer)
             const decidedMatches = (stats?.wins || 0) + (stats?.losses || 0)
             sampleRow.push(decidedMatches)
-            row.push(resolveRelationMetricValue(stats, metricName, decidedMatches))
+            const value = resolveRelationMetricValue(stats, metricName, decidedMatches)
+            if (metricName === "avgGameDiff" && typeof value === "number") {
+                maxAbsDiff = Math.max(maxAbsDiff, Math.abs(value))
+            }
+            row.push(value)
         }
         matrix.push(row)
         sampleMatrix.push(sampleRow)
@@ -60,8 +66,8 @@ function buildRelationMetricHeatmap(relationMap, players, metricName) {
         players,
         matrix,
         sampleMatrix,
-        min: 0,
-        max: 1,
+        min: metricName === "avgGameDiff" ? -maxAbsDiff : 0,
+        max: metricName === "avgGameDiff" ? maxAbsDiff : 1,
     }
 }
 
@@ -71,6 +77,9 @@ function resolveRelationMetricValue(stats, metricName, decidedMatches) {
     }
     if (metricName === "winRate") {
         return stats.wins / decidedMatches
+    }
+    if (metricName === "avgGameDiff") {
+        return stats.totalGameDiff / decidedMatches
     }
     return null
 }
