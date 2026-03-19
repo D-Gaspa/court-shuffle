@@ -1,3 +1,4 @@
+import { hasSavedScoreEntry } from "../../score-editor/sets.js"
 import { getModeLabel } from "../../shared/utils.js"
 import {
     getCurrentTournamentRun,
@@ -129,16 +130,6 @@ function renderSitOutsSection(round, ui) {
     }
 }
 
-function hasSavedMatchScore(entry) {
-    if (!entry) {
-        return false
-    }
-    if (Array.isArray(entry.sets) && entry.sets.length > 0) {
-        return true
-    }
-    return Array.isArray(entry.score) && entry.score.length === 2
-}
-
 function cloneMatchForHistory(match) {
     return {
         ...match,
@@ -187,7 +178,7 @@ function collectPlayedRoundMatches(round) {
     const scores = []
     for (let i = 0; i < round.matches.length; i += 1) {
         const score = round.scores[i]
-        if (!hasSavedMatchScore(score)) {
+        if (!hasSavedScoreEntry(score)) {
             continue
         }
         matches.push(cloneMatchForHistory(round.matches[i]))
@@ -228,8 +219,24 @@ function buildTournamentSeriesHistory(series) {
     }
 }
 
+function buildPlayedSessionRounds(rounds) {
+    if (!Array.isArray(rounds)) {
+        return []
+    }
+
+    return rounds.filter(
+        (round) => Array.isArray(round?.scores) && round.scores.some((score) => hasSavedScoreEntry(score)),
+    )
+}
+
 function buildHistoryEntryForSession(session) {
-    const playedRounds = session.rounds.filter((round) => round.scores?.some((s) => s !== null) ?? false)
+    if (!session) {
+        return null
+    }
+
+    const playedRounds = buildPlayedSessionRounds(session.rounds)
+    const tournamentRounds =
+        session.mode === "tournament" && !session.tournamentSeries ? buildTournamentHistoryRounds(session.rounds) : null
     const historyEntry = {
         id: session.id,
         date: session.date,
@@ -237,21 +244,26 @@ function buildHistoryEntryForSession(session) {
         teamCount: session.teamCount,
         mode: session.mode || "free",
         courtCount: session.courtCount || 1,
-        rounds:
-            session.mode === "tournament" && !session.tournamentSeries
-                ? buildTournamentHistoryRounds(session.rounds)
-                : playedRounds,
+        rounds: tournamentRounds ?? playedRounds,
     }
 
     if (session.mode !== "tournament") {
-        return historyEntry
+        return historyEntry.rounds.length > 0 ? historyEntry : null
     }
 
     if (session.tournamentSeries) {
-        historyEntry.tournamentSeries = buildTournamentSeriesHistory(session.tournamentSeries)
+        const tournamentSeries = buildTournamentSeriesHistory(session.tournamentSeries)
+        if (tournamentSeries.tournaments.length === 0) {
+            return null
+        }
+        historyEntry.tournamentSeries = tournamentSeries
         historyEntry.tournamentFormat = session.tournamentSeries.format
         historyEntry.tournamentTeamSize = session.tournamentSeries.matchType === "singles" ? 1 : 2
         return historyEntry
+    }
+
+    if (historyEntry.rounds.length === 0) {
+        return null
     }
 
     historyEntry.tournamentFormat = session.tournamentFormat
@@ -261,13 +273,18 @@ function buildHistoryEntryForSession(session) {
     return historyEntry
 }
 
+function canSaveSessionToHistory(session) {
+    return buildHistoryEntryForSession(session) !== null
+}
+
 function endSession(state, saveState, save) {
     const session = state.activeSession
-    if (save && session) {
-        state.history.push(buildHistoryEntryForSession(session))
+    const historyEntry = save && session ? buildHistoryEntryForSession(session) : null
+    if (historyEntry) {
+        state.history.push(historyEntry)
     }
     state.activeSession = null
     saveState()
 }
 
-export { renderActiveSession, endSession }
+export { renderActiveSession, canSaveSessionToHistory, endSession }

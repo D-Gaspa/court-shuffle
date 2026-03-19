@@ -1,20 +1,11 @@
+import { hasSavedScoreEntry } from "../../../score-editor/sets.js"
 import { advanceTournament } from "../../../tournament/bracket.js"
 import { attachTournamentCourtSchedule } from "../../../tournament/courts.js"
 import { createInitialBracket } from "../../../tournament/engine.js"
 import { allScoresEntered } from "../../../tournament/utils.js"
 
-function hasSavedMatchScore(entry) {
-    if (!entry) {
-        return false
-    }
-    if (Array.isArray(entry.sets) && entry.sets.length > 0) {
-        return true
-    }
-    return Array.isArray(entry.score) && entry.score.length === 2
-}
-
 function roundHasSavedScores(round) {
-    return Array.isArray(round?.scores) && round.scores.some(hasSavedMatchScore)
+    return Array.isArray(round?.scores) && round.scores.some(hasSavedScoreEntry)
 }
 
 function isMutableBracketFormat(session) {

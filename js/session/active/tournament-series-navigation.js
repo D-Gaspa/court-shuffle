@@ -1,3 +1,4 @@
+import { hasSavedScoreEntry } from "../../score-editor/sets.js"
 import {
     getCurrentTournamentRun,
     isSeriesTournamentSession,
@@ -29,11 +30,7 @@ function hasAnyPlayedScores(rounds) {
         return false
     }
     return rounds.some(
-        (round) =>
-            Array.isArray(round?.scores) &&
-            round.scores.some(
-                (score) => Boolean(score) && ((score.sets?.length ?? 0) > 0 || (score.score?.length ?? 0) > 0),
-            ),
+        (round) => Array.isArray(round?.scores) && round.scores.some((score) => hasSavedScoreEntry(score)),
     )
 }
 

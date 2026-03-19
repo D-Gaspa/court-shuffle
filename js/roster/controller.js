@@ -41,6 +41,46 @@ function renameTeamObjects(teams, oldName, newName) {
     }
 }
 
+function renameUsedPairs(usedPairs, oldName, newName) {
+    if (!Array.isArray(usedPairs)) {
+        return usedPairs
+    }
+
+    return usedPairs.map((pk) => {
+        const parts = pk.split("||")
+        const newParts = parts.map((part) => (part === oldName ? newName : part))
+        return pairKey(newParts[0], newParts[1])
+    })
+}
+
+function renameSessionRecord(session, oldName, newName) {
+    if (!session) {
+        return
+    }
+
+    if (Array.isArray(session.players)) {
+        renameInPlayerList(session.players, oldName, newName)
+    }
+    if (Array.isArray(session.rounds)) {
+        renameInRounds(session.rounds, oldName, newName)
+    }
+    renameTeamObjects(session.teams, oldName, newName)
+    if (session.tournamentSeries) {
+        renameInTournamentSeries(session.tournamentSeries, oldName, newName)
+    }
+    session.usedPairs = renameUsedPairs(session.usedPairs, oldName, newName)
+}
+
+function renameSessionCollection(sessions, oldName, newName) {
+    if (!Array.isArray(sessions)) {
+        return
+    }
+
+    for (const session of sessions) {
+        renameSessionRecord(session, oldName, newName)
+    }
+}
+
 function syncAddButton() {
     addPlayerBtn.disabled = !playerNameInput.value.trim()
 }
@@ -134,30 +174,9 @@ function commitRename() {
 }
 
 function updateSessionsWithNewName(oldName, newName) {
-    if (globalState.activeSession) {
-        renameInPlayerList(globalState.activeSession.players, oldName, newName)
-        renameInRounds(globalState.activeSession.rounds, oldName, newName)
-        renameTeamObjects(globalState.activeSession.teams, oldName, newName)
-        if (globalState.activeSession.tournamentSeries) {
-            renameInTournamentSeries(globalState.activeSession.tournamentSeries, oldName, newName)
-        }
-        if (globalState.activeSession.usedPairs) {
-            globalState.activeSession.usedPairs = globalState.activeSession.usedPairs.map((pk) => {
-                const parts = pk.split("||")
-                const newParts = parts.map((p) => (p === oldName ? newName : p))
-                return pairKey(newParts[0], newParts[1])
-            })
-        }
-    }
-
-    for (const session of globalState.history) {
-        renameInPlayerList(session.players, oldName, newName)
-        renameInRounds(session.rounds, oldName, newName)
-        renameTeamObjects(session.teams, oldName, newName)
-        if (session.tournamentSeries) {
-            renameInTournamentSeries(session.tournamentSeries, oldName, newName)
-        }
-    }
+    renameSessionRecord(globalState.activeSession, oldName, newName)
+    renameSessionCollection(globalState.history, oldName, newName)
+    renameSessionCollection(globalState.archivedHistory, oldName, newName)
 }
 
 function openDeletePlayerDialog(index, name) {

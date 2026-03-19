@@ -68,6 +68,7 @@ function buildTournamentSeed(players, config, courtCount) {
         courtCount,
         allowNotStrictDoubles: config.allowNotStrictDoubles,
         advanced: config.advanced,
+        nonce: crypto.randomUUID(),
     }
     return `setup:${JSON.stringify(payload)}`
 }

@@ -10,7 +10,7 @@ import {
     syncTournamentSeriesAliases,
 } from "../../tournament/series/sync.js"
 import { allScoresEntered, getRoundScoreBlockReason } from "../../tournament/utils.js"
-import { endSession } from "./active.js"
+import { canSaveSessionToHistory, endSession } from "./active.js"
 import {
     onNextTournamentClick as onNextTournamentClickHandler,
     onPrevTournamentClick as onPrevTournamentClickHandler,
@@ -187,6 +187,22 @@ function retreatTournamentView(session) {
 }
 
 function onEndSessionClick() {
+    const session = _globalState.activeSession
+    if (!canSaveSessionToHistory(session)) {
+        _askConfirm(
+            "End Session",
+            "No matches were played, so this session can only be discarded.",
+            () => {
+                endSession(_globalState, _saveState, false)
+                _refreshFn()
+            },
+            {
+                okLabel: "Discard",
+            },
+        )
+        return
+    }
+
     const opts = {
         okLabel: "Save & End",
         okClass: "btn-primary",

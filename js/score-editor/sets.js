@@ -11,6 +11,14 @@ export function normalizeSets(entry) {
     return null
 }
 
+export function hasSavedScoreEntry(entry) {
+    const sets = normalizeSets(entry)
+    if (!Array.isArray(sets)) {
+        return false
+    }
+    return sets.some(([a, b]) => a !== null && b !== null)
+}
+
 export function formatSets(sets) {
     return sets
         .filter(([a, b]) => a !== null && b !== null)
