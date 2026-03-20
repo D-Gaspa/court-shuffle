@@ -18,6 +18,7 @@ function createAnalyticsQueryPanel({
     onQueryChange,
     onResetQuery,
     showPlayerFilter = true,
+    idPrefix = "analytics",
 }) {
     const section = createEl("section", "analytics-panel")
     const header = createEl("div", "analytics-panel-header")
@@ -36,6 +37,7 @@ function createAnalyticsQueryPanel({
             summary,
             onQueryChange,
             showPlayerFilter,
+            idPrefix,
         }),
     )
     section.appendChild(createActiveChipRow(summary.activeChips, onResetQuery))
@@ -61,13 +63,14 @@ function createTimePresetRow(query, timeOptions, onQueryChange) {
     return wrap
 }
 
-function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFilter }) {
+function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFilter, idPrefix }) {
     const grid = createEl("div", "analytics-field-grid")
     if (showPlayerFilter) {
         grid.appendChild(
             createField({
                 label: "Player",
                 control: createSelect({
+                    name: `${idPrefix}-player`,
                     value: query.player,
                     options: [
                         { value: "all", label: "All Players" },
@@ -82,6 +85,7 @@ function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFi
         createField({
             label: "Mode",
             control: createSelect({
+                name: `${idPrefix}-mode`,
                 value: query.mode,
                 options: options.modeOptions.map((option) => ({ value: option.key, label: option.label })),
                 onChange: (value) => onQueryChange({ mode: value }),
@@ -93,6 +97,7 @@ function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFi
             createField({
                 label: "Tournament",
                 control: createSelect({
+                    name: `${idPrefix}-tournament-format`,
                     value: query.tournamentFormat,
                     options: [
                         { value: "all", label: "All Formats" },
@@ -110,13 +115,17 @@ function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFi
         grid.appendChild(
             createField({
                 label: "From",
-                control: createDateInput(query.dateFrom, (value) => onQueryChange({ dateFrom: value })),
+                control: createDateInput(`${idPrefix}-date-from`, query.dateFrom, (value) =>
+                    onQueryChange({ dateFrom: value }),
+                ),
             }),
         )
         grid.appendChild(
             createField({
                 label: "To",
-                control: createDateInput(query.dateTo, (value) => onQueryChange({ dateTo: value })),
+                control: createDateInput(`${idPrefix}-date-to`, query.dateTo, (value) =>
+                    onQueryChange({ dateTo: value }),
+                ),
             }),
         )
     }
@@ -130,18 +139,22 @@ function createField({ label, control, wide = false }) {
     return wrap
 }
 
-function createDateInput(value, onChange) {
+function createDateInput(name, value, onChange) {
     const input = document.createElement("input")
     input.className = "analytics-input"
     input.type = "date"
+    input.id = name
+    input.name = name
     input.value = value
     input.addEventListener("input", () => onChange(input.value))
     return input
 }
 
-function createSelect({ value, options, onChange }) {
+function createSelect({ name, value, options, onChange }) {
     const select = document.createElement("select")
     select.className = "analytics-select"
+    select.id = name
+    select.name = name
     for (const option of options) {
         const item = document.createElement("option")
         item.value = option.value

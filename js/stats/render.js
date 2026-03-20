@@ -51,6 +51,7 @@ function appendQueryUi(shell, analytics, onQueryChange, onResetQuery) {
             onQueryChange,
             onResetQuery,
             showPlayerFilter: false,
+            idPrefix: "stats",
         }),
     )
     shell.appendChild(

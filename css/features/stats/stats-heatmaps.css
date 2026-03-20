@@ -24,9 +24,14 @@
 
 .stats-heatmap-table {
     width: 100%;
-    min-width: 520px;
     border-collapse: separate;
     border-spacing: 0;
+}
+
+@media (width >= 768px) {
+    .stats-heatmap-table {
+        min-width: 520px;
+    }
 }
 
 .stats-heatmap-corner,
@@ -146,6 +151,21 @@
     color: var(--text-muted);
     font-size: 0.75rem;
     margin-top: 0.55rem;
+}
+
+@media (width < 768px) {
+    .stats-heatmap-corner,
+    .stats-heatmap-header,
+    .stats-heatmap-row-header {
+        padding: 0.3rem;
+        font-size: 0.66rem;
+    }
+
+    .stats-heatmap-cell {
+        min-width: 32px;
+        padding: 0.3rem 0.2rem;
+        font-size: 0.7rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

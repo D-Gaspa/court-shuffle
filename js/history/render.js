@@ -84,6 +84,7 @@ function renderHistory({
             summary: analytics.summary,
             onQueryChange,
             onResetQuery,
+            idPrefix: "history",
         }),
     )
 

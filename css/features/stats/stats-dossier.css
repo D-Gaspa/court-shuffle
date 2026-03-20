@@ -63,6 +63,13 @@
     margin-inline: -0.1rem;
 }
 
+@media (width < 768px) {
+    .stats-panel-switcher .stats-player-chip-rail {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+}
+
 .stats-player-chip {
     display: inline-flex;
     align-items: center;
