@@ -58,6 +58,7 @@ function renderModalSections(state, modal) {
         doublesRestrictionsList: dom.doublesRestrictionsList,
         addDoublesRestrictionBtn: dom.addDoublesRestrictionBtn,
         fillDoublesRestrictionBtn: dom.fillDoublesRestrictionBtn,
+        fillDoublesRestrictionSessionBtn: dom.fillDoublesRestrictionSessionBtn,
         singlesByesSection: dom.singlesByesSection,
         singlesByesList: dom.singlesByesList,
         doublesByesSection: dom.doublesByesSection,

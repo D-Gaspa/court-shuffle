@@ -12,6 +12,7 @@ function getAdvancedSectionElements(root) {
         doublesRestrictionsList: root.getElementById("advanced-doubles-restrictions-list"),
         addDoublesRestrictionBtn: root.getElementById("advanced-add-doubles-restriction"),
         fillDoublesRestrictionBtn: root.getElementById("advanced-fill-doubles-restrictions"),
+        fillDoublesRestrictionSessionBtn: root.getElementById("advanced-fill-doubles-restrictions-session"),
         singlesByesSection: root.getElementById("advanced-singles-byes-section"),
         singlesByesList: root.getElementById("advanced-singles-byes-list"),
         doublesByesSection: root.getElementById("advanced-doubles-byes-section"),

@@ -1,3 +1,4 @@
+import { hasSavedScoreEntry } from "../../score-editor/sets.js"
 import { collectLockedPairKeySet, normalizeTeamKey } from "./advanced-model-helpers.js"
 
 function toTimestamp(value) {
@@ -5,8 +6,11 @@ function toTimestamp(value) {
     return Number.isFinite(parsed) ? parsed : 0
 }
 
-function hasRounds(run) {
-    return Array.isArray(run?.rounds) && run.rounds.length > 0
+function hasScoredMatches(run) {
+    if (!Array.isArray(run?.rounds) || run.rounds.length === 0) {
+        return false
+    }
+    return run.rounds.some((round) => Array.isArray(round?.scores) && round.scores.some(hasSavedScoreEntry))
 }
 
 function getHistoryRunCandidates(historySessions) {
@@ -16,7 +20,7 @@ function getHistoryRunCandidates(historySessions) {
         if (Array.isArray(session?.tournamentSeries?.tournaments)) {
             for (let i = 0; i < session.tournamentSeries.tournaments.length; i += 1) {
                 const run = session.tournamentSeries.tournaments[i]
-                if (run?.tournamentTeamSize !== 2 || !hasRounds(run)) {
+                if (run?.tournamentTeamSize !== 2 || !hasScoredMatches(run)) {
                     continue
                 }
                 candidates.push({
@@ -28,13 +32,40 @@ function getHistoryRunCandidates(historySessions) {
             continue
         }
 
-        if (session?.tournamentTeamSize !== 2 || !hasRounds(session)) {
+        if (session?.tournamentTeamSize !== 2 || !hasScoredMatches(session)) {
             continue
         }
         candidates.push({
             date: session.date,
             runIndex: 0,
             run: session,
+        })
+    }
+
+    return candidates
+}
+
+function getHistorySessionCandidates(historySessions) {
+    const candidates = []
+
+    for (let i = 0; i < (historySessions || []).length; i += 1) {
+        const session = historySessions[i]
+        let runs = []
+        if (Array.isArray(session?.tournamentSeries?.tournaments)) {
+            runs = session.tournamentSeries.tournaments.filter(
+                (run) => run?.tournamentTeamSize === 2 && hasScoredMatches(run),
+            )
+        } else if (session?.tournamentTeamSize === 2 && hasScoredMatches(session)) {
+            runs = [session]
+        }
+
+        if (runs.length === 0) {
+            continue
+        }
+        candidates.push({
+            date: session.date,
+            sessionIndex: i,
+            runs,
         })
     }
 
@@ -53,6 +84,18 @@ function findLatestSavedDoublesTournament(historySessions) {
     const candidates = getHistoryRunCandidates(historySessions)
     candidates.sort(compareCandidates)
     return candidates[0]?.run || null
+}
+
+function findLatestSavedDoublesSession(historySessions) {
+    const candidates = getHistorySessionCandidates(historySessions)
+    candidates.sort((a, b) => {
+        const dateDiff = toTimestamp(b.date) - toTimestamp(a.date)
+        if (dateDiff !== 0) {
+            return dateDiff
+        }
+        return b.sessionIndex - a.sessionIndex
+    })
+    return candidates[0]?.runs || null
 }
 
 function toImportableTeam(team, allowNotStrictDoubles, activePlayers) {
@@ -97,20 +140,35 @@ function collectTeamsFromMatch({ match, teamsByKey, lockedKeys, allowNotStrictDo
     }
 }
 
-function extractRestrictedTeamsFromRun({ run, activePlayers, allowNotStrictDoubles, lockedPairs }) {
-    const teamsByKey = new Map()
-    const lockedKeys = collectLockedPairKeySet(lockedPairs, allowNotStrictDoubles)
-
+function collectTeamsFromRun({ run, teamsByKey, lockedKeys, allowNotStrictDoubles, activePlayers }) {
     for (const round of run?.rounds || []) {
-        for (const match of round?.matches || []) {
+        for (let i = 0; i < (round?.matches || []).length; i += 1) {
+            if (!hasSavedScoreEntry(round?.scores?.[i])) {
+                continue
+            }
             collectTeamsFromMatch({
-                match,
+                match: round.matches[i],
                 teamsByKey,
                 lockedKeys,
                 allowNotStrictDoubles,
                 activePlayers,
             })
         }
+    }
+}
+
+function extractRestrictedTeamsFromRuns({ runs, activePlayers, allowNotStrictDoubles, lockedPairs }) {
+    const teamsByKey = new Map()
+    const lockedKeys = collectLockedPairKeySet(lockedPairs, allowNotStrictDoubles)
+
+    for (const run of runs || []) {
+        collectTeamsFromRun({
+            run,
+            teamsByKey,
+            lockedKeys,
+            allowNotStrictDoubles,
+            activePlayers,
+        })
     }
 
     return [...teamsByKey.values()]
@@ -128,12 +186,32 @@ function buildRestrictedTeamsFromLastTournament({
         return null
     }
 
-    return extractRestrictedTeamsFromRun({
-        run: latestRun,
+    return extractRestrictedTeamsFromRuns({
+        runs: [latestRun],
         activePlayers: new Set(activePlayers || []),
         allowNotStrictDoubles,
         lockedPairs,
     })
 }
 
-export { buildRestrictedTeamsFromLastTournament }
+function buildRestrictedTeamsFromLastSession({
+    history,
+    archivedHistory,
+    activePlayers,
+    allowNotStrictDoubles,
+    lockedPairs,
+}) {
+    const latestRuns = findLatestSavedDoublesSession([...(history || []), ...(archivedHistory || [])])
+    if (!latestRuns) {
+        return null
+    }
+
+    return extractRestrictedTeamsFromRuns({
+        runs: latestRuns,
+        activePlayers: new Set(activePlayers || []),
+        allowNotStrictDoubles,
+        lockedPairs,
+    })
+}
+
+export { buildRestrictedTeamsFromLastSession, buildRestrictedTeamsFromLastTournament }

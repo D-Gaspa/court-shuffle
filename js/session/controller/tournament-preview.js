@@ -91,7 +91,7 @@ function clearTournamentDistribution({
 
 function renderTournamentDistributionSummary(preview, courtCount, tournamentDistributionHint, config) {
     if (!preview?.ok) {
-        tournamentDistributionHint.textContent = ""
+        tournamentDistributionHint.replaceChildren()
         return
     }
 
@@ -125,7 +125,13 @@ function renderTournamentDistributionSummary(preview, courtCount, tournamentDist
             lines.push(`- ${line}`)
         }
     }
-    tournamentDistributionHint.textContent = lines.join("\n")
+    tournamentDistributionHint.replaceChildren(
+        ...lines.map((line) => {
+            const row = document.createElement("div")
+            row.textContent = line
+            return row
+        }),
+    )
 }
 
 function showTournamentPreviewPendingState({
@@ -134,13 +140,13 @@ function showTournamentPreviewPendingState({
     tournamentAdvancedError,
 }) {
     tournamentDistributionGroup.hidden = false
-    tournamentDistributionHint.textContent = ""
+    tournamentDistributionHint.replaceChildren()
     tournamentAdvancedError.hidden = true
     tournamentAdvancedError.textContent = ""
 }
 
 function showTournamentPreviewError(error, tournamentDistributionHint, tournamentAdvancedError) {
-    tournamentDistributionHint.textContent = ""
+    tournamentDistributionHint.replaceChildren()
     tournamentAdvancedError.hidden = false
     tournamentAdvancedError.textContent = error || "Unable to build the Tournament 1 preview."
 }

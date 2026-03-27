@@ -197,6 +197,7 @@ function renderDoublesRestrictionsSection(context) {
         doublesRestrictionsList,
         addDoublesRestrictionBtn,
         fillDoublesRestrictionBtn,
+        fillDoublesRestrictionSessionBtn,
         onRequestRender,
     } = context
 
@@ -205,6 +206,9 @@ function renderDoublesRestrictionsSection(context) {
     updateRestrictedAddButton(addDoublesRestrictionBtn, selectedPlayers, allowNotStrictDoubles)
     if (fillDoublesRestrictionBtn) {
         fillDoublesRestrictionBtn.disabled = !visible
+    }
+    if (fillDoublesRestrictionSessionBtn) {
+        fillDoublesRestrictionSessionBtn.disabled = !visible
     }
     if (!visible) {
         return

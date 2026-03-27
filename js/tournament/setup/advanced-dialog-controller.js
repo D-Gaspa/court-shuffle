@@ -7,7 +7,10 @@ import {
     setAdvancedModalError,
     setAdvancedModalMessage,
 } from "./advanced-dialog-helpers.js"
-import { buildRestrictedTeamsFromLastTournament } from "./advanced-history-restrictions.js"
+import {
+    buildRestrictedTeamsFromLastSession,
+    buildRestrictedTeamsFromLastTournament,
+} from "./advanced-history-restrictions.js"
 import { createAdvancedModalUiController } from "./advanced-modal-ui.js"
 import { cloneAdvancedSettings, summarizeAdvancedSettings } from "./advanced-model.js"
 
@@ -100,10 +103,10 @@ function applyAdvancedDialog(state) {
     })
 }
 
-function fillDoublesRestrictionsFromHistory(state) {
+function getImportableRestrictedTeams(state, mode) {
     const modal = state.modalState
     if (!modal || modal.tournamentTeamSize !== 2) {
-        return
+        return null
     }
 
     const historyState = state.getHistorySource?.() || { history: [], archivedHistory: [] }
@@ -114,22 +117,38 @@ function fillDoublesRestrictionsFromHistory(state) {
         minRequiredSitOutPool: state.minRequiredSitOutPool,
         forcedSitOutPlayer: modal.workingAdvanced.forcedSitOutPlayer,
     })
-    const restrictedTeams = buildRestrictedTeamsFromLastTournament({
+    const builder = mode === "session" ? buildRestrictedTeamsFromLastSession : buildRestrictedTeamsFromLastTournament
+    return builder({
         history: historyState.history,
         archivedHistory: historyState.archivedHistory,
         activePlayers,
         allowNotStrictDoubles: modal.allowNotStrictDoubles,
         lockedPairs: modal.workingAdvanced.doublesLockedPairs,
     })
+}
 
-    if (restrictedTeams === null) {
-        setAdvancedModalMessage(state, "No saved doubles tournament with scored matches is available to import.")
+function fillDoublesRestrictionsFromHistory(state, mode) {
+    const modal = state.modalState
+    if (!modal) {
         return
     }
+    const restrictedTeams = getImportableRestrictedTeams(state, mode)
+    if (restrictedTeams === null) {
+        setAdvancedModalMessage(
+            state,
+            mode === "session"
+                ? "No saved doubles session with scored matches is available to import."
+                : "No saved doubles tournament with scored matches is available to import.",
+        )
+        return
+    }
+
     if (restrictedTeams.length === 0) {
         setAdvancedModalMessage(
             state,
-            "No compatible scored teams from the last saved doubles tournament match this setup.",
+            mode === "session"
+                ? "No compatible scored teams from the last saved doubles session match this setup."
+                : "No compatible scored teams from the last saved doubles tournament match this setup.",
         )
         return
     }
@@ -166,7 +185,12 @@ function bindAdvancedDialogInteractions(state) {
         state.modalState.workingAdvanced.doublesRestrictedTeams.push(["", ""])
         renderAdvancedModalState(state)
     })
-    dom.fillDoublesRestrictionBtn?.addEventListener("click", () => fillDoublesRestrictionsFromHistory(state))
+    dom.fillDoublesRestrictionBtn?.addEventListener("click", () =>
+        fillDoublesRestrictionsFromHistory(state, "tournament"),
+    )
+    dom.fillDoublesRestrictionSessionBtn?.addEventListener("click", () =>
+        fillDoublesRestrictionsFromHistory(state, "session"),
+    )
     dom.advancedCancelBtn?.addEventListener("click", () => dom.advancedDialog?.close())
     dom.advancedApplyBtn?.addEventListener("click", () => applyAdvancedDialog(state))
     dom.advancedDialog?.addEventListener("close", () => resetAdvancedModalState(state))

@@ -16,11 +16,9 @@
 .advanced-card {
     border: 1px solid var(--advanced-line-soft);
     border-radius: var(--radius-lg);
-    background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--advanced-panel-raised), transparent 15%),
-        var(--advanced-panel)
-    );
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--advanced-panel-raised), transparent 15%),
+            var(--advanced-panel));
 }
 
 .advanced-card-header {
@@ -51,7 +49,7 @@
 
 .advanced-card-body {
     display: grid;
-    gap: 10px;
+    gap: 8px;
     padding: 2px 14px 14px;
 }
 
@@ -84,7 +82,7 @@
     min-width: min(100%, 18rem);
 }
 
-.advanced-section-header > .advanced-action-row,
+.advanced-section-header>.advanced-action-row,
 .session-advanced-step .advanced-section-header .btn-ghost {
     flex: 0 0 auto;
 }
@@ -247,13 +245,13 @@
     }
 
     .advanced-section-header {
-        align-items: stretch;
+        grid-template-columns: 1fr;
     }
 
-    .advanced-section-header > .advanced-card-hint,
-    .advanced-section-header > .advanced-action-row,
+    .advanced-section-header>.advanced-card-hint,
+    .advanced-section-header>.advanced-action-row,
     .session-advanced-step .advanced-section-header .btn-ghost {
-        flex-basis: 100%;
+        justify-self: start;
     }
 }
 
