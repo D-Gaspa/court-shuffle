@@ -1,6 +1,7 @@
 import {
     collectLockedPairKeySet,
     filterByeTeamsToLockedPairs,
+    getConfiguredDoublesTeamsByKey,
     reconcileByeTeams,
     reconcilePairRows,
     toLockedTeamPlayers,
@@ -21,11 +22,15 @@ function normalizeAdvancedForConfig(source, allowNotStrictDoubles = false) {
     }
 
     const lockedPairKeySet = collectLockedPairKeySet(doublesLockedPairs, allowNotStrictDoubles)
+    const doublesRestrictedTeams = [
+        ...getConfiguredDoublesTeamsByKey(source.doublesRestrictedTeams, allowNotStrictDoubles).values(),
+    ].map((teamPlayers) => (teamPlayers.length === 1 ? [teamPlayers[0], ""] : [teamPlayers[0], teamPlayers[1]]))
     return {
         singlesOpeningMatchups: reconcilePairRows(source.singlesOpeningMatchups)
             .filter(([a, b]) => a && b)
             .map(([a, b]) => [a, b]),
         doublesLockedPairs,
+        doublesRestrictedTeams,
         forcedSitOutPlayer: source.forcedSitOutPlayer || null,
         singlesByePlayers: [...new Set((source.singlesByePlayers || []).filter(Boolean))],
         doublesByeTeams: filterByeTeamsToLockedPairs(

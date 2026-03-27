@@ -8,6 +8,10 @@ function getAdvancedSectionElements(root) {
         doublesPairsSection: root.getElementById("advanced-doubles-pairs-section"),
         doublesPairsList: root.getElementById("advanced-doubles-pairs-list"),
         addDoublesPairBtn: root.getElementById("advanced-add-doubles-pair"),
+        doublesRestrictionsSection: root.getElementById("advanced-doubles-restrictions-section"),
+        doublesRestrictionsList: root.getElementById("advanced-doubles-restrictions-list"),
+        addDoublesRestrictionBtn: root.getElementById("advanced-add-doubles-restriction"),
+        fillDoublesRestrictionBtn: root.getElementById("advanced-fill-doubles-restrictions"),
         singlesByesSection: root.getElementById("advanced-singles-byes-section"),
         singlesByesList: root.getElementById("advanced-singles-byes-list"),
         doublesByesSection: root.getElementById("advanced-doubles-byes-section"),
@@ -32,6 +36,10 @@ function getAdvancedCardElements(root, sections) {
         doublesPairs: {
             section: sections.doublesPairsSection,
             status: root.getElementById("advanced-status-doubles-pairs"),
+        },
+        doublesRestrictions: {
+            section: sections.doublesRestrictionsSection,
+            status: root.getElementById("advanced-status-doubles-restrictions"),
         },
         singlesByes: {
             section: sections.singlesByesSection,

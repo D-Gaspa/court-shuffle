@@ -475,8 +475,8 @@
                         <div>
                             <h2>Advanced Tournament Settings</h2>
                             <p class="modal-subtitle">
-                                Round 1 overrides apply after you press Apply. Court-limit queues and off-court waiting
-                                are automatic.
+                                Apply opening locks, team restrictions, and bracket preferences. Court-limit queues and
+                                off-court waiting stay automatic.
                             </p>
                         </div>
                     </div>
@@ -497,6 +497,14 @@
                             <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-doubles-pairs-section">
                                 <span class="advanced-rail-label">Doubles Pairs</span>
                                 <span id="advanced-status-doubles-pairs" class="advanced-status-chip">N/A</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="advanced-rail-btn"
+                                data-advanced-nav-target="advanced-doubles-restrictions-section"
+                            >
+                                <span class="advanced-rail-label">Restricted Teams</span>
+                                <span id="advanced-status-doubles-restrictions" class="advanced-status-chip">N/A</span>
                             </button>
                             <button type="button" class="advanced-rail-btn" data-advanced-nav-target="advanced-singles-byes-section">
                                 <span class="advanced-rail-label">Singles Byes</span>
@@ -575,6 +583,39 @@
                                     <button type="button" id="advanced-add-doubles-pair" class="btn btn-ghost btn-sm">Add</button>
                                 </div>
                                 <div id="advanced-doubles-pairs-list" class="advanced-row-list"></div>
+                            </div>
+                        </section>
+
+                        <section
+                            id="advanced-doubles-restrictions-section"
+                            class="config-group advanced-card"
+                            data-advanced-card="doublesRestrictions"
+                            hidden
+                        >
+                            <div class="advanced-card-header">
+                                <span class="advanced-card-kicker">Doubles Bracket</span>
+                                <span class="advanced-card-title">Restricted Teams</span>
+                            </div>
+                            <div class="advanced-card-body">
+                                <div class="advanced-section-header">
+                                    <p class="advanced-card-hint">
+                                        Block exact teams across the generated doubles series. Restricted teams will not
+                                        be built in any mini tournament.
+                                    </p>
+                                    <div class="advanced-action-row">
+                                        <button type="button" id="advanced-add-doubles-restriction" class="btn btn-ghost btn-sm">
+                                            Add
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="advanced-fill-doubles-restrictions"
+                                            class="btn btn-ghost btn-sm"
+                                        >
+                                            Fill with last tournament
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="advanced-doubles-restrictions-list" class="advanced-row-list"></div>
                             </div>
                         </section>
 

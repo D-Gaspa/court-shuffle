@@ -40,6 +40,11 @@ function collectDoublesOverrideLines(advanced) {
     )
     pushOverrideLine(
         lines,
+        "Doubles team restrictions",
+        (advanced.doublesRestrictedTeams || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean),
+    )
+    pushOverrideLine(
+        lines,
         "Doubles bye locks",
         (advanced.doublesByeTeams || []).map((team) => formatDoublesTeamLabel(team)).filter(Boolean),
     )

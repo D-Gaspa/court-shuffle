@@ -1,50 +1,19 @@
 import { isBracketFormat } from "./advanced-model.js"
-import { getBracketByeSlotCount } from "./advanced-model-helpers.js"
+import {
+    getBracketByeSlotCount,
+    getConfiguredDoublesTeamsByKey,
+    toLockedTeamPlayers,
+} from "./advanced-model-helpers.js"
 import { addPlaceholderRow, getRowValue } from "./advanced-render-utils.js"
-
-function normalizeTeamKey(team) {
-    return [...team].sort().join("||")
-}
-
-function toNormalizedLockedTeam(row, allowNotStrictDoubles) {
-    const left = getRowValue(row, 0)
-    const right = getRowValue(row, 1)
-    if (left && right) {
-        if (left === right) {
-            return null
-        }
-        return [left, right]
-    }
-    if (!allowNotStrictDoubles) {
-        return null
-    }
-    const solo = left || right
-    return solo ? [solo] : null
-}
-
-function getCompleteLockedTeams(rows, allowNotStrictDoubles) {
-    const byKey = new Map()
-    for (const row of rows || []) {
-        const team = toNormalizedLockedTeam(row, allowNotStrictDoubles)
-        if (!team) {
-            continue
-        }
-        const key = normalizeTeamKey(team)
-        if (!byKey.has(key)) {
-            byKey.set(key, team)
-        }
-    }
-    return byKey
-}
 
 function collectSelectedByeKeys(doublesByeTeams, lockedTeamsByKey, allowNotStrictDoubles) {
     const selectedByeKeys = new Set()
     for (const team of doublesByeTeams || []) {
-        const normalizedTeam = toNormalizedLockedTeam(team, allowNotStrictDoubles)
+        const normalizedTeam = toLockedTeamPlayers([getRowValue(team, 0), getRowValue(team, 1)], allowNotStrictDoubles)
         if (!normalizedTeam) {
             continue
         }
-        const key = normalizeTeamKey(normalizedTeam)
+        const key = [...normalizedTeam].sort().join("||")
         if (lockedTeamsByKey.has(key)) {
             selectedByeKeys.add(key)
         }
@@ -149,7 +118,7 @@ function trimSelectedByeKeysToSlots(selectedByeKeys, byeSlots) {
 }
 
 function renderLockedByeOptions({ allowNotStrictDoubles, advancedDraft, doublesByesList, onRequestRender, byeSlots }) {
-    const lockedTeamsByKey = getCompleteLockedTeams(advancedDraft.doublesLockedPairs, allowNotStrictDoubles)
+    const lockedTeamsByKey = getConfiguredDoublesTeamsByKey(advancedDraft.doublesLockedPairs, allowNotStrictDoubles)
     const lockedTeams = [...lockedTeamsByKey.entries()]
     if (lockedTeams.length === 0) {
         advancedDraft.doublesByeTeams = []

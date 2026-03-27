@@ -1,40 +1,6 @@
 import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
+import { getConfiguredDoublesTeamsByKey, normalizeTeamKey, toLockedTeamPlayers } from "./advanced-model-helpers.js"
 import { addPlaceholderRow, createAdvancedCheckCard } from "./advanced-render-utils.js"
-
-function normalizeTeamKey(team) {
-    return [...team].sort().join("||")
-}
-
-function toNormalizedLockedTeam(row, allowNotStrictDoubles) {
-    const left = typeof row?.[0] === "string" ? row[0] : ""
-    const right = typeof row?.[1] === "string" ? row[1] : ""
-    if (left && right) {
-        if (left === right) {
-            return null
-        }
-        return [left, right]
-    }
-    if (!allowNotStrictDoubles) {
-        return null
-    }
-    const solo = left || right
-    return solo ? [solo] : null
-}
-
-function getCompleteLockedTeams(rows, allowNotStrictDoubles) {
-    const byKey = new Map()
-    for (const row of rows || []) {
-        const team = toNormalizedLockedTeam(row, allowNotStrictDoubles)
-        if (!team) {
-            continue
-        }
-        const key = normalizeTeamKey(team)
-        if (!byKey.has(key)) {
-            byKey.set(key, team)
-        }
-    }
-    return byKey
-}
 
 function getSelectedSinglesNextUpPlayers(advancedDraft, slotCount) {
     advancedDraft.singlesNextUpPlayers = [...new Set((advancedDraft.singlesNextUpPlayers || []).filter(Boolean))].slice(
@@ -197,8 +163,8 @@ function getDoublesNextUpRenderContext(context) {
 function getSelectableLockedTeams(advancedDraft, allowNotStrictDoubles, activePlayers) {
     const activeEntrants = new Set(activePlayers)
     return new Map(
-        [...getCompleteLockedTeams(advancedDraft.doublesLockedPairs, allowNotStrictDoubles)].filter(([, team]) =>
-            team.every((player) => activeEntrants.has(player)),
+        [...getConfiguredDoublesTeamsByKey(advancedDraft.doublesLockedPairs, allowNotStrictDoubles)].filter(
+            ([, team]) => team.every((player) => activeEntrants.has(player)),
         ),
     )
 }
@@ -206,7 +172,7 @@ function getSelectableLockedTeams(advancedDraft, allowNotStrictDoubles, activePl
 function collectSelectedDoublesNextUpKeys(advancedDraft, lockedTeamsByKey, allowNotStrictDoubles, slotCount) {
     const selectedKeys = new Set()
     for (const team of advancedDraft.doublesNextUpTeams || []) {
-        const normalized = toNormalizedLockedTeam(team, allowNotStrictDoubles)
+        const normalized = toLockedTeamPlayers(team, allowNotStrictDoubles)
         if (!normalized) {
             continue
         }

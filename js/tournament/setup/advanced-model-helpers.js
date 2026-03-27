@@ -32,6 +32,21 @@ function toLockedTeamPlayers(row, allowSolo = false) {
     return solo ? [solo] : null
 }
 
+function getConfiguredDoublesTeamsByKey(rows, allowSolo = false) {
+    const byKey = new Map()
+    for (const row of rows || []) {
+        const teamPlayers = toLockedTeamPlayers(row, allowSolo)
+        if (!teamPlayers) {
+            continue
+        }
+        const key = normalizeTeamKey(teamPlayers)
+        if (!byKey.has(key)) {
+            byKey.set(key, teamPlayers)
+        }
+    }
+    return byKey
+}
+
 function collectLockedPairKeySet(rows, allowSolo = false) {
     const keys = new Set()
     for (const row of rows || []) {
@@ -171,6 +186,7 @@ export {
     collectLockedPairKeySet,
     filterByeTeamsToLockedPairs,
     formatCountLabel,
+    getConfiguredDoublesTeamsByKey,
     getBracketByeSlotCount,
     normalizeByeTeam,
     normalizeTeamKey,

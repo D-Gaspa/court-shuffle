@@ -29,6 +29,14 @@ function createOptionalSection({ visible, activeCount, singular, plural }) {
     }
 }
 
+function createCustomOptionalSection({ visible, activeCount, label }) {
+    return {
+        visible,
+        activeCount: visible ? activeCount : 0,
+        label: visible && activeCount > 0 ? label(activeCount) : "Auto",
+    }
+}
+
 function buildSectionStats({
     normalized,
     tournamentTeamSize,
@@ -38,8 +46,10 @@ function buildSectionStats({
     nextUpSlotCount,
 }) {
     const configuredDoublesPairs = countConfiguredRows(normalized.doublesLockedPairs)
+    const configuredDoublesRestrictions = countConfiguredRows(normalized.doublesRestrictedTeams)
     const singlesOpeningVisible = tournamentTeamSize === 1 && bracketFormat
     const doublesPairsVisible = tournamentTeamSize === 2
+    const doublesRestrictionsVisible = tournamentTeamSize === 2
     const singlesByesVisible = tournamentTeamSize === 1 && bracketFormat && byeSlotCount > 0
     const doublesByesVisible = tournamentTeamSize === 2 && bracketFormat && byeSlotCount > 0
     const singlesNextUpVisible = tournamentTeamSize === 1 && nextUpSlotCount > 0
@@ -58,6 +68,11 @@ function buildSectionStats({
             activeCount: configuredDoublesPairs,
             singular: "team lock",
             plural: "team locks",
+        }),
+        doublesRestrictions: createCustomOptionalSection({
+            visible: doublesRestrictionsVisible,
+            activeCount: configuredDoublesRestrictions,
+            label: (count) => `${count} blocked`,
         }),
         singlesByes: createOptionalSection({
             visible: singlesByesVisible,

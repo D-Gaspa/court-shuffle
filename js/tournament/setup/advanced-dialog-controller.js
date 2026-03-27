@@ -1,71 +1,15 @@
-import { hideFieldError, showFieldError } from "../../shared/utils.js"
-import { createAdvancedModalUiController } from "./advanced-modal-ui.js"
+import { getAdvancedEntrants } from "./advanced-context.js"
 import {
-    cloneAdvancedSettings,
-    reconcileAdvancedDraftForContext,
-    summarizeAdvancedSettings,
-    validateAdvancedDraft,
-} from "./advanced-model.js"
-import { renderAdvancedModalSections } from "./advanced-render.js"
-
-function buildSummaryContext(config, minRequiredSitOutPool) {
-    return { ...config, minRequiredSitOutPool }
-}
-
-function buildAdvancedValidationError(config, minRequiredSitOutPool) {
-    return (
-        validateAdvancedDraft({
-            advancedDraft: config.advancedDraft,
-            tournamentFormat: config.tournamentFormat,
-            tournamentTeamSize: config.tournamentTeamSize,
-            allowNotStrictDoubles: config.allowNotStrictDoubles,
-            selectedPlayers: config.selectedPlayers,
-            minRequiredSitOutPool,
-            courtCount: config.courtCount,
-        }) || ""
-    )
-}
-
-function setAdvancedModalError(advancedModalError, message) {
-    if (message) {
-        showFieldError(advancedModalError, message)
-        return
-    }
-    hideFieldError(advancedModalError)
-}
-
-function hasVisibleAdvancedOptions(summary) {
-    return Object.values(summary.sections || {}).some((section) => section.visible)
-}
-
-function renderAdvancedSections(state, tournamentDraft, selectedPlayers, onRequestRender) {
-    const { dom } = state
-    renderAdvancedModalSections({
-        tournamentTeamSize: tournamentDraft.teamSize,
-        tournamentFormat: tournamentDraft.format,
-        allowNotStrictDoubles: tournamentDraft.allowNotStrictDoubles,
-        selectedPlayers,
-        minRequiredSitOutPool: state.minRequiredSitOutPool,
-        courtCount: tournamentDraft.courtCount,
-        advancedDraft: tournamentDraft.advanced,
-        requiredSitOutSection: dom.requiredSitOutSection,
-        requiredSitOutSelect: dom.requiredSitOutSelect,
-        singlesOpeningSection: dom.singlesOpeningSection,
-        singlesOpeningList: dom.singlesOpeningList,
-        doublesPairsSection: dom.doublesPairsSection,
-        doublesPairsList: dom.doublesPairsList,
-        addDoublesPairBtn: dom.addDoublesPairBtn,
-        singlesByesSection: dom.singlesByesSection,
-        singlesByesList: dom.singlesByesList,
-        doublesByesSection: dom.doublesByesSection,
-        doublesByesList: dom.doublesByesList,
-        singlesNextUpSection: dom.singlesNextUpSection,
-        singlesNextUpList: dom.singlesNextUpList,
-        doublesNextUpSection: dom.doublesNextUpSection,
-        doublesNextUpList: dom.doublesNextUpList,
-        onRequestRender,
-    })
-}
+    buildAdvancedValidationError,
+    buildSummaryContext,
+    hasVisibleAdvancedOptions,
+    reconcileAndRenderAdvancedModalState,
+    setAdvancedModalError,
+    setAdvancedModalMessage,
+} from "./advanced-dialog-helpers.js"
+import { buildRestrictedTeamsFromLastTournament } from "./advanced-history-restrictions.js"
+import { createAdvancedModalUiController } from "./advanced-modal-ui.js"
+import { cloneAdvancedSettings, summarizeAdvancedSettings } from "./advanced-model.js"
 
 function syncActiveSummaryState(state, tournamentDraft, players) {
     state.currentAdvancedSummary = summarizeAdvancedSettings(
@@ -101,63 +45,7 @@ function resetAdvancedModalState(state) {
 }
 
 function renderAdvancedModalState(state, options = {}) {
-    if (!state.modalState) {
-        return
-    }
-
-    const modal = state.modalState
-    reconcileAdvancedDraftForContext({
-        tournamentAdvanced: modal.workingAdvanced,
-        tournamentTeamSize: modal.tournamentTeamSize,
-        tournamentFormat: modal.tournamentFormat,
-        allowNotStrictDoubles: modal.allowNotStrictDoubles,
-        selectedPlayers: modal.selectedPlayers,
-        minRequiredSitOutPool: state.minRequiredSitOutPool,
-        courtCount: modal.courtCount,
-        preserveIncompleteRows: options.preserveIncompleteRows ?? true,
-    })
-
-    renderAdvancedSections(
-        state,
-        {
-            advanced: modal.workingAdvanced,
-            format: modal.tournamentFormat,
-            teamSize: modal.tournamentTeamSize,
-            allowNotStrictDoubles: modal.allowNotStrictDoubles,
-            courtCount: modal.courtCount,
-        },
-        modal.selectedPlayers,
-        () => renderAdvancedModalState(state),
-    )
-
-    state.activeAdvancedSummary = summarizeAdvancedSettings(
-        modal.workingAdvanced,
-        buildSummaryContext(
-            {
-                tournamentFormat: modal.tournamentFormat,
-                tournamentTeamSize: modal.tournamentTeamSize,
-                allowNotStrictDoubles: modal.allowNotStrictDoubles,
-                selectedPlayers: modal.selectedPlayers,
-                courtCount: modal.courtCount,
-            },
-            state.minRequiredSitOutPool,
-        ),
-    )
-    setAdvancedModalError(
-        state.dom.advancedModalError,
-        buildAdvancedValidationError(
-            {
-                advancedDraft: modal.workingAdvanced,
-                tournamentFormat: modal.tournamentFormat,
-                tournamentTeamSize: modal.tournamentTeamSize,
-                allowNotStrictDoubles: modal.allowNotStrictDoubles,
-                selectedPlayers: modal.selectedPlayers,
-                courtCount: modal.courtCount,
-            },
-            state.minRequiredSitOutPool,
-        ),
-    )
-    state.advancedUi.renderMeta()
+    reconcileAndRenderAdvancedModalState(state, options)
 }
 
 function openAdvancedDialog(state, latestRenderState) {
@@ -212,6 +100,44 @@ function applyAdvancedDialog(state) {
     })
 }
 
+function fillDoublesRestrictionsFromHistory(state) {
+    const modal = state.modalState
+    if (!modal || modal.tournamentTeamSize !== 2) {
+        return
+    }
+
+    const historyState = state.getHistorySource?.() || { history: [], archivedHistory: [] }
+    const activePlayers = getAdvancedEntrants({
+        selectedPlayers: modal.selectedPlayers,
+        tournamentTeamSize: modal.tournamentTeamSize,
+        allowNotStrictDoubles: modal.allowNotStrictDoubles,
+        minRequiredSitOutPool: state.minRequiredSitOutPool,
+        forcedSitOutPlayer: modal.workingAdvanced.forcedSitOutPlayer,
+    })
+    const restrictedTeams = buildRestrictedTeamsFromLastTournament({
+        history: historyState.history,
+        archivedHistory: historyState.archivedHistory,
+        activePlayers,
+        allowNotStrictDoubles: modal.allowNotStrictDoubles,
+        lockedPairs: modal.workingAdvanced.doublesLockedPairs,
+    })
+
+    if (restrictedTeams === null) {
+        setAdvancedModalMessage(state, "No saved doubles tournament with scored matches is available to import.")
+        return
+    }
+    if (restrictedTeams.length === 0) {
+        setAdvancedModalMessage(
+            state,
+            "No compatible scored teams from the last saved doubles tournament match this setup.",
+        )
+        return
+    }
+
+    modal.workingAdvanced.doublesRestrictedTeams = restrictedTeams
+    renderAdvancedModalState(state)
+}
+
 function bindAdvancedDialogInteractions(state) {
     const { dom } = state
     dom.advancedBtn?.addEventListener("click", () => {
@@ -233,6 +159,14 @@ function bindAdvancedDialogInteractions(state) {
         state.modalState.workingAdvanced.doublesLockedPairs.push(["", ""])
         renderAdvancedModalState(state)
     })
+    dom.addDoublesRestrictionBtn?.addEventListener("click", () => {
+        if (!state.modalState) {
+            return
+        }
+        state.modalState.workingAdvanced.doublesRestrictedTeams.push(["", ""])
+        renderAdvancedModalState(state)
+    })
+    dom.fillDoublesRestrictionBtn?.addEventListener("click", () => fillDoublesRestrictionsFromHistory(state))
     dom.advancedCancelBtn?.addEventListener("click", () => dom.advancedDialog?.close())
     dom.advancedApplyBtn?.addEventListener("click", () => applyAdvancedDialog(state))
     dom.advancedDialog?.addEventListener("close", () => resetAdvancedModalState(state))
@@ -266,6 +200,7 @@ function createAdvancedDialogController({ dom, minRequiredSitOutPool }) {
     const state = {
         dom,
         minRequiredSitOutPool,
+        getHistorySource: () => ({ history: [], archivedHistory: [] }),
         currentAdvancedSummary: { totalActive: 0, triggerLabel: "Auto", sections: {} },
         activeAdvancedSummary: { totalActive: 0, triggerLabel: "Auto", sections: {} },
         latestRenderState: null,
@@ -285,6 +220,10 @@ function createAdvancedDialogController({ dom, minRequiredSitOutPool }) {
     return {
         init: () => bindAdvancedDialogInteractions(state),
         render: (config) => renderAdvancedDialogController(state, config),
+        setHistorySource: (getHistorySource) => {
+            state.getHistorySource =
+                typeof getHistorySource === "function" ? getHistorySource : () => ({ history: [], archivedHistory: [] })
+        },
     }
 }
 

@@ -29,7 +29,7 @@
     justify-items: start;
     gap: 2px;
     text-align: left;
-    padding: 14px 14px 0;
+    padding: 14px 14px 4px;
 }
 
 .advanced-card-kicker {
@@ -45,21 +45,23 @@
     font-size: 0.99rem;
     font-weight: 700;
     letter-spacing: 0;
+    line-height: 1.1;
     color: var(--advanced-text);
 }
 
 .advanced-card-body {
     display: grid;
-    gap: var(--space-sm);
-    padding: 12px 14px 14px;
+    gap: 10px;
+    padding: 6px 14px 14px;
 }
 
 .advanced-card-hint {
     margin: 0;
-    max-width: 62ch;
+    max-width: 56ch;
     font-size: 0.78rem;
     color: var(--advanced-muted);
     line-height: 1.45;
+    text-wrap: pretty;
 }
 
 .advanced-card-body .hint {
@@ -72,7 +74,14 @@
 .advanced-section-header {
     display: grid;
     justify-items: start;
-    gap: var(--space-sm);
+    gap: 4px;
+}
+
+.advanced-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    align-items: center;
 }
 
 .advanced-row-list {

@@ -1,6 +1,13 @@
 import { shuffleWithRng } from "../../../core/random.js"
 import { buildBracketDoublesRun, buildRoundRobinDoublesRun, validateRoundRobinByeOverrides } from "./doubles-byes.js"
 import {
+    buildRestrictedTeamKeySet,
+    collectRestrictedTeamKeys,
+    getDoublesPartitionError,
+    teamsContainRestrictedTeam,
+    validateLockedPairs,
+} from "./doubles-team-validation.js"
+import {
     buildDoublesTeamPartition,
     buildTournamentRunFromTeams,
     chooseTournamentSitOut,
@@ -46,84 +53,19 @@ function resolveDoublesEntrants({ players, allowNotStrictDoubles, normalizedAdva
     return { entrants, tournamentLevelSitOuts }
 }
 
-function toUniqueLockedPlayers(a, b) {
-    return [...new Set([a, b].filter(Boolean))]
-}
-
-function getLockedTeamRowError({ a, b, uniquePlayers, allowNotStrictDoubles }) {
-    if (uniquePlayers.length === 0) {
-        return "Every locked doubles team row must include at least one player."
-    }
-    if (a && b && a === b) {
-        return "Locked doubles pairs must use two different players."
-    }
-    if (!allowNotStrictDoubles && uniquePlayers.length !== 2) {
-        return "Strict doubles locked teams must include exactly two players."
-    }
-    return null
-}
-
-function hasInactiveLockedPlayers(uniquePlayers, entrantsSet) {
-    return !uniquePlayers.every((player) => entrantsSet.has(player))
-}
-
-function hasDuplicateLockedPlayers(uniquePlayers, lockedPlayers) {
-    return uniquePlayers.some((player) => lockedPlayers.has(player))
-}
-
-function registerLockedPlayers(uniquePlayers, lockedPlayers) {
-    for (const player of uniquePlayers) {
-        lockedPlayers.add(player)
-    }
-}
-
-function validateLockedPairs(entrants, normalizedAdvanced, allowNotStrictDoubles, errors) {
-    const entrantsSet = new Set(entrants)
-    const lockedPairs = normalizedAdvanced.doublesLockedPairs.filter(([a, b]) => a || b)
-    const lockedPlayers = new Set()
-    const validLockedTeams = []
-    let soloLockedTeamCount = 0
-    const availableSoloTeamSlots = allowNotStrictDoubles ? entrants.length % 2 : 0
-
-    for (const [a, b] of lockedPairs) {
-        const uniquePlayers = toUniqueLockedPlayers(a, b)
-        const rowError = getLockedTeamRowError({ a, b, uniquePlayers, allowNotStrictDoubles })
-        if (rowError) {
-            errors.push(rowError)
-            continue
-        }
-        if (allowNotStrictDoubles && uniquePlayers.length === 1) {
-            soloLockedTeamCount += 1
-        }
-        if (hasInactiveLockedPlayers(uniquePlayers, entrantsSet)) {
-            errors.push("Locked doubles teams must use currently active players.")
-            continue
-        }
-        if (hasDuplicateLockedPlayers(uniquePlayers, lockedPlayers)) {
-            errors.push("A player cannot be assigned to multiple locked doubles teams.")
-            continue
-        }
-        registerLockedPlayers(uniquePlayers, lockedPlayers)
-        validLockedTeams.push(uniquePlayers)
-    }
-
-    if (soloLockedTeamCount > availableSoloTeamSlots) {
-        errors.push(
-            `Solo locked doubles teams exceed available 2v1 team slots (${availableSoloTeamSlots}) for this roster.`,
-        )
-    }
-
-    return {
-        entrantsSet,
-        validLockedPairs: validLockedTeams,
-    }
-}
-
-function buildTeamsFromLockedPairs({ entrants, validLockedPairs, usedDoublesPartnerPairs, usedDoublesTeamKeys, rng }) {
+function buildTeamsFromLockedPairs({
+    entrants,
+    validLockedPairs,
+    restrictedTeamKeys,
+    usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
+    rng,
+}) {
     const partition = buildDoublesTeamPartition({
         players: entrants,
         usedPartnerPairs: usedDoublesPartnerPairs,
         usedTeamKeys: usedDoublesTeamKeys,
+        restrictedTeamKeys,
         rng,
         seedBuckets: validLockedPairs,
     })
@@ -144,12 +86,19 @@ function prepareDoublesFirstRun({ players, allowNotStrictDoubles, advanced, sitO
         rng,
         errors,
     })
-    const { entrantsSet, validLockedPairs } = validateLockedPairs(
+    const { entrantsSet, lockedTeamKeys, validLockedPairs } = validateLockedPairs({
         entrants,
         normalizedAdvanced,
         allowNotStrictDoubles,
         errors,
-    )
+    })
+    const restrictedTeamKeys = collectRestrictedTeamKeys({
+        entrantsSet,
+        restrictedRows: normalizedAdvanced.doublesRestrictedTeams.filter(([a, b]) => a || b),
+        allowNotStrictDoubles,
+        lockedTeamKeys,
+        errors,
+    })
 
     if (entrants.length < 2) {
         errors.push("Not enough active entrants to build a doubles tournament.")
@@ -160,46 +109,42 @@ function prepareDoublesFirstRun({ players, allowNotStrictDoubles, advanced, sitO
         entrantsSet,
         errors,
         normalizedAdvanced,
+        restrictedTeamKeys,
         tournamentLevelSitOuts,
         validLockedPairs,
     }
 }
 
-function buildDoublesFirstRun({
-    players,
-    format,
-    allowNotStrictDoubles,
-    advanced,
-    usedDoublesPartnerPairs,
-    usedDoublesTeamKeys,
-    sitOutCounts,
-    courtCount,
-    rng,
-}) {
-    const { entrants, entrantsSet, errors, normalizedAdvanced, tournamentLevelSitOuts, validLockedPairs } =
-        prepareDoublesFirstRun({
-            players,
-            allowNotStrictDoubles,
-            advanced,
-            sitOutCounts,
-            rng,
-        })
-
-    if (errors.length > 0) {
-        return { run: null, errors }
-    }
-
-    const teams = buildTeamsFromLockedPairs({
+function resolveFirstRunTeams(preparedRun, usedDoublesPartnerPairs, usedDoublesTeamKeys, rng) {
+    const { entrants, restrictedTeamKeys, validLockedPairs } = preparedRun
+    return buildTeamsFromLockedPairs({
         entrants,
         validLockedPairs,
+        restrictedTeamKeys,
         usedDoublesPartnerPairs,
         usedDoublesTeamKeys,
         rng,
     })
-    if (!teams) {
-        return { run: null, errors: ["Unable to build doubles teams from the selected locked pairs."] }
-    }
+}
 
+function getBuiltRestrictedTeamError(validLockedPairs, restrictedTeamKeys) {
+    return getDoublesPartitionError(validLockedPairs, restrictedTeamKeys)
+}
+
+function buildFirstRunTournament({
+    format,
+    teams,
+    normalizedAdvanced,
+    allowNotStrictDoubles,
+    entrantsSet,
+    errors,
+    rng,
+    entrants,
+    tournamentLevelSitOuts,
+    courtCount,
+    usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
+}) {
     const roundRobinError = validateRoundRobinByeOverrides(format, normalizedAdvanced)
     if (roundRobinError) {
         return { run: null, errors: [roundRobinError] }
@@ -233,10 +178,66 @@ function buildDoublesFirstRun({
     })
 }
 
+function buildDoublesFirstRun({
+    players,
+    format,
+    allowNotStrictDoubles,
+    advanced,
+    usedDoublesPartnerPairs,
+    usedDoublesTeamKeys,
+    sitOutCounts,
+    courtCount,
+    rng,
+}) {
+    const preparedRun = prepareDoublesFirstRun({
+        players,
+        allowNotStrictDoubles,
+        advanced,
+        sitOutCounts,
+        rng,
+    })
+    const {
+        entrants,
+        entrantsSet,
+        errors,
+        normalizedAdvanced,
+        restrictedTeamKeys,
+        tournamentLevelSitOuts,
+        validLockedPairs,
+    } = preparedRun
+
+    if (errors.length > 0) {
+        return { run: null, errors }
+    }
+
+    const teams = resolveFirstRunTeams(preparedRun, usedDoublesPartnerPairs, usedDoublesTeamKeys, rng)
+    if (!teams) {
+        return { run: null, errors: [getBuiltRestrictedTeamError(validLockedPairs, restrictedTeamKeys)] }
+    }
+    if (teamsContainRestrictedTeam(teams, restrictedTeamKeys)) {
+        return { run: null, errors: [getBuiltRestrictedTeamError(validLockedPairs, restrictedTeamKeys)] }
+    }
+    return buildFirstRunTournament({
+        format,
+        teams,
+        normalizedAdvanced,
+        allowNotStrictDoubles,
+        entrantsSet,
+        errors,
+        rng,
+        entrants,
+        tournamentLevelSitOuts,
+        courtCount,
+        usedDoublesPartnerPairs,
+        usedDoublesTeamKeys,
+    })
+}
+
 function buildDoublesTournament({
     players,
     format,
     allowNotStrictDoubles,
+    advanced,
     usedDoublesPartnerPairs,
     usedDoublesTeamKeys,
     sitOutCounts,
@@ -256,17 +257,26 @@ function buildDoublesTournament({
     if (entrants.length < 2) {
         return null
     }
+    const restrictedTeamKeys = buildRestrictedTeamKeySet({
+        entrants,
+        advanced,
+        allowNotStrictDoubles,
+    })
 
     const partition = buildDoublesTeamPartition({
         players: entrants,
         usedPartnerPairs: usedDoublesPartnerPairs,
         usedTeamKeys: usedDoublesTeamKeys,
+        restrictedTeamKeys,
         rng,
     })
     if (!partition) {
         return null
     }
     const teams = toShuffledTeams(partition, rng)
+    if (teamsContainRestrictedTeam(teams, restrictedTeamKeys)) {
+        return null
+    }
     const run = buildTournamentRunFromTeams({
         format,
         teamSize: 2,

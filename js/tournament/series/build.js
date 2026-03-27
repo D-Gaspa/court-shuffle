@@ -15,6 +15,7 @@ function createSeriesBuildState(players, seed) {
         usedDoublesTeamKeys: new Set(),
         usedSinglesOpeningMatchups: new Set(),
         sitOutCounts: Object.fromEntries(players.map((player) => [player, 0])),
+        advanced: null,
     }
 }
 
@@ -154,6 +155,7 @@ function appendSeriesRuns({ tournaments, players, format, teamSize, courtCount, 
             teamSize,
             courtCount,
             allowNotStrictDoubles,
+            advanced: state.advanced,
             usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
             usedDoublesTeamKeys: state.usedDoublesTeamKeys,
             usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
@@ -182,6 +184,7 @@ function buildTournamentSeries({
     advanced,
 }) {
     const state = createSeriesBuildState(players, seed)
+    state.advanced = advanced
     const tournaments = buildSeriesTournaments({
         players,
         format,

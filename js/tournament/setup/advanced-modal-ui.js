@@ -2,6 +2,7 @@ const SECTION_PRIORITY = [
     "requiredSitOut",
     "singlesOpening",
     "doublesPairs",
+    "doublesRestrictions",
     "singlesByes",
     "doublesByes",
     "singlesNextUp",
@@ -26,6 +27,15 @@ function getErrorSectionKey(errorText) {
         normalized.includes("locked doubles teams")
     ) {
         return "doublesPairs"
+    }
+    if (
+        normalized.includes("restricted doubles pair") ||
+        normalized.includes("restricted doubles team") ||
+        normalized.includes("restricted doubles teams") ||
+        normalized.includes("locked and restricted") ||
+        normalized.includes("both locked and restricted")
+    ) {
+        return "doublesRestrictions"
     }
     if (normalized.includes("bye")) {
         return normalized.includes("singles") ? "singlesByes" : "doublesByes"
@@ -115,11 +125,11 @@ function setValidationSummaryText(validationSummaryEl, errorText, activeSummary)
         return
     }
     if (activeSummary.totalActive > 0) {
-        validationSummaryEl.textContent = `${activeSummary.triggerLabel} configured for Tournament 1.`
+        validationSummaryEl.textContent = `${activeSummary.triggerLabel} configured for this tournament setup.`
         validationSummaryEl.dataset.state = "ready"
         return
     }
-    validationSummaryEl.textContent = "No overrides set. Tournament 1 will use automatic pairing rules."
+    validationSummaryEl.textContent = "No overrides set. Pairings, openings, and queues will be automatic."
     validationSummaryEl.dataset.state = "auto"
 }
 

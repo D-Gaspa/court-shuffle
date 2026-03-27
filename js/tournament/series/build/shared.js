@@ -21,6 +21,10 @@ function normalizeAdvancedSettings(advanced) {
             pair?.[1] || "",
         ]),
         doublesLockedPairs: (advanced?.doublesLockedPairs || []).map((pair) => [pair?.[0] || "", pair?.[1] || ""]),
+        doublesRestrictedTeams: (advanced?.doublesRestrictedTeams || []).map((pair) => [
+            pair?.[0] || "",
+            pair?.[1] || "",
+        ]),
         forcedSitOutPlayer: advanced?.forcedSitOutPlayer || null,
         singlesByePlayers: [...(advanced?.singlesByePlayers || [])],
         doublesByeTeams: (advanced?.doublesByeTeams || []).map((team) =>
@@ -123,7 +127,7 @@ function chooseTournamentSitOut(players, sitOutCounts, rng) {
     return selected
 }
 
-function canJoinDoublesBucket({ player, bucket, capacity, usedPartnerPairs, usedTeamKeys }) {
+function canJoinDoublesBucket({ player, bucket, capacity, usedPartnerPairs, usedTeamKeys, restrictedTeamKeys }) {
     if (bucket.length >= capacity) {
         return false
     }
@@ -133,8 +137,11 @@ function canJoinDoublesBucket({ player, bucket, capacity, usedPartnerPairs, used
             return false
         }
     }
-    if (nextBucket.length === capacity && usedTeamKeys.has(normalizeTeamKey(nextBucket))) {
-        return false
+    if (nextBucket.length === capacity) {
+        const nextTeamKey = normalizeTeamKey(nextBucket)
+        if (usedTeamKeys.has(nextTeamKey) || restrictedTeamKeys.has(nextTeamKey)) {
+            return false
+        }
     }
     return true
 }
@@ -184,7 +191,27 @@ function hasUsedSeededTeam(seededBuckets, capacities, usedTeamKeys) {
     return false
 }
 
-function buildDoublesTeamPartition({ players, usedPartnerPairs, usedTeamKeys, rng, seedBuckets = [] }) {
+function hasRestrictedSeededTeam(seededBuckets, capacities, restrictedTeamKeys) {
+    for (let i = 0; i < seededBuckets.length; i += 1) {
+        const bucket = seededBuckets[i]
+        if (bucket.length !== capacities[i]) {
+            continue
+        }
+        if (restrictedTeamKeys.has(normalizeTeamKey(bucket))) {
+            return true
+        }
+    }
+    return false
+}
+
+function buildDoublesTeamPartition({
+    players,
+    usedPartnerPairs,
+    usedTeamKeys,
+    restrictedTeamKeys = new Set(),
+    rng,
+    seedBuckets = [],
+}) {
     const teamCount = Math.ceil(players.length / 2)
     const capacities = computeCapacities(players.length, teamCount)
     const seededBuckets = allocateSeedBuckets(seedBuckets, capacities)
@@ -192,6 +219,9 @@ function buildDoublesTeamPartition({ players, usedPartnerPairs, usedTeamKeys, rn
         return null
     }
     if (hasUsedSeededTeam(seededBuckets, capacities, usedTeamKeys)) {
+        return null
+    }
+    if (hasRestrictedSeededTeam(seededBuckets, capacities, restrictedTeamKeys)) {
         return null
     }
 
@@ -216,6 +246,7 @@ function buildDoublesTeamPartition({ players, usedPartnerPairs, usedTeamKeys, rn
                     capacity: capacities[teamIndex],
                     usedPartnerPairs,
                     usedTeamKeys,
+                    restrictedTeamKeys,
                 })
             ) {
                 continue

@@ -19,6 +19,9 @@ function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers, allo
     tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs, true).map(
         ([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""],
     )
+    tournamentAdvanced.doublesRestrictedTeams = reconcilePairRows(tournamentAdvanced.doublesRestrictedTeams, true).map(
+        ([a, b]) => [selected.has(a) ? a : "", selected.has(b) ? b : ""],
+    )
 
     const lockedPairKeySet = collectLockedPairKeySet(tournamentAdvanced.doublesLockedPairs, allowNotStrictDoubles)
     tournamentAdvanced.singlesByePlayers = tournamentAdvanced.singlesByePlayers.filter((player) => selected.has(player))
@@ -66,6 +69,9 @@ function reconcileAdvancedForEntrants({
     tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs, true).map(
         ([a, b]) => [activeEntrants.has(a) ? a : "", activeEntrants.has(b) ? b : ""],
     )
+    tournamentAdvanced.doublesRestrictedTeams = reconcilePairRows(tournamentAdvanced.doublesRestrictedTeams, true).map(
+        ([a, b]) => [activeEntrants.has(a) ? a : "", activeEntrants.has(b) ? b : ""],
+    )
 
     const lockedPairKeySet = collectLockedPairKeySet(tournamentAdvanced.doublesLockedPairs, allowNotStrictDoubles)
     const reconcileActiveTeams = (teams) =>
@@ -96,6 +102,13 @@ function finalizeDoublesLockedRows(tournamentAdvanced, allowNotStrictDoubles, pr
     ).filter((row) => preserveIncompleteRows || toLockedTeamPlayers(row, allowNotStrictDoubles) !== null)
 }
 
+function finalizeDoublesRestrictedRows(tournamentAdvanced, allowNotStrictDoubles, preserveIncompleteRows) {
+    tournamentAdvanced.doublesRestrictedTeams = reconcilePairRows(
+        tournamentAdvanced.doublesRestrictedTeams,
+        preserveIncompleteRows,
+    ).filter((row) => preserveIncompleteRows || toLockedTeamPlayers(row, allowNotStrictDoubles) !== null)
+}
+
 function reconcileAdvancedForMode({
     tournamentAdvanced,
     tournamentTeamSize,
@@ -106,6 +119,7 @@ function reconcileAdvancedForMode({
 }) {
     if (tournamentTeamSize === 1) {
         tournamentAdvanced.doublesLockedPairs = []
+        tournamentAdvanced.doublesRestrictedTeams = []
         tournamentAdvanced.doublesByeTeams = []
         tournamentAdvanced.doublesNextUpTeams = []
         tournamentAdvanced.forcedSitOutPlayer = null
@@ -128,6 +142,10 @@ function reconcileAdvancedForMode({
         tournamentAdvanced.doublesLockedPairs = reconcilePairRows(tournamentAdvanced.doublesLockedPairs, true).map(
             ([a, b]) => [a, a && a === b ? "" : b],
         )
+        tournamentAdvanced.doublesRestrictedTeams = reconcilePairRows(
+            tournamentAdvanced.doublesRestrictedTeams,
+            true,
+        ).map(([a, b]) => [a, a && a === b ? "" : b])
         tournamentAdvanced.doublesByeTeams = reconcileStrictTeamRows(tournamentAdvanced.doublesByeTeams)
         tournamentAdvanced.doublesNextUpTeams = reconcileStrictTeamRows(tournamentAdvanced.doublesNextUpTeams)
     }
@@ -199,6 +217,7 @@ function reconcileAdvancedDraftForContext({
         return
     }
     finalizeDoublesLockedRows(tournamentAdvanced, allowNotStrictDoubles, preserveIncompleteRows)
+    finalizeDoublesRestrictedRows(tournamentAdvanced, allowNotStrictDoubles, preserveIncompleteRows)
 }
 
 export {

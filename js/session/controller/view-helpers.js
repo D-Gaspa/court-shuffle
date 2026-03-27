@@ -1,3 +1,5 @@
+import { setTournamentSeriesNavCollapsedUi } from "./ui.js"
+
 function renderActiveSessionView({
     sessionSetup,
     sessionActive,
@@ -21,6 +23,23 @@ function showSetupSessionView({ sessionSetup, sessionActive, uiState, resetGoTop
     sessionSetup.hidden = false
     sessionActive.hidden = true
     resetGoTopButtonVisibility(uiState.sessionBottomActions)
+}
+
+function showSetupBaseSessionView({
+    sessionSetup,
+    sessionActive,
+    uiState,
+    resetGoTopButtonVisibility,
+    tournamentSeriesNavToggleBtn,
+}) {
+    showSetupSessionView({ sessionSetup, sessionActive, uiState, resetGoTopButtonVisibility })
+    setTournamentSeriesNavCollapsedUi(
+        {
+            tournamentSeriesNav: uiState.tournamentSeriesNav,
+            tournamentSeriesNavToggleBtn,
+        },
+        false,
+    )
 }
 
 function reconcileSelectedPlayersWithRoster(selectedPlayers, roster) {
@@ -57,6 +76,7 @@ export {
     bindModeButtons,
     reconcileSelectedPlayersWithRoster,
     renderActiveSessionView,
+    showSetupBaseSessionView,
     showSetupSessionView,
     syncInitialGoTopButtonState,
     syncModeSelectorSelection,

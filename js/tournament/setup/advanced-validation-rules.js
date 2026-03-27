@@ -9,21 +9,25 @@ import {
     validateSinglesRows,
 } from "./advanced-model-helpers.js"
 import { requiresForcedSitOut } from "./advanced-rules.js"
+import {
+    validateDoublesRestrictedRows,
+    validateLockedRestrictedOverlap,
+} from "./advanced-validation-doubles-restrictions.js"
 import { validateSinglesOpeningSelections } from "./advanced-validation-singles.js"
 
-function getLockedRowMissingError(allowNotStrictDoubles) {
+function getDoublesRowMissingError(label, allowNotStrictDoubles) {
     return allowNotStrictDoubles
-        ? "Every locked doubles team row must include at least one player."
-        : "Every locked doubles pair row must select two players."
+        ? `Every ${label} doubles team row must include at least one player.`
+        : `Every ${label} doubles pair row must select two players.`
 }
 
-function getLockedTeamPlayers(row, allowNotStrictDoubles) {
+function getDoublesTeamPlayers(row, allowNotStrictDoubles, label) {
     const teamPlayers = toLockedTeamPlayers(row, allowNotStrictDoubles)
     if (!teamPlayers) {
-        return { error: getLockedRowMissingError(allowNotStrictDoubles), teamPlayers: null }
+        return { error: getDoublesRowMissingError(label, allowNotStrictDoubles), teamPlayers: null }
     }
     if (!allowNotStrictDoubles && teamPlayers.length !== 2) {
-        return { error: "Strict doubles locked teams must include exactly two players.", teamPlayers: null }
+        return { error: `Strict doubles ${label} teams must include exactly two players.`, teamPlayers: null }
     }
     return { error: null, teamPlayers }
 }
@@ -33,7 +37,7 @@ function validateLockedRow(row, allowNotStrictDoubles, activePlayers, usedPlayer
         return { error: null, isSoloLock: false }
     }
 
-    const { error, teamPlayers } = getLockedTeamPlayers(row, allowNotStrictDoubles)
+    const { error, teamPlayers } = getDoublesTeamPlayers(row, allowNotStrictDoubles, "locked")
     if (error) {
         return { error, isSoloLock: false }
     }
@@ -219,6 +223,12 @@ function runAdvancedValidationChecks({
         validateSinglesRows(advancedDraft.singlesOpeningMatchups, "singles opening matchup") ||
         validateSinglesOpeningSelections(advancedDraft, tournamentTeamSize) ||
         validateDoublesLockedRows(advancedDraft.doublesLockedPairs, allowNotStrictDoubles, activePlayers) ||
+        validateDoublesRestrictedRows(advancedDraft.doublesRestrictedTeams, allowNotStrictDoubles, activePlayers) ||
+        validateLockedRestrictedOverlap(
+            advancedDraft.doublesLockedPairs,
+            advancedDraft.doublesRestrictedTeams,
+            allowNotStrictDoubles,
+        ) ||
         validateSoloLockCapacity(advancedDraft, allowNotStrictDoubles, selectedPlayers) ||
         validateDoublesByeTeams(advancedDraft.doublesByeTeams, allowNotStrictDoubles) ||
         validateLockedTeamMembership(

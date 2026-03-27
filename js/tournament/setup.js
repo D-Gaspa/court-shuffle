@@ -24,6 +24,10 @@ const advancedDialogController = createAdvancedDialogController({
     minRequiredSitOutPool: MIN_REQUIRED_SIT_OUT_POOL,
 })
 
+function setTournamentAdvancedHistorySource(getHistorySource) {
+    advancedDialogController.setHistorySource(getHistorySource)
+}
+
 function createDefaultTournamentDraft() {
     return {
         format: "consolation",
@@ -159,5 +163,6 @@ export {
     initTournamentSetup,
     reconcileTournamentDraft,
     renderTournamentSetup,
+    setTournamentAdvancedHistorySource,
     validateTournamentAdvancedState,
 }

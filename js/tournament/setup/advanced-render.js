@@ -1,7 +1,11 @@
 import { getAdvancedEntrants } from "./advanced-context.js"
 import { isBracketFormat, requiresForcedSitOut } from "./advanced-model.js"
 import { getBracketByeSlotCount } from "./advanced-model-helpers.js"
-import { renderDoublesByesSection, renderDoublesPairsSection } from "./advanced-render-doubles.js"
+import {
+    renderDoublesByesSection,
+    renderDoublesPairsSection,
+    renderDoublesRestrictionsSection,
+} from "./advanced-render-doubles.js"
 import { renderDoublesNextUpSection, renderSinglesNextUpSection } from "./advanced-render-next-up.js"
 import {
     addPlaceholderRow,
@@ -235,6 +239,10 @@ function renderAdvancedModalSections(context) {
     renderRequiredSitOutSection(context)
     renderSinglesOpeningSection(context)
     renderDoublesPairsSection({ ...context, selectedPlayers: activeDoublesPlayers })
+    renderDoublesRestrictionsSection({
+        ...context,
+        selectedPlayers: activeDoublesPlayers,
+    })
     renderSinglesByesSection(context)
     renderDoublesByesSection(context)
     renderSinglesNextUpSection({

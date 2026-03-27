@@ -10,32 +10,30 @@ import {
 
 const renderDoublesByesSection = renderDoublesByesSectionValue
 
-function getBlockedPlayersForLockedPairRow(rows, rowIndex) {
-    const blocked = new Set()
-    for (let i = 0; i < rows.length; i += 1) {
-        if (i === rowIndex) {
-            continue
-        }
-        const left = getRowValue(rows[i], 0)
-        const right = getRowValue(rows[i], 1)
-        if (left) {
-            blocked.add(left)
-        }
-        if (right) {
-            blocked.add(right)
-        }
-    }
-    return blocked
-}
-
 function getSelectablePlayers({ selectedPlayers, blockedPlayers, currentValue }) {
     return selectedPlayers.filter((player) => player === currentValue || !blockedPlayers.has(player))
 }
 
-function getPairOptionsForRow(rows, rowIndex, selectedPlayers, allowNotStrictDoubles) {
+function getRowOptions({ rows, rowIndex, selectedPlayers, allowNotStrictDoubles, blockPlayersFromOtherRows }) {
     const currentLeft = getRowValue(rows[rowIndex], 0)
     const currentRight = getRowValue(rows[rowIndex], 1)
-    const blockedByOtherRows = getBlockedPlayersForLockedPairRow(rows, rowIndex)
+    const blockedByOtherRows = new Set()
+
+    if (blockPlayersFromOtherRows) {
+        for (let i = 0; i < rows.length; i += 1) {
+            if (i === rowIndex) {
+                continue
+            }
+            const left = getRowValue(rows[i], 0)
+            const right = getRowValue(rows[i], 1)
+            if (left) {
+                blockedByOtherRows.add(left)
+            }
+            if (right) {
+                blockedByOtherRows.add(right)
+            }
+        }
+    }
 
     const blockedForLeft = new Set(blockedByOtherRows)
     if (currentRight) {
@@ -58,12 +56,76 @@ function getPairOptionsForRow(rows, rowIndex, selectedPlayers, allowNotStrictDou
         rightOptions: getPlayerOptions(
             getSelectablePlayers({ selectedPlayers, blockedPlayers: blockedForRight, currentValue: currentRight }),
             true,
-            allowNotStrictDoubles ? "Optional (solo lock)" : "Select player",
+            allowNotStrictDoubles ? "Optional (solo team)" : "Select player",
         ),
     }
 }
 
-function updateDoublesPairAddButton(addDoublesPairBtn, rows, selectedPlayers, allowNotStrictDoubles) {
+function appendDoublesTeamRow({
+    rows,
+    rowIndex,
+    selectedPlayers,
+    allowNotStrictDoubles,
+    advancedRows,
+    listEl,
+    onRequestRender,
+    separatorText,
+    namePrefix,
+    soloClassName = "",
+    blockPlayersFromOtherRows = false,
+}) {
+    const row = document.createElement("div")
+    row.className = "advanced-row"
+    const { currentLeft, currentRight, leftOptions, rightOptions } = getRowOptions({
+        rows,
+        rowIndex,
+        selectedPlayers,
+        allowNotStrictDoubles,
+        blockPlayersFromOtherRows,
+    })
+
+    row.appendChild(
+        createSelect(
+            leftOptions,
+            currentLeft,
+            (next) => {
+                advancedRows[rowIndex][0] = next
+                if (next && advancedRows[rowIndex][1] === next) {
+                    advancedRows[rowIndex][1] = ""
+                }
+                onRequestRender()
+            },
+            { name: `${namePrefix}-${rowIndex}-left` },
+        ),
+    )
+    row.appendChild(createRowSeparator(separatorText))
+    row.appendChild(
+        createSelect(
+            rightOptions,
+            currentRight,
+            (next) => {
+                advancedRows[rowIndex][1] = next
+                if (next && advancedRows[rowIndex][0] === next) {
+                    advancedRows[rowIndex][0] = ""
+                }
+                onRequestRender()
+            },
+            { name: `${namePrefix}-${rowIndex}-right` },
+        ),
+    )
+    if (allowNotStrictDoubles && (currentLeft || currentRight) && !(currentLeft && currentRight) && soloClassName) {
+        row.classList.add(soloClassName)
+    }
+    row.appendChild(
+        createRemoveRowButton(() => {
+            advancedRows.splice(rowIndex, 1)
+            onRequestRender()
+        }),
+    )
+    listEl.appendChild(row)
+}
+
+function updateLockedAddButton(addDoublesPairBtn, rows, selectedPlayers, allowNotStrictDoubles) {
     if (!addDoublesPairBtn) {
         return
     }
@@ -72,63 +134,11 @@ function updateDoublesPairAddButton(addDoublesPairBtn, rows, selectedPlayers, al
     addDoublesPairBtn.disabled = availablePlayers.length < (allowNotStrictDoubles ? 1 : 2)
 }
 
-function appendDoublesPairRow({
-    rows,
-    rowIndex,
-    selectedPlayers,
-    allowNotStrictDoubles,
-    advancedDraft,
-    doublesPairsList,
-    onRequestRender,
-}) {
-    const row = document.createElement("div")
-    row.className = "advanced-row"
-    const { currentLeft, currentRight, leftOptions, rightOptions } = getPairOptionsForRow(
-        rows,
-        rowIndex,
-        selectedPlayers,
-        allowNotStrictDoubles,
-    )
-
-    row.appendChild(
-        createSelect(
-            leftOptions,
-            currentLeft,
-            (next) => {
-                advancedDraft.doublesLockedPairs[rowIndex][0] = next
-                if (next && advancedDraft.doublesLockedPairs[rowIndex][1] === next) {
-                    advancedDraft.doublesLockedPairs[rowIndex][1] = ""
-                }
-                onRequestRender()
-            },
-            { name: `advanced-doubles-pair-${rowIndex}-left` },
-        ),
-    )
-    row.appendChild(createRowSeparator(allowNotStrictDoubles ? "+" : "and"))
-    row.appendChild(
-        createSelect(
-            rightOptions,
-            currentRight,
-            (next) => {
-                advancedDraft.doublesLockedPairs[rowIndex][1] = next
-                if (next && advancedDraft.doublesLockedPairs[rowIndex][0] === next) {
-                    advancedDraft.doublesLockedPairs[rowIndex][0] = ""
-                }
-                onRequestRender()
-            },
-            { name: `advanced-doubles-pair-${rowIndex}-right` },
-        ),
-    )
-    if (allowNotStrictDoubles && (currentLeft || currentRight) && !(currentLeft && currentRight)) {
-        row.classList.add("advanced-row-solo-lock")
+function updateRestrictedAddButton(addDoublesRestrictionBtn, selectedPlayers, allowNotStrictDoubles) {
+    if (!addDoublesRestrictionBtn) {
+        return
     }
-    row.appendChild(
-        createRemoveRowButton(() => {
-            advancedDraft.doublesLockedPairs.splice(rowIndex, 1)
-            onRequestRender()
-        }),
-    )
-    doublesPairsList.appendChild(row)
+    addDoublesRestrictionBtn.disabled = selectedPlayers.length < (allowNotStrictDoubles ? 1 : 2)
 }
 
 function renderDoublesPairsSection(context) {
@@ -154,23 +164,73 @@ function renderDoublesPairsSection(context) {
 
     doublesPairsList.textContent = ""
     const rows = Array.isArray(advancedDraft.doublesLockedPairs) ? advancedDraft.doublesLockedPairs : []
-    updateDoublesPairAddButton(addDoublesPairBtn, rows, selectedPlayers, allowNotStrictDoubles)
+    updateLockedAddButton(addDoublesPairBtn, rows, selectedPlayers, allowNotStrictDoubles)
     if (rows.length === 0) {
         addPlaceholderRow(doublesPairsList, "No locked doubles teams.")
         return
     }
 
     for (let i = 0; i < rows.length; i += 1) {
-        appendDoublesPairRow({
+        appendDoublesTeamRow({
             rows,
             rowIndex: i,
             selectedPlayers,
             allowNotStrictDoubles,
-            advancedDraft,
-            doublesPairsList,
+            advancedRows: advancedDraft.doublesLockedPairs,
+            listEl: doublesPairsList,
             onRequestRender,
+            separatorText: allowNotStrictDoubles ? "+" : "and",
+            namePrefix: "advanced-doubles-lock",
+            soloClassName: "advanced-row-solo-lock",
+            blockPlayersFromOtherRows: true,
         })
     }
 }
 
-export { renderDoublesByesSection, renderDoublesPairsSection }
+function renderDoublesRestrictionsSection(context) {
+    const {
+        tournamentTeamSize,
+        allowNotStrictDoubles,
+        selectedPlayers,
+        advancedDraft,
+        doublesRestrictionsSection,
+        doublesRestrictionsList,
+        addDoublesRestrictionBtn,
+        fillDoublesRestrictionBtn,
+        onRequestRender,
+    } = context
+
+    const visible = tournamentTeamSize === 2
+    doublesRestrictionsSection.hidden = !visible
+    updateRestrictedAddButton(addDoublesRestrictionBtn, selectedPlayers, allowNotStrictDoubles)
+    if (fillDoublesRestrictionBtn) {
+        fillDoublesRestrictionBtn.disabled = !visible
+    }
+    if (!visible) {
+        return
+    }
+
+    doublesRestrictionsList.textContent = ""
+    const rows = Array.isArray(advancedDraft.doublesRestrictedTeams) ? advancedDraft.doublesRestrictedTeams : []
+    if (rows.length === 0) {
+        addPlaceholderRow(doublesRestrictionsList, "No restricted doubles teams.")
+        return
+    }
+
+    for (let i = 0; i < rows.length; i += 1) {
+        appendDoublesTeamRow({
+            rows,
+            rowIndex: i,
+            selectedPlayers,
+            allowNotStrictDoubles,
+            advancedRows: advancedDraft.doublesRestrictedTeams,
+            listEl: doublesRestrictionsList,
+            onRequestRender,
+            separatorText: allowNotStrictDoubles ? "+" : "and",
+            namePrefix: "advanced-doubles-restriction",
+            soloClassName: "advanced-row-solo-restriction",
+        })
+    }
+}
+
+export { renderDoublesByesSection, renderDoublesPairsSection, renderDoublesRestrictionsSection }

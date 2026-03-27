@@ -8,6 +8,7 @@ import {
     initTournamentSetup,
     reconcileTournamentDraft,
     renderTournamentSetup,
+    setTournamentAdvancedHistorySource,
     validateTournamentAdvancedState,
 } from "../tournament/setup.js"
 import { renderActiveSession } from "./active/active.js"
@@ -78,7 +79,7 @@ import {
 import { setTournamentSeriesNavCollapsedUi } from "./controller/ui.js"
 import {
     renderActiveSessionView,
-    showSetupSessionView,
+    showSetupBaseSessionView,
     syncInitialGoTopButtonState,
 } from "./controller/view-helpers.js"
 import { applyTournamentAction, bindWizardControls, startSession } from "./controller/wizard-actions.js"
@@ -91,17 +92,6 @@ let saveState = null
 
 const getSelectedPlayersInRosterOrder = () =>
     globalState.roster.filter((player) => sessionSetupDraft.selectedPlayers.has(player))
-
-function showSetupBaseState() {
-    showSetupSessionView({ sessionSetup, sessionActive, uiState, resetGoTopButtonVisibility })
-    setTournamentSeriesNavCollapsedUi(
-        {
-            tournamentSeriesNav: uiState.tournamentSeriesNav,
-            tournamentSeriesNavToggleBtn,
-        },
-        false,
-    )
-}
 
 function buildCurrentWizardState() {
     return buildWizardState(
@@ -188,7 +178,13 @@ function renderWizardContent(normalizedWizardState) {
 }
 
 function renderSetupWizard() {
-    showSetupBaseState()
+    showSetupBaseSessionView({
+        sessionSetup,
+        sessionActive,
+        uiState,
+        resetGoTopButtonVisibility,
+        tournamentSeriesNavToggleBtn,
+    })
     if (globalState.roster.length < 2) {
         noRosterWarning.hidden = false
         sessionConfig.hidden = true
@@ -290,6 +286,10 @@ function bindActiveSessionControls(state, persistFn, confirmFn) {
 function initSession(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
+    setTournamentAdvancedHistorySource(() => ({
+        history: globalState.history,
+        archivedHistory: globalState.archivedHistory,
+    }))
 
     bindSetupControls()
     bindActiveSessionControls(state, persistFn, confirmFn)

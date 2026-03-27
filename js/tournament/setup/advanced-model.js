@@ -32,6 +32,7 @@ function getDefaultAdvancedSettings() {
     return {
         singlesOpeningMatchups: [],
         doublesLockedPairs: [],
+        doublesRestrictedTeams: [],
         forcedSitOutPlayer: null,
         singlesByePlayers: [],
         doublesByeTeams: [],
@@ -44,6 +45,7 @@ function cloneAdvancedSettings(value = getDefaultAdvancedSettings()) {
     return {
         singlesOpeningMatchups: (value.singlesOpeningMatchups || []).map((pair) => [pair?.[0] || "", pair?.[1] || ""]),
         doublesLockedPairs: (value.doublesLockedPairs || []).map((pair) => [pair?.[0] || "", pair?.[1] || ""]),
+        doublesRestrictedTeams: (value.doublesRestrictedTeams || []).map((pair) => [pair?.[0] || "", pair?.[1] || ""]),
         forcedSitOutPlayer: value.forcedSitOutPlayer || null,
         singlesByePlayers: [...(value.singlesByePlayers || [])],
         doublesByeTeams: (value.doublesByeTeams || []).map((team) =>
