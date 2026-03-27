@@ -290,4 +290,4 @@ function buildDoublesTournament({
     return run
 }
 
-export { buildDoublesFirstRun, buildDoublesTournament }
+export { buildDoublesFirstRun, buildDoublesTournament, buildFirstRunTournament }

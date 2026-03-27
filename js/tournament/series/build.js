@@ -4,6 +4,7 @@
 
 import { createSeededRng } from "../../core/random.js"
 import { buildDoublesFirstRun, buildDoublesTournament } from "./build/doubles.js"
+import { buildOptimizedDoublesSeriesRuns } from "./build/doubles-series-planner.js"
 import { SERIES_BUILD_ATTEMPTS } from "./build/shared.js"
 import { buildSinglesFirstRun, buildSinglesTournament } from "./build/singles.js"
 import { buildSeriesRun, buildTournamentSeriesResult } from "./build-helpers.js"
@@ -73,9 +74,57 @@ function buildPreviewDistribution(run, courtCount) {
     }
 }
 
+function buildFailedPreview(errors, seed) {
+    return {
+        ok: false,
+        errors: errors.length > 0 ? errors : ["Unable to build a first tournament preview."],
+        run: null,
+        seed,
+    }
+}
+
+function buildSuccessfulPreview(run, seed, courtCount) {
+    return {
+        ok: true,
+        errors: [],
+        run,
+        seed,
+        distribution: buildPreviewDistribution(run, courtCount),
+    }
+}
+
+function buildDoublesPreview({ players, format, allowNotStrictDoubles, advanced, courtCount, seed, state }) {
+    const result = buildOptimizedDoublesSeriesRuns({
+        players,
+        format,
+        allowNotStrictDoubles,
+        advanced,
+        usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+        usedDoublesTeamKeys: state.usedDoublesTeamKeys,
+        sitOutCounts: state.sitOutCounts,
+        courtCount,
+        rng: state.rng,
+    })
+    const [run] = result.runs || []
+    if (!run) {
+        return buildFailedPreview(result.errors, seed)
+    }
+    return buildSuccessfulPreview(run, seed, courtCount)
+}
+
 function buildTournamentPreview({ players, format, teamSize, courtCount, allowNotStrictDoubles, seed, advanced }) {
-    const { rng, usedDoublesPartnerPairs, usedDoublesTeamKeys, usedSinglesOpeningMatchups, sitOutCounts } =
-        createSeriesBuildState(players, seed)
+    const state = createSeriesBuildState(players, seed)
+    if (teamSize === 2) {
+        return buildDoublesPreview({
+            players,
+            format,
+            allowNotStrictDoubles,
+            advanced,
+            courtCount,
+            seed,
+            state,
+        })
+    }
     const firstRunResult = buildFirstTournamentRun({
         players,
         format,
@@ -83,35 +132,38 @@ function buildTournamentPreview({ players, format, teamSize, courtCount, allowNo
         courtCount,
         allowNotStrictDoubles,
         advanced,
-        usedDoublesPartnerPairs,
-        usedDoublesTeamKeys,
-        usedSinglesOpeningMatchups,
-        sitOutCounts,
-        rng,
+        usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+        usedDoublesTeamKeys: state.usedDoublesTeamKeys,
+        usedSinglesOpeningMatchups: state.usedSinglesOpeningMatchups,
+        sitOutCounts: state.sitOutCounts,
+        rng: state.rng,
     })
 
     if (!firstRunResult.run) {
-        return {
-            ok: false,
-            errors:
-                firstRunResult.errors.length > 0
-                    ? firstRunResult.errors
-                    : ["Unable to build a first tournament preview."],
-            run: null,
-            seed,
-        }
+        return buildFailedPreview(firstRunResult.errors, seed)
     }
 
-    return {
-        ok: true,
-        errors: [],
-        run: firstRunResult.run,
-        seed,
-        distribution: buildPreviewDistribution(firstRunResult.run, courtCount),
-    }
+    return buildSuccessfulPreview(firstRunResult.run, seed, courtCount)
 }
 
 function buildSeriesTournaments({ players, format, teamSize, courtCount, allowNotStrictDoubles, advanced, state }) {
+    if (teamSize === 2) {
+        const result = buildOptimizedDoublesSeriesRuns({
+            players,
+            format,
+            allowNotStrictDoubles,
+            advanced,
+            usedDoublesPartnerPairs: state.usedDoublesPartnerPairs,
+            usedDoublesTeamKeys: state.usedDoublesTeamKeys,
+            sitOutCounts: state.sitOutCounts,
+            courtCount,
+            rng: state.rng,
+        })
+        if (!result.runs) {
+            return null
+        }
+        return result.runs.map((run, index) => ({ ...run, index }))
+    }
     const tournaments = []
     const firstRunResult = buildFirstTournamentRun({
         players,

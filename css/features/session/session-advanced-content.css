@@ -29,7 +29,7 @@
     justify-items: start;
     gap: 2px;
     text-align: left;
-    padding: 14px 14px 4px;
+    padding: 14px 14px 2px;
 }
 
 .advanced-card-kicker {
@@ -52,7 +52,7 @@
 .advanced-card-body {
     display: grid;
     gap: 10px;
-    padding: 6px 14px 14px;
+    padding: 2px 14px 14px;
 }
 
 .advanced-card-hint {
@@ -72,9 +72,21 @@
 }
 
 .advanced-section-header {
-    display: grid;
-    justify-items: start;
-    gap: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px 12px;
+}
+
+.advanced-section-header > .advanced-card-hint {
+    flex: 1 1 26rem;
+    min-width: min(100%, 18rem);
+}
+
+.advanced-section-header > .advanced-action-row,
+.session-advanced-step .advanced-section-header .btn-ghost {
+    flex: 0 0 auto;
 }
 
 .advanced-action-row {
@@ -232,6 +244,16 @@
 
     .advanced-control-nav {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .advanced-section-header {
+        align-items: stretch;
+    }
+
+    .advanced-section-header > .advanced-card-hint,
+    .advanced-section-header > .advanced-action-row,
+    .session-advanced-step .advanced-section-header .btn-ghost {
+        flex-basis: 100%;
     }
 }
 
