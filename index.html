@@ -418,6 +418,24 @@
                         <p>Past sessions, plus an archive for accidental removals.</p>
                     </div>
 
+                    <section class="history-backup-panel" aria-labelledby="history-backup-title">
+                        <div class="history-backup-copy">
+                            <p class="history-backup-kicker">Backup &amp; Restore</p>
+                            <h2 id="history-backup-title">Keep your local history portable</h2>
+                            <p class="history-backup-note">
+                                Export a full backup file before clearing browser data or switching devices, then import it later to restore your roster,
+                                active session, and history.
+                            </p>
+                        </div>
+                        <div class="history-backup-actions">
+                            <button type="button" id="history-export-btn" class="btn btn-accent">Export Backup</button>
+                            <button type="button" id="history-import-btn" class="btn btn-ghost">Import Backup</button>
+                            <input type="file" id="history-import-input" accept="application/json,.json" hidden />
+                        </div>
+                        <p id="history-backup-summary" class="history-backup-summary"></p>
+                        <p id="history-backup-status" class="history-backup-status" aria-live="polite"></p>
+                    </section>
+
                     <div id="history-list" class="history-list">
                         <!-- Populated by JS -->
                     </div>

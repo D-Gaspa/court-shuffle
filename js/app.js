@@ -1,5 +1,6 @@
 import { createDefaultAnalyticsQuery, resolveAnalyticsContext, updateAnalyticsQuery } from "./analytics/query.js"
 import { loadState, saveState } from "./core/storage.js"
+import { createHistoryBackupController } from "./history/backup.js"
 import { renderHistory } from "./history/render.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
 import { initSession, refreshSessionView } from "./session/index.js"
@@ -18,6 +19,11 @@ const views = {
 
 const historyList = document.getElementById("history-list")
 const historyEmpty = document.getElementById("history-empty")
+const historyExportBtn = document.getElementById("history-export-btn")
+const historyImportBtn = document.getElementById("history-import-btn")
+const historyImportInput = document.getElementById("history-import-input")
+const historyBackupSummary = document.getElementById("history-backup-summary")
+const historyBackupStatus = document.getElementById("history-backup-status")
 const statsRoot = document.getElementById("stats-root")
 
 const confirmDialog = document.getElementById("confirm-dialog")
@@ -31,6 +37,30 @@ let confirmCallback = null
 let confirmExtraCallback = null
 let analyticsQuery = createDefaultAnalyticsQuery()
 let historyPlayerFilter = "all"
+const historyBackupController = createHistoryBackupController({
+    state,
+    sortRoster,
+    switchView,
+    showConfirmDialog,
+    persist,
+    refreshAll: () => {
+        refreshRoster()
+        refreshSessionView()
+        refreshHistory()
+        refreshStats()
+    },
+    elements: {
+        exportButton: historyExportBtn,
+        importButton: historyImportBtn,
+        importInput: historyImportInput,
+        summary: historyBackupSummary,
+        status: historyBackupStatus,
+    },
+})
+
+function sortRoster() {
+    state.roster.sort((a, b) => a.localeCompare(b))
+}
 
 function persist() {
     saveState(state)
@@ -159,6 +189,7 @@ function refreshHistory() {
             ],
         },
     })
+    historyBackupController.refreshSummary()
 }
 
 function refreshStats() {
@@ -205,9 +236,12 @@ function resetHistoryQuery() {
 function init() {
     setupTabs()
     setupConfirmDialog()
+    historyBackupController.setupActions()
     initRoster(state, persist, showConfirmDialog)
     initSession(state, persist, showConfirmDialog)
 
+    sortRoster()
+    historyBackupController.refreshSummary()
     refreshRoster()
     if (state.activeSession) {
         switchView("session")

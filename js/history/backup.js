@@ -1,0 +1,163 @@
+import { createStateExport, parseStateImport } from "../core/storage.js"
+
+function formatBackupTimestamp(isoString) {
+    if (!isoString) {
+        return "not yet exported"
+    }
+
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) {
+        return "recently updated"
+    }
+
+    return date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    })
+}
+
+function setStatus(statusElement, message, tone = "success") {
+    statusElement.textContent = message
+    statusElement.classList.toggle("is-error", tone === "error")
+}
+
+function refreshSummary({ state, statusElement, summaryElement }) {
+    const totalSavedSessions = state.history.length + state.archivedHistory.length
+    const activeSessionLabel = state.activeSession ? "1 active session in progress" : "no active session"
+
+    summaryElement.textContent = `${state.roster.length} roster players, ${state.history.length} saved sessions, ${state.archivedHistory.length} archived sessions, ${activeSessionLabel}. Last backup: ${formatBackupTimestamp(
+        state.lastExportedAt,
+    )}.`
+
+    if (!statusElement.textContent) {
+        setStatus(statusElement, "Export a backup before clearing browser data or moving to another browser.")
+    }
+    if (totalSavedSessions === 0 && !state.activeSession && state.roster.length === 0) {
+        setStatus(statusElement, "Import an existing backup to restore your Court Shuffle data.")
+    }
+}
+
+function assignImportedState(state, sortRoster, nextState, exportedAt = null) {
+    state.roster = [...nextState.roster]
+    state.activeSession = nextState.activeSession
+    state.history = [...nextState.history]
+    state.archivedHistory = [...nextState.archivedHistory]
+    state.lastExportedAt = exportedAt
+    sortRoster()
+}
+
+function downloadBackup({ persist, state, statusElement, summaryElement }) {
+    const backup = createStateExport(state)
+    const payload = JSON.stringify(backup, null, 2)
+    const blob = new Blob([payload], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    const dateStamp = backup.exportedAt.slice(0, 10)
+
+    link.href = url
+    link.download = `court-shuffle-backup-${dateStamp}.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+
+    state.lastExportedAt = backup.exportedAt
+    persist()
+    refreshSummary({ state, statusElement, summaryElement })
+    setStatus(statusElement, "Backup exported. Keep the JSON file somewhere you control.")
+}
+
+async function importBackup({ file, persist, refreshAll, sortRoster, state, statusElement, switchView }) {
+    const rawText = await file.text()
+    const importedBackup = parseStateImport(rawText)
+
+    assignImportedState(state, sortRoster, importedBackup.state, importedBackup.exportedAt)
+    persist()
+    refreshAll()
+    setStatus(statusElement, "Backup imported. Local data has been restored.")
+
+    if (state.activeSession) {
+        switchView("session")
+        return
+    }
+
+    switchView("history")
+}
+
+function getImportMessage(state) {
+    const hasExistingData =
+        state.roster.length > 0 ||
+        state.history.length > 0 ||
+        state.archivedHistory.length > 0 ||
+        Boolean(state.activeSession)
+
+    return hasExistingData
+        ? "Importing a backup will replace the data currently stored in this browser. Continue?"
+        : "Import this backup into the current browser?"
+}
+
+function bindImportAction({ importInput, showConfirmDialog, ...controller }) {
+    importInput.addEventListener("change", () => {
+        const [file] = importInput.files || []
+        importInput.value = ""
+        if (!file) {
+            return
+        }
+
+        showConfirmDialog("Import Backup", getImportMessage(controller.state), () => {
+            importBackup({ ...controller, file }).catch((error) => {
+                setStatus(controller.statusElement, error.message || "Backup import failed.", "error")
+            })
+        })
+    })
+}
+
+function setupActions({ elements, showConfirmDialog, ...controller }) {
+    const { exportButton, importButton, importInput } = elements
+
+    exportButton.addEventListener("click", () => {
+        downloadBackup(controller)
+    })
+
+    importButton.addEventListener("click", () => {
+        importInput.click()
+    })
+
+    bindImportAction({
+        ...controller,
+        importInput,
+        showConfirmDialog,
+    })
+}
+
+export function createHistoryBackupController({
+    elements,
+    persist,
+    refreshAll,
+    showConfirmDialog,
+    sortRoster,
+    state,
+    switchView,
+}) {
+    const controller = {
+        persist,
+        refreshAll,
+        sortRoster,
+        state,
+        statusElement: elements.status,
+        summaryElement: elements.summary,
+        switchView,
+    }
+
+    return {
+        refreshSummary: () => {
+            refreshSummary(controller)
+        },
+        setupActions: () => {
+            setupActions({ ...controller, elements, showConfirmDialog })
+        },
+    }
+}

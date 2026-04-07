@@ -1,0 +1,59 @@
+.history-backup-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-lg);
+    background:
+        radial-gradient(circle at top right, var(--court-glow), transparent 42%),
+        linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated), var(--bg-card) 35%), var(--bg-card));
+    border: 1px solid color-mix(in srgb, var(--court), var(--border) 45%);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.history-backup-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.history-backup-kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--court-light);
+}
+
+.history-backup-panel h2 {
+    font-size: 1.15rem;
+    color: var(--text);
+}
+
+.history-backup-note,
+.history-backup-summary,
+.history-backup-status {
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+.history-backup-note,
+.history-backup-summary {
+    color: var(--text-secondary);
+}
+
+.history-backup-status {
+    min-height: 1.4em;
+    color: var(--court-light);
+}
+
+.history-backup-status.is-error {
+    color: var(--danger);
+}
+
+.history-backup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
