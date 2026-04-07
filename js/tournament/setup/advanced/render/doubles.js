@@ -1,4 +1,4 @@
-import { renderDoublesByesSection as renderDoublesByesSectionValue } from "./advanced-render-doubles-byes.js"
+import { renderDoublesByesSection as renderDoublesByesSectionValue } from "./doubles-byes.js"
 import {
     addPlaceholderRow,
     createRemoveRowButton,
@@ -6,7 +6,7 @@ import {
     createSelect,
     getPlayerOptions,
     getRowValue,
-} from "./advanced-render-utils.js"
+} from "./utils.js"
 
 const renderDoublesByesSection = renderDoublesByesSectionValue
 
@@ -141,6 +141,25 @@ function updateRestrictedAddButton(addDoublesRestrictionBtn, selectedPlayers, al
     addDoublesRestrictionBtn.disabled = selectedPlayers.length < (allowNotStrictDoubles ? 1 : 2)
 }
 
+function updateRestrictedActionButtons({
+    fillDoublesRestrictionBtn,
+    fillDoublesRestrictionSessionBtn,
+    clearDoublesRestrictionBtn,
+    visible,
+    hasRows,
+}) {
+    if (fillDoublesRestrictionBtn) {
+        fillDoublesRestrictionBtn.disabled = !visible
+    }
+    if (fillDoublesRestrictionSessionBtn) {
+        fillDoublesRestrictionSessionBtn.disabled = !visible
+    }
+    if (clearDoublesRestrictionBtn) {
+        clearDoublesRestrictionBtn.disabled = !(visible && hasRows)
+        clearDoublesRestrictionBtn.hidden = !(visible && hasRows)
+    }
+}
+
 function renderDoublesPairsSection(context) {
     const {
         tournamentTeamSize,
@@ -198,24 +217,26 @@ function renderDoublesRestrictionsSection(context) {
         addDoublesRestrictionBtn,
         fillDoublesRestrictionBtn,
         fillDoublesRestrictionSessionBtn,
+        clearDoublesRestrictionBtn,
         onRequestRender,
     } = context
 
     const visible = tournamentTeamSize === 2
     doublesRestrictionsSection.hidden = !visible
     updateRestrictedAddButton(addDoublesRestrictionBtn, selectedPlayers, allowNotStrictDoubles)
-    if (fillDoublesRestrictionBtn) {
-        fillDoublesRestrictionBtn.disabled = !visible
-    }
-    if (fillDoublesRestrictionSessionBtn) {
-        fillDoublesRestrictionSessionBtn.disabled = !visible
-    }
+    const rows = Array.isArray(advancedDraft.doublesRestrictedTeams) ? advancedDraft.doublesRestrictedTeams : []
+    updateRestrictedActionButtons({
+        fillDoublesRestrictionBtn,
+        fillDoublesRestrictionSessionBtn,
+        clearDoublesRestrictionBtn,
+        visible,
+        hasRows: rows.length > 0,
+    })
     if (!visible) {
         return
     }
 
     doublesRestrictionsList.textContent = ""
-    const rows = Array.isArray(advancedDraft.doublesRestrictedTeams) ? advancedDraft.doublesRestrictedTeams : []
     if (rows.length === 0) {
         addPlaceholderRow(doublesRestrictionsList, "No restricted doubles teams.")
         return

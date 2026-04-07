@@ -1,4 +1,4 @@
-import { getStepCaption, MODE_HINTS } from "./wizard-state.js"
+import { getStepCaption, MODE_HINTS } from "../wizard/state.js"
 
 function syncStepperUi({
     draft,

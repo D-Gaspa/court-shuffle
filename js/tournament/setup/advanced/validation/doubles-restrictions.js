@@ -1,4 +1,4 @@
-import { collectLockedPairKeySet, normalizeTeamKey, toLockedTeamPlayers } from "./advanced-model-helpers.js"
+import { collectLockedPairKeySet, normalizeTeamKey, toLockedTeamPlayers } from "../model/helpers.js"
 
 function getRestrictedRowMissingError(allowNotStrictDoubles) {
     return allowNotStrictDoubles

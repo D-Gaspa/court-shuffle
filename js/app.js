@@ -2,7 +2,7 @@ import { createDefaultAnalyticsQuery, resolveAnalyticsContext, updateAnalyticsQu
 import { loadState, saveState } from "./core/storage.js"
 import { renderHistory } from "./history/render.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
-import { initSession, refreshSessionView } from "./session/controller.js"
+import { initSession, refreshSessionView } from "./session/index.js"
 import { renderStats } from "./stats/render.js"
 
 const state = loadState()

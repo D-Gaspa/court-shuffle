@@ -1,5 +1,5 @@
-import { getAdvancedEntrants } from "./advanced-context.js"
-import { runAdvancedValidationChecks } from "./advanced-validation-rules.js"
+import { getAdvancedEntrants } from "../context.js"
+import { runAdvancedValidationChecks } from "./rules.js"
 
 function validateAdvancedDraft({
     advancedDraft,

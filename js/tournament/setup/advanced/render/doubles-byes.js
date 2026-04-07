@@ -1,10 +1,6 @@
-import { isBracketFormat } from "./advanced-model.js"
-import {
-    getBracketByeSlotCount,
-    getConfiguredDoublesTeamsByKey,
-    toLockedTeamPlayers,
-} from "./advanced-model-helpers.js"
-import { addPlaceholderRow, getRowValue } from "./advanced-render-utils.js"
+import { getBracketByeSlotCount, getConfiguredDoublesTeamsByKey, toLockedTeamPlayers } from "../model/helpers.js"
+import { isBracketFormat } from "../model/index.js"
+import { addPlaceholderRow, getRowValue } from "./utils.js"
 
 function collectSelectedByeKeys(doublesByeTeams, lockedTeamsByKey, allowNotStrictDoubles) {
     const selectedByeKeys = new Set()

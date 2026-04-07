@@ -1,4 +1,4 @@
-import { setTournamentSeriesNavCollapsedUi } from "./ui.js"
+import { setTournamentSeriesNavCollapsedUi } from "./ui-state.js"
 
 function renderActiveSessionView({
     sessionSetup,
@@ -42,28 +42,6 @@ function showSetupBaseSessionView({
     )
 }
 
-function reconcileSelectedPlayersWithRoster(selectedPlayers, roster) {
-    const validSelected = new Set()
-    for (const player of selectedPlayers) {
-        if (roster.includes(player)) {
-            validSelected.add(player)
-        }
-    }
-    return validSelected
-}
-
-function syncModeSelectorSelection(modeSelector, gameMode) {
-    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
-        btn.classList.toggle("selected", btn.dataset.mode === gameMode)
-    }
-}
-
-function bindModeButtons(modeSelector, onModeChange) {
-    for (const btn of modeSelector.querySelectorAll(".mode-btn")) {
-        btn.addEventListener("click", () => onModeChange(btn.dataset.mode))
-    }
-}
-
 function syncInitialGoTopButtonState(globalState, uiState, syncGoTopButtonVisibility) {
     syncGoTopButtonVisibility({
         hasActiveSession: Boolean(globalState?.activeSession),
@@ -72,12 +50,4 @@ function syncInitialGoTopButtonState(globalState, uiState, syncGoTopButtonVisibi
     })
 }
 
-export {
-    bindModeButtons,
-    reconcileSelectedPlayersWithRoster,
-    renderActiveSessionView,
-    showSetupBaseSessionView,
-    showSetupSessionView,
-    syncInitialGoTopButtonState,
-    syncModeSelectorSelection,
-}
+export { renderActiveSessionView, showSetupBaseSessionView, syncInitialGoTopButtonState }

@@ -1,23 +1,16 @@
-import { getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
-import {
-    formatCountLabel,
-    getBracketByeSlotCount,
-    normalizeByeTeam as normalizeByeTeamValue,
-} from "./advanced-model-helpers.js"
-import { normalizeAdvancedForConfig as normalizeAdvancedForConfigValue } from "./advanced-normalize.js"
-import { reconcileByeSelectionsForContext, reconcileNextUpSelectionsForContext } from "./advanced-override-reconcile.js"
+import { getRoundOneQueueTeamSlotCount } from "../context.js"
+import { validateAdvancedDraft as validateAdvancedDraftValue } from "../validation/index.js"
+import { formatCountLabel, getBracketByeSlotCount, normalizeByeTeam as normalizeByeTeamValue } from "./helpers.js"
+import { normalizeAdvancedForConfig as normalizeAdvancedForConfigValue } from "./normalize.js"
+import { reconcileByeSelectionsForContext, reconcileNextUpSelectionsForContext } from "./override-reconcile.js"
 import {
     reconcileAdvancedDraftForContext as reconcileAdvancedDraftForContextValue,
     reconcileAdvancedForEntrants,
     reconcileAdvancedForMode as reconcileAdvancedForModeValue,
     reconcileAdvancedForSelection as reconcileAdvancedForSelectionValue,
-} from "./advanced-reconcile.js"
-import {
-    isBracketFormat as isBracketFormatValue,
-    requiresForcedSitOut as requiresForcedSitOutValue,
-} from "./advanced-rules.js"
-import { buildSectionStats } from "./advanced-summary-helpers.js"
-import { validateAdvancedDraft as validateAdvancedDraftValue } from "./advanced-validation.js"
+} from "./reconcile.js"
+import { isBracketFormat as isBracketFormatValue, requiresForcedSitOut as requiresForcedSitOutValue } from "./rules.js"
+import { buildSectionStats } from "./summary.js"
 
 const normalizeByeTeam = normalizeByeTeamValue
 const normalizeAdvancedForConfig = normalizeAdvancedForConfigValue

@@ -1,4 +1,9 @@
-import { getAdvancedEntrants } from "./advanced-context.js"
+import { getAdvancedEntrants } from "../context.js"
+import {
+    buildRestrictedTeamsFromLastSession,
+    buildRestrictedTeamsFromLastTournament,
+} from "../model/history-restrictions.js"
+import { cloneAdvancedSettings, summarizeAdvancedSettings } from "../model/index.js"
 import {
     buildAdvancedValidationError,
     buildSummaryContext,
@@ -6,13 +11,8 @@ import {
     reconcileAndRenderAdvancedModalState,
     setAdvancedModalError,
     setAdvancedModalMessage,
-} from "./advanced-dialog-helpers.js"
-import {
-    buildRestrictedTeamsFromLastSession,
-    buildRestrictedTeamsFromLastTournament,
-} from "./advanced-history-restrictions.js"
-import { createAdvancedModalUiController } from "./advanced-modal-ui.js"
-import { cloneAdvancedSettings, summarizeAdvancedSettings } from "./advanced-model.js"
+} from "./helpers.js"
+import { createAdvancedModalUiController } from "./modal-ui.js"
 
 function syncActiveSummaryState(state, tournamentDraft, players) {
     state.currentAdvancedSummary = summarizeAdvancedSettings(
@@ -157,6 +157,14 @@ function fillDoublesRestrictionsFromHistory(state, mode) {
     renderAdvancedModalState(state)
 }
 
+function clearDoublesRestrictions(state) {
+    if (!state.modalState) {
+        return
+    }
+    state.modalState.workingAdvanced.doublesRestrictedTeams = []
+    renderAdvancedModalState(state)
+}
+
 function bindAdvancedDialogInteractions(state) {
     const { dom } = state
     dom.advancedBtn?.addEventListener("click", () => {
@@ -191,6 +199,7 @@ function bindAdvancedDialogInteractions(state) {
     dom.fillDoublesRestrictionSessionBtn?.addEventListener("click", () =>
         fillDoublesRestrictionsFromHistory(state, "session"),
     )
+    dom.clearDoublesRestrictionBtn?.addEventListener("click", () => clearDoublesRestrictions(state))
     dom.advancedCancelBtn?.addEventListener("click", () => dom.advancedDialog?.close())
     dom.advancedApplyBtn?.addEventListener("click", () => applyAdvancedDialog(state))
     dom.advancedDialog?.addEventListener("close", () => resetAdvancedModalState(state))

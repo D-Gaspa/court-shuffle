@@ -1,6 +1,6 @@
-import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
-import { getConfiguredDoublesTeamsByKey, normalizeTeamKey, toLockedTeamPlayers } from "./advanced-model-helpers.js"
-import { addPlaceholderRow, createAdvancedCheckCard } from "./advanced-render-utils.js"
+import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "../context.js"
+import { getConfiguredDoublesTeamsByKey, normalizeTeamKey, toLockedTeamPlayers } from "../model/helpers.js"
+import { addPlaceholderRow, createAdvancedCheckCard } from "./utils.js"
 
 function getSelectedSinglesNextUpPlayers(advancedDraft, slotCount) {
     advancedDraft.singlesNextUpPlayers = [...new Set((advancedDraft.singlesNextUpPlayers || []).filter(Boolean))].slice(

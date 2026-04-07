@@ -1,5 +1,5 @@
-import { hasSavedScoreEntry } from "../../score-editor/sets.js"
-import { collectLockedPairKeySet, normalizeTeamKey } from "./advanced-model-helpers.js"
+import { hasSavedScoreEntry } from "../../../../score-editor/sets.js"
+import { collectLockedPairKeySet, normalizeTeamKey } from "./helpers.js"
 
 function toTimestamp(value) {
     const parsed = Date.parse(value || "")

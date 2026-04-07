@@ -1,6 +1,6 @@
-import { hideFieldError, showFieldError } from "../../shared/utils.js"
-import { reconcileAdvancedDraftForContext, summarizeAdvancedSettings, validateAdvancedDraft } from "./advanced-model.js"
-import { renderAdvancedModalSections } from "./advanced-render.js"
+import { hideFieldError, showFieldError } from "../../../shared/utils.js"
+import { reconcileAdvancedDraftForContext, summarizeAdvancedSettings, validateAdvancedDraft } from "../model/index.js"
+import { renderAdvancedModalSections } from "../render/index.js"
 
 function buildSummaryContext(config, minRequiredSitOutPool) {
     return { ...config, minRequiredSitOutPool }
@@ -59,6 +59,7 @@ function renderModalSections(state, modal) {
         addDoublesRestrictionBtn: dom.addDoublesRestrictionBtn,
         fillDoublesRestrictionBtn: dom.fillDoublesRestrictionBtn,
         fillDoublesRestrictionSessionBtn: dom.fillDoublesRestrictionSessionBtn,
+        clearDoublesRestrictionBtn: dom.clearDoublesRestrictionBtn,
         singlesByesSection: dom.singlesByesSection,
         singlesByesList: dom.singlesByesList,
         doublesByesSection: dom.doublesByesSection,

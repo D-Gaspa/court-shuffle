@@ -1,14 +1,14 @@
-import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
+import { getAdvancedEntrants, getRoundOneQueueTeamSlotCount } from "../context.js"
 import {
     collectLockedPairKeySet,
     filterByeTeamsToLockedPairs,
     reconcileByeTeams,
     reconcilePairRows,
     toLockedTeamPlayers,
-} from "./advanced-model-helpers.js"
-import { reconcileByeSelectionsForContext, reconcileNextUpSelectionsForContext } from "./advanced-override-reconcile.js"
-import { isBracketFormat, requiresForcedSitOut } from "./advanced-rules.js"
-import { reconcileSinglesOpeningAvailability } from "./advanced-singles-opening.js"
+} from "./helpers.js"
+import { reconcileByeSelectionsForContext, reconcileNextUpSelectionsForContext } from "./override-reconcile.js"
+import { isBracketFormat, requiresForcedSitOut } from "./rules.js"
+import { reconcileSinglesOpeningAvailability } from "./singles-opening.js"
 
 function reconcileAdvancedForSelection(tournamentAdvanced, selectedPlayers, allowNotStrictDoubles = true) {
     const selected = new Set(selectedPlayers)

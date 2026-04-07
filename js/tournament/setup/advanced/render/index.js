@@ -1,12 +1,9 @@
-import { getAdvancedEntrants } from "./advanced-context.js"
-import { isBracketFormat, requiresForcedSitOut } from "./advanced-model.js"
-import { getBracketByeSlotCount } from "./advanced-model-helpers.js"
-import {
-    renderDoublesByesSection,
-    renderDoublesPairsSection,
-    renderDoublesRestrictionsSection,
-} from "./advanced-render-doubles.js"
-import { renderDoublesNextUpSection, renderSinglesNextUpSection } from "./advanced-render-next-up.js"
+import { getAdvancedEntrants } from "../context.js"
+import { getBracketByeSlotCount } from "../model/helpers.js"
+import { isBracketFormat, requiresForcedSitOut } from "../model/index.js"
+import { getSinglesOpeningSelectablePlayers } from "../model/singles-opening.js"
+import { renderDoublesByesSection, renderDoublesPairsSection, renderDoublesRestrictionsSection } from "./doubles.js"
+import { renderDoublesNextUpSection, renderSinglesNextUpSection } from "./next-up.js"
 import {
     addPlaceholderRow,
     createAdvancedCheckCard,
@@ -14,8 +11,7 @@ import {
     createRowSeparator,
     createSelect,
     getPlayerOptions,
-} from "./advanced-render-utils.js"
-import { getSinglesOpeningSelectablePlayers } from "./advanced-singles-opening.js"
+} from "./utils.js"
 
 function renderRequiredSitOutSection(context) {
     const {

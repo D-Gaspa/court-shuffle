@@ -1,11 +1,11 @@
-import { createAdvancedDialogController } from "./setup/advanced-dialog-controller.js"
-import { getAdvancedSetupDom } from "./setup/advanced-dom.js"
+import { createAdvancedDialogController } from "./setup/advanced/dialog/controller.js"
+import { getAdvancedSetupDom } from "./setup/advanced/dom.js"
 import {
     getDefaultAdvancedSettings,
     normalizeAdvancedForConfig,
     reconcileAdvancedDraftForContext,
     validateAdvancedDraft,
-} from "./setup/advanced-model.js"
+} from "./setup/advanced/model/index.js"
 
 const MIN_DOUBLES_TEAM_PLAYERS = 4
 const MIN_SINGLES_TEAM_PLAYERS = 2

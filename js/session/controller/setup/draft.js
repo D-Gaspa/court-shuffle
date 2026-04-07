@@ -18,20 +18,6 @@ function getFinalStepId() {
     return "setup"
 }
 
-function resetTournamentDraft(draft, createDefaultTournamentDraft) {
-    draft.tournament = createDefaultTournamentDraft()
-}
-
-function setGameMode(draft, nextMode, createDefaultTournamentDraft) {
-    if (draft.gameMode === nextMode) {
-        return
-    }
-    draft.gameMode = nextMode
-    if (nextMode !== "tournament") {
-        resetTournamentDraft(draft, createDefaultTournamentDraft)
-    }
-}
-
 function clampFreeTeamCount(draft) {
     const selectedCount = draft.selectedPlayers.size
     const maxTeams = Math.max(2, selectedCount)
@@ -60,11 +46,4 @@ function reconcileDraftWithRoster(draft, roster, reconcileTournamentDraft) {
     }
 }
 
-export {
-    clampFreeTeamCount,
-    createSessionSetupDraft,
-    getFinalStepId,
-    getVisibleStepIds,
-    reconcileDraftWithRoster,
-    setGameMode,
-}
+export { clampFreeTeamCount, createSessionSetupDraft, getFinalStepId, getVisibleStepIds, reconcileDraftWithRoster }

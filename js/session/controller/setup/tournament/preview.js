@@ -151,78 +151,10 @@ function showTournamentPreviewError(error, tournamentDistributionHint, tournamen
     tournamentAdvancedError.textContent = error || "Unable to build the Tournament 1 preview."
 }
 
-function updateTournamentPreview({
-    selectedPlayers,
-    count,
-    minPlayers,
-    getCourtCount,
-    getNotStrictDoubles,
-    getTournamentConfig,
-    buildTournamentPreview,
-    tournamentDistributionGroup,
-    tournamentDistributionHint,
-    tournamentAdvancedError,
-}) {
-    const players = [...selectedPlayers]
-    const courtCount = getCourtCount()
-    const config = getTournamentConfig(players, getNotStrictDoubles())
-    const seed = buildTournamentSeed(players, config, courtCount)
-    const tournamentBuildConfig = { ...config, seed }
-
-    if (count < minPlayers) {
-        showTournamentPreviewPendingState({
-            tournamentDistributionGroup,
-            tournamentDistributionHint,
-            tournamentAdvancedError,
-        })
-        return {
-            canStartTournament: false,
-            tournamentPreview: null,
-            tournamentBuildConfig,
-        }
-    }
-
-    const tournamentPreview = buildTournamentPreview({
-        players,
-        format: tournamentBuildConfig.format,
-        teamSize: tournamentBuildConfig.teamSize,
-        courtCount,
-        courtHandling: tournamentBuildConfig.courtHandling,
-        allowNotStrictDoubles: tournamentBuildConfig.allowNotStrictDoubles,
-        seed,
-        advanced: tournamentBuildConfig.advanced,
-    })
-
-    tournamentDistributionGroup.hidden = false
-    if (tournamentPreview.ok) {
-        renderTournamentDistributionSummary(
-            tournamentPreview,
-            courtCount,
-            tournamentDistributionHint,
-            tournamentBuildConfig,
-        )
-        tournamentAdvancedError.hidden = true
-        tournamentAdvancedError.textContent = ""
-        return {
-            canStartTournament: true,
-            tournamentPreview,
-            tournamentBuildConfig,
-        }
-    }
-
-    showTournamentPreviewError(tournamentPreview.errors[0], tournamentDistributionHint, tournamentAdvancedError)
-    return {
-        canStartTournament: false,
-        tournamentPreview,
-        tournamentBuildConfig,
-    }
-}
-
 export {
     buildTournamentSeed,
     clearTournamentDistribution,
     renderTournamentDistributionSummary,
     showTournamentPreviewError,
     showTournamentPreviewPendingState,
-    updateTournamentPreview,
 }

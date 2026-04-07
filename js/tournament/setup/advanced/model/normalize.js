@@ -5,7 +5,7 @@ import {
     reconcileByeTeams,
     reconcilePairRows,
     toLockedTeamPlayers,
-} from "./advanced-model-helpers.js"
+} from "./helpers.js"
 
 function normalizeAdvancedForConfig(source, allowNotStrictDoubles = false) {
     const doublesLockedPairs = []

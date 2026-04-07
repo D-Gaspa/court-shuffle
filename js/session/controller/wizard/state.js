@@ -1,4 +1,4 @@
-import { getMinPlayersForTournament } from "../../tournament/setup.js"
+import { getMinPlayersForTournament } from "../../../tournament/setup.js"
 
 const MODE_HINTS = {
     default: "Choose free or tournament to unlock the setup step.",

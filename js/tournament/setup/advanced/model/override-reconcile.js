@@ -5,8 +5,8 @@ import {
     normalizeTeamKey,
     normalizeTeamPlayers,
     reconcileByeTeams,
-} from "./advanced-model-helpers.js"
-import { isBracketFormat } from "./advanced-rules.js"
+} from "./helpers.js"
+import { isBracketFormat } from "./rules.js"
 
 function reconcileByeSelectionsForContext({
     tournamentAdvanced,

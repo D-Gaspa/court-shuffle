@@ -1,4 +1,4 @@
-import { getRoundOneQueueTeamSlotCount } from "./advanced-context.js"
+import { getRoundOneQueueTeamSlotCount } from "../context.js"
 import {
     collectLockedPairKeySet,
     getBracketByeSlotCount,
@@ -7,13 +7,10 @@ import {
     toLockedTeamPlayers,
     validateDoublesByeTeams,
     validateSinglesRows,
-} from "./advanced-model-helpers.js"
-import { requiresForcedSitOut } from "./advanced-rules.js"
-import {
-    validateDoublesRestrictedRows,
-    validateLockedRestrictedOverlap,
-} from "./advanced-validation-doubles-restrictions.js"
-import { validateSinglesOpeningSelections } from "./advanced-validation-singles.js"
+} from "../model/helpers.js"
+import { requiresForcedSitOut } from "../model/rules.js"
+import { validateDoublesRestrictedRows, validateLockedRestrictedOverlap } from "./doubles-restrictions.js"
+import { validateSinglesOpeningSelections } from "./singles.js"
 
 function getDoublesRowMissingError(label, allowNotStrictDoubles) {
     return allowNotStrictDoubles

@@ -16,9 +16,11 @@
 .advanced-card {
     border: 1px solid var(--advanced-line-soft);
     border-radius: var(--radius-lg);
-    background: linear-gradient(180deg,
-            color-mix(in srgb, var(--advanced-panel-raised), transparent 15%),
-            var(--advanced-panel));
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--advanced-panel-raised), transparent 15%),
+        var(--advanced-panel)
+    );
 }
 
 .advanced-card-header {
@@ -82,7 +84,7 @@
     min-width: min(100%, 18rem);
 }
 
-.advanced-section-header>.advanced-action-row,
+.advanced-section-header > .advanced-action-row,
 .session-advanced-step .advanced-section-header .btn-ghost {
     flex: 0 0 auto;
 }
@@ -248,8 +250,8 @@
         grid-template-columns: 1fr;
     }
 
-    .advanced-section-header>.advanced-card-hint,
-    .advanced-section-header>.advanced-action-row,
+    .advanced-section-header > .advanced-card-hint,
+    .advanced-section-header > .advanced-action-row,
     .session-advanced-step .advanced-section-header .btn-ghost {
         justify-self: start;
     }
@@ -258,6 +260,16 @@
 @media (max-width: 640px) {
     .advanced-control-nav {
         grid-template-columns: 1fr;
+    }
+
+    .advanced-action-row-stack-sm {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .advanced-action-row-stack-sm .btn {
+        width: 100%;
     }
 
     .advanced-row {
