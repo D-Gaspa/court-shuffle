@@ -63,24 +63,24 @@ function createTimePresetRow(query, timeOptions, onQueryChange) {
     return wrap
 }
 
-function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFilter, idPrefix }) {
-    const grid = createEl("div", "analytics-field-grid")
-    if (showPlayerFilter) {
-        grid.appendChild(
-            createField({
-                label: "Player",
-                control: createSelect({
-                    name: `${idPrefix}-player`,
-                    value: query.player,
-                    options: [
-                        { value: "all", label: "All Players" },
-                        ...options.playerOptions.map((player) => ({ value: player, label: player })),
-                    ],
-                    onChange: (value) => onQueryChange({ player: value }),
-                }),
+function appendPlayerField(grid, { idPrefix, onQueryChange, options, query }) {
+    grid.appendChild(
+        createField({
+            label: "Player",
+            control: createSelect({
+                name: `${idPrefix}-player`,
+                value: query.player,
+                options: [
+                    { value: "all", label: "All Players" },
+                    ...options.playerOptions.map((player) => ({ value: player, label: player })),
+                ],
+                onChange: (value) => onQueryChange({ player: value }),
             }),
-        )
-    }
+        }),
+    )
+}
+
+function appendModeField(grid, { idPrefix, onQueryChange, options, query }) {
     grid.appendChild(
         createField({
             label: "Mode",
@@ -92,42 +92,56 @@ function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFi
             }),
         }),
     )
-    if (summary.showTournamentFormatFilter) {
-        grid.appendChild(
-            createField({
-                label: "Tournament",
-                control: createSelect({
-                    name: `${idPrefix}-tournament-format`,
-                    value: query.tournamentFormat,
-                    options: [
-                        { value: "all", label: "All Formats" },
-                        ...options.tournamentFormatOptions.map((option) => ({
-                            value: option.key,
-                            label: option.label,
-                        })),
-                    ],
-                    onChange: (value) => onQueryChange({ tournamentFormat: value }),
-                }),
+}
+
+function appendTournamentField(grid, { idPrefix, onQueryChange, options, query }) {
+    grid.appendChild(
+        createField({
+            label: "Tournament",
+            control: createSelect({
+                name: `${idPrefix}-tournament-format`,
+                value: query.tournamentFormat,
+                options: [
+                    { value: "all", label: "All Formats" },
+                    ...options.tournamentFormatOptions.map((option) => ({
+                        value: option.key,
+                        label: option.label,
+                    })),
+                ],
+                onChange: (value) => onQueryChange({ tournamentFormat: value }),
             }),
-        )
+        }),
+    )
+}
+
+function appendCustomDateFields(grid, { idPrefix, onQueryChange, query }) {
+    grid.appendChild(
+        createField({
+            label: "From",
+            control: createDateInput(`${idPrefix}-date-from`, query.dateFrom, (value) =>
+                onQueryChange({ dateFrom: value }),
+            ),
+        }),
+    )
+    grid.appendChild(
+        createField({
+            label: "To",
+            control: createDateInput(`${idPrefix}-date-to`, query.dateTo, (value) => onQueryChange({ dateTo: value })),
+        }),
+    )
+}
+
+function createFieldsGrid({ query, options, summary, onQueryChange, showPlayerFilter, idPrefix }) {
+    const grid = createEl("div", "analytics-field-grid")
+    if (showPlayerFilter) {
+        appendPlayerField(grid, { idPrefix, onQueryChange, options, query })
+    }
+    appendModeField(grid, { idPrefix, onQueryChange, options, query })
+    if (summary.showTournamentFormatFilter) {
+        appendTournamentField(grid, { idPrefix, onQueryChange, options, query })
     }
     if (query.timePreset === "custom") {
-        grid.appendChild(
-            createField({
-                label: "From",
-                control: createDateInput(`${idPrefix}-date-from`, query.dateFrom, (value) =>
-                    onQueryChange({ dateFrom: value }),
-                ),
-            }),
-        )
-        grid.appendChild(
-            createField({
-                label: "To",
-                control: createDateInput(`${idPrefix}-date-to`, query.dateTo, (value) =>
-                    onQueryChange({ dateTo: value }),
-                ),
-            }),
-        )
+        appendCustomDateFields(grid, { idPrefix, onQueryChange, query })
     }
     return grid
 }

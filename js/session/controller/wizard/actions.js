@@ -40,7 +40,11 @@ function applyTournamentAction(draft, action) {
             draft.tournament.teamSize = action.value
             break
         case "allow-2v1":
-            draft.tournament.allowNotStrictDoubles = Boolean(action.value)
+            if (draft.gameMode === "doubles") {
+                draft.structured.allowNotStrictDoubles = Boolean(action.value)
+            } else {
+                draft.tournament.allowNotStrictDoubles = Boolean(action.value)
+            }
             break
         case "add-singles-matchup":
             draft.tournament.advanced.singlesOpeningMatchups.push(["", ""])
@@ -60,6 +64,7 @@ function startSession({
     draft,
     buildSelectedSession,
     buildWizardState,
+    clearSetupNotice,
     getFinalStepId,
     getPlayers,
     getTournamentBlockingError,
@@ -81,11 +86,15 @@ function startSession({
         players,
         gameMode: draft.gameMode,
         teamCount: draft.free.teamCount,
-        courtCount: draft.gameMode === "tournament" ? draft.tournament.courtCount : 1,
-        allowNotStrict: draft.tournament.allowNotStrictDoubles,
+        courtCount: draft.gameMode === "tournament" ? draft.tournament.courtCount : draft.structured.courtCount,
+        allowNotStrict:
+            draft.gameMode === "doubles"
+                ? draft.structured.allowNotStrictDoubles
+                : draft.tournament.allowNotStrictDoubles,
         tournamentConfig: draft.tournament.buildConfig,
     })
     if (session) {
+        clearSetupNotice()
         onSessionStart(session)
     }
 }
@@ -101,10 +110,10 @@ function bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, re
     })
 }
 
-function bindModeControls({ modeSelector, draft, createDefaultTournamentDraft, setGameMode, refreshSessionView }) {
+function bindModeControls({ modeSelector, setGameMode, refreshSessionView }) {
     for (const button of modeSelector.querySelectorAll(".mode-btn")) {
         button.addEventListener("click", () => {
-            setGameMode(draft, button.dataset.mode, createDefaultTournamentDraft)
+            setGameMode(button.dataset.mode)
             refreshSessionView()
         })
     }
@@ -127,14 +136,16 @@ function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, cour
     })
 
     courtsDecBtn.addEventListener("click", () => {
-        if (draft.tournament.courtCount <= 1) {
+        const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
+        if (courtCountTarget.courtCount <= 1) {
             return
         }
-        draft.tournament.courtCount -= 1
+        courtCountTarget.courtCount -= 1
         refreshSessionView()
     })
     courtsIncBtn.addEventListener("click", () => {
-        draft.tournament.courtCount += 1
+        const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
+        courtCountTarget.courtCount += 1
         refreshSessionView()
     })
 }
@@ -186,7 +197,6 @@ function bindWizardControls({
     buildWizardState,
     courtsDecBtn,
     courtsIncBtn,
-    createDefaultTournamentDraft,
     deselectAllBtn,
     draft,
     getFinalStepId,
@@ -209,7 +219,7 @@ function bindWizardControls({
     onTournamentAction,
 }) {
     bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, refreshSessionView })
-    bindModeControls({ modeSelector, draft, createDefaultTournamentDraft, setGameMode, refreshSessionView })
+    bindModeControls({ modeSelector, setGameMode, refreshSessionView })
     bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, courtsIncBtn, refreshSessionView })
     bindWizardNavigation({
         buildWizardState,

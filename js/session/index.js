@@ -1,3 +1,4 @@
+import { buildHistoryRemixPrefill } from "../history/remix.js"
 import { buildTournamentPreview } from "../tournament/series/build.js"
 import {
     buildTournamentConfig,
@@ -13,6 +14,7 @@ import {
 } from "../tournament/setup.js"
 import { renderActiveSession } from "./active/active.js"
 import { resetGoTopButtonVisibility, syncGoTopButtonVisibility } from "./active/go-top-button.js"
+import { canSaveSessionToHistory, endSession } from "./active/history.js"
 import {
     initNavigation,
     onEndSessionClick,
@@ -23,9 +25,11 @@ import {
     onSkipTournamentClick,
 } from "./active/navigation.js"
 import {
+    allow2v1Checkbox,
     courtCountLabel,
     courtCountValue,
     courtHint,
+    courtsConfig,
     courtsDecBtn,
     courtsIncBtn,
     deselectAllBtn,
@@ -33,6 +37,7 @@ import {
     modeHint,
     modeSelector,
     noRosterWarning,
+    notStrictDoublesGroup,
     playerSelection,
     selectAllBtn,
     sessionActive,
@@ -40,6 +45,7 @@ import {
     sessionConfig,
     sessionNextBtn,
     sessionSetup,
+    sessionSetupNotice,
     sessionStepButtons,
     sessionStepCaption,
     sessionStepPanels,
@@ -50,6 +56,7 @@ import {
     teamsDecBtn,
     teamsIncBtn,
     tournamentAdvancedError,
+    tournamentConfig,
     tournamentDistributionGroup,
     tournamentDistributionHint,
     tournamentSeriesNavToggleBtn,
@@ -69,6 +76,7 @@ import { buildSelectedSession } from "./setup/build.js"
 
 let globalState = null
 let saveState = null
+let askConfirm = null
 
 const setupController = createSessionSetupController({
     buildTournamentConfig,
@@ -96,6 +104,7 @@ const setupController = createSessionSetupController({
         sessionBackBtn,
         sessionConfig,
         sessionNextBtn,
+        sessionSetupNotice,
         sessionSetup,
         sessionStepButtons,
         sessionStepCaption,
@@ -106,7 +115,11 @@ const setupController = createSessionSetupController({
         teamsConfig,
         teamsDecBtn,
         teamsIncBtn,
+        allow2v1Checkbox,
+        courtsConfig,
+        notStrictDoublesGroup,
         tournamentAdvancedError,
+        tournamentConfig,
         tournamentDistributionGroup,
         tournamentDistributionHint,
         tournamentSetupPanel,
@@ -147,8 +160,16 @@ function bindSetupControls() {
         buildSelectedSession,
         getRoster: () => globalState.roster,
         onChange: refreshSessionView,
-        onSessionStart: ({ draft, buildWizardState, getFinalStepId, getTournamentBlockingError, getVisibleStepIds }) =>
+        onSessionStart: ({
+            clearSetupNotice,
+            draft,
+            buildWizardState,
+            getFinalStepId,
+            getTournamentBlockingError,
+            getVisibleStepIds,
+        }) =>
             startSession({
+                clearSetupNotice,
                 draft,
                 buildSelectedSession,
                 buildWizardState,
@@ -162,6 +183,47 @@ function bindSetupControls() {
                     refreshSessionView()
                 },
             }),
+    })
+}
+
+function completeHistoryRemix(prefill, switchView) {
+    setupController.applyExternalSetupPrefill(prefill)
+    saveState()
+    switchView("session")
+}
+
+function launchHistoryRemix(session, action, switchView) {
+    const prefill = buildHistoryRemixPrefill(session, action, globalState.roster)
+    const replace = (shouldSave) => {
+        if (globalState.activeSession) {
+            endSession(globalState, saveState, shouldSave)
+        }
+        completeHistoryRemix(prefill, switchView)
+    }
+
+    if (!globalState.activeSession) {
+        completeHistoryRemix(prefill, switchView)
+        return
+    }
+
+    if (canSaveSessionToHistory(globalState.activeSession)) {
+        askConfirm(
+            "Replace Active Session",
+            "Save the current session to history before loading this remix?",
+            () => replace(true),
+            {
+                okLabel: "Save & Replace",
+                okClass: "btn-primary",
+                extraLabel: "Discard & Replace",
+                onExtra: () => replace(false),
+            },
+        )
+        return
+    }
+
+    askConfirm("Replace Active Session", "Discard the current session and load this remix?", () => replace(false), {
+        okLabel: "Discard & Replace",
+        okClass: "btn-danger",
     })
 }
 
@@ -189,6 +251,7 @@ function bindActiveSessionControls(state, persistFn, confirmFn) {
 function initSession(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
+    askConfirm = confirmFn
     setTournamentAdvancedHistorySource(() => ({
         history: globalState.history,
         archivedHistory: globalState.archivedHistory,
@@ -199,4 +262,4 @@ function initSession(state, persistFn, confirmFn) {
     syncInitialGoTopButtonState(globalState, uiState, syncGoTopButtonVisibility)
 }
 
-export { initSession, refreshSessionView }
+export { initSession, launchHistoryRemix, refreshSessionView }

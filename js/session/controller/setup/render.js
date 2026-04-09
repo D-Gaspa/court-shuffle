@@ -69,4 +69,9 @@ function renderFreeSetup({
     updateTeamSizeHint(selectedCount, draft.free.teamCount, teamSizeHint)
 }
 
-export { renderFreeSetup, renderModeStep, syncStepperUi }
+function renderSetupNotice(setupNotice, noticeElement) {
+    noticeElement.hidden = !setupNotice
+    noticeElement.textContent = setupNotice || ""
+}
+
+export { renderFreeSetup, renderModeStep, renderSetupNotice, syncStepperUi }

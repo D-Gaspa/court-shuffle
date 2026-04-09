@@ -53,6 +53,45 @@ function renameUsedPairs(usedPairs, oldName, newName) {
     })
 }
 
+function renameAdvancedPairRows(rows, oldName, newName) {
+    if (!Array.isArray(rows)) {
+        return
+    }
+    for (const row of rows) {
+        if (!Array.isArray(row)) {
+            continue
+        }
+        const nextRow = row.map((value) => (value === oldName ? newName : value))
+        row.splice(0, row.length, ...nextRow)
+    }
+}
+
+function renameAdvancedSettings(advanced, oldName, newName) {
+    if (!advanced) {
+        return
+    }
+    renameAdvancedPairRows(advanced.singlesOpeningMatchups, oldName, newName)
+    renameAdvancedPairRows(advanced.doublesLockedPairs, oldName, newName)
+    renameAdvancedPairRows(advanced.doublesRestrictedTeams, oldName, newName)
+    renameAdvancedPairRows(advanced.doublesByeTeams, oldName, newName)
+    renameAdvancedPairRows(advanced.doublesNextUpTeams, oldName, newName)
+    renameInPlayerList(advanced.singlesByePlayers || [], oldName, newName)
+    renameInPlayerList(advanced.singlesNextUpPlayers || [], oldName, newName)
+    if (advanced.forcedSitOutPlayer === oldName) {
+        advanced.forcedSitOutPlayer = newName
+    }
+}
+
+function renameRemixPayload(remix, oldName, newName) {
+    if (!remix) {
+        return
+    }
+    if (Array.isArray(remix.players)) {
+        renameInPlayerList(remix.players, oldName, newName)
+    }
+    renameAdvancedSettings(remix.tournamentConfig?.advanced, oldName, newName)
+}
+
 function renameSessionRecord(session, oldName, newName) {
     if (!session) {
         return
@@ -68,7 +107,9 @@ function renameSessionRecord(session, oldName, newName) {
     if (session.tournamentSeries) {
         renameInTournamentSeries(session.tournamentSeries, oldName, newName)
     }
+    renameAdvancedSettings(session.tournamentConfig?.advanced, oldName, newName)
     session.usedPairs = renameUsedPairs(session.usedPairs, oldName, newName)
+    renameRemixPayload(session.remix, oldName, newName)
 }
 
 function renameSessionCollection(sessions, oldName, newName) {

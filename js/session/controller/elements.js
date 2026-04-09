@@ -2,6 +2,7 @@ const sessionSetup = document.getElementById("session-setup")
 const sessionActive = document.getElementById("session-active")
 const noRosterWarning = document.getElementById("no-roster-warning")
 const sessionConfig = document.getElementById("session-config")
+const sessionSetupNotice = document.getElementById("session-setup-notice")
 const playerSelection = document.getElementById("player-selection")
 const selectAllBtn = document.getElementById("select-all-btn")
 const deselectAllBtn = document.getElementById("deselect-all-btn")
@@ -23,6 +24,7 @@ const allow2v1Checkbox = document.getElementById("allow-2v1")
 const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
 const tournamentDistributionHint = document.getElementById("tournament-distribution-hint")
 const tournamentAdvancedError = document.getElementById("tournament-advanced-error")
+const tournamentConfig = document.getElementById("tournament-config")
 const formatSelector = document.getElementById("format-selector")
 const teamSizeSelector = document.getElementById("tournament-team-size")
 const tournamentHint = document.getElementById("tournament-hint")
@@ -81,6 +83,7 @@ export {
     sessionActive,
     sessionConfig,
     sessionNextBtn,
+    sessionSetupNotice,
     sessionStepButtons,
     sessionStepCaption,
     sessionStepPanels,
@@ -91,6 +94,7 @@ export {
     teamSizeHint,
     teamSizeSelector,
     tournamentAdvancedError,
+    tournamentConfig,
     tournamentDistributionGroup,
     tournamentDistributionHint,
     tournamentHint,

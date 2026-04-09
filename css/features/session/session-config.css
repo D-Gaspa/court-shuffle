@@ -23,6 +23,11 @@
     flex-wrap: wrap;
 }
 
+.session-config > .info-banner {
+    margin-top: 0;
+    margin-bottom: var(--space-lg);
+}
+
 .section-label {
     font-size: 0.8rem;
     font-weight: 700;

@@ -9,21 +9,38 @@ function getPlayersPerCourt(matchMode, allowNotStrictDoubles) {
     return allowNotStrictDoubles ? FLEX_DOUBLES_PLAYERS_PER_COURT : STRICT_DOUBLES_PLAYERS_PER_COURT
 }
 
-function clampTournamentCourtCount({ draft, matchMode, courtCountValue, courtCountLabel, courtsDecBtn, courtsIncBtn }) {
-    const playerCount = draft.selectedPlayers.size
-    const playersPerCourt = getPlayersPerCourt(matchMode, draft.tournament.allowNotStrictDoubles)
-    const maxCourts = Math.max(1, Math.floor(playerCount / playersPerCourt))
-    if (draft.tournament.courtCount > maxCourts) {
-        draft.tournament.courtCount = maxCourts
-    }
-    if (draft.tournament.courtCount < 1) {
-        draft.tournament.courtCount = 1
+function getCourtSetupState(draft) {
+    if (draft.gameMode === "tournament") {
+        return {
+            courtCount: draft.tournament.courtCount,
+            allowNotStrictDoubles: draft.tournament.allowNotStrictDoubles,
+            setCourtCount: (nextValue) => {
+                draft.tournament.courtCount = nextValue
+            },
+        }
     }
 
-    courtCountValue.textContent = draft.tournament.courtCount
-    courtCountLabel.textContent = draft.tournament.courtCount === 1 ? "court" : "courts"
-    courtsDecBtn.disabled = draft.tournament.courtCount <= 1
-    courtsIncBtn.disabled = draft.tournament.courtCount >= maxCourts || playerCount < 2
+    return {
+        courtCount: draft.structured.courtCount,
+        allowNotStrictDoubles: draft.structured.allowNotStrictDoubles,
+        setCourtCount: (nextValue) => {
+            draft.structured.courtCount = nextValue
+        },
+    }
+}
+
+function clampCourtCount({ draft, matchMode, courtCountValue, courtCountLabel, courtsDecBtn, courtsIncBtn }) {
+    const playerCount = draft.selectedPlayers.size
+    const state = getCourtSetupState(draft)
+    const playersPerCourt = getPlayersPerCourt(matchMode, state.allowNotStrictDoubles)
+    const maxCourts = Math.max(1, Math.floor(playerCount / playersPerCourt))
+    const nextCourtCount = Math.min(Math.max(1, state.courtCount), maxCourts)
+    state.setCourtCount(nextCourtCount)
+
+    courtCountValue.textContent = nextCourtCount
+    courtCountLabel.textContent = nextCourtCount === 1 ? "court" : "courts"
+    courtsDecBtn.disabled = nextCourtCount <= 1
+    courtsIncBtn.disabled = nextCourtCount >= maxCourts || playerCount < 2
 }
 
 function updateCourtHint({ draft, matchMode, courtHint }) {
@@ -33,18 +50,21 @@ function updateCourtHint({ draft, matchMode, courtHint }) {
         return
     }
 
+    const state = getCourtSetupState(draft)
     const maxPerCourt = matchMode === "singles" ? SINGLES_PLAYERS_PER_COURT : STRICT_DOUBLES_PLAYERS_PER_COURT
-    const onCourtCount = Math.min(maxPerCourt * draft.tournament.courtCount, playerCount)
+    const onCourtCount = Math.min(maxPerCourt * state.courtCount, playerCount)
     const offCourtCount = Math.max(0, playerCount - onCourtCount)
     const parts = [`${onCourtCount} on court at once`]
     if (offCourtCount > 0) {
         parts.push(`${offCourtCount} off court at the same time`)
     }
-    if (matchMode === "doubles" && !draft.tournament.allowNotStrictDoubles && playerCount % 2 !== 0) {
-        parts.push("1 tournament sit-out may be required")
+    if (matchMode === "doubles" && !state.allowNotStrictDoubles && playerCount % 2 !== 0) {
+        parts.push(
+            draft.gameMode === "tournament" ? "1 tournament sit-out may be required" : "1 sit-out may be required",
+        )
     }
     if (
-        draft.tournament.allowNotStrictDoubles &&
+        state.allowNotStrictDoubles &&
         matchMode === "doubles" &&
         onCourtCount % STRICT_DOUBLES_PLAYERS_PER_COURT !== 0
     ) {
@@ -53,4 +73,4 @@ function updateCourtHint({ draft, matchMode, courtHint }) {
     courtHint.textContent = parts.join(" · ")
 }
 
-export { clampTournamentCourtCount, updateCourtHint }
+export { clampCourtCount, clampCourtCount as clampTournamentCourtCount, getPlayersPerCourt, updateCourtHint }

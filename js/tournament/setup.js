@@ -34,6 +34,8 @@ function createDefaultTournamentDraft() {
         teamSize: 1,
         courtCount: 1,
         allowNotStrictDoubles: false,
+        seedOverride: null,
+        seedOverrideSignature: "",
         advanced: getDefaultAdvancedSettings(),
         preview: null,
         buildConfig: null,

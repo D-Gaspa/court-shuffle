@@ -37,7 +37,8 @@ function renderHistorySection({ title, subtitle, sessions, container, actions })
 
         const dateStr = formatDate(session.date)
         const headerEl = buildHistoryCardHeader(session, dateStr)
-        const body = buildHistoryCardBody(session, actions)
+        const sessionActions = typeof actions === "function" ? actions(session) : actions
+        const body = buildHistoryCardBody(session, sessionActions)
 
         headerEl.addEventListener("click", () => {
             card.classList.toggle("expanded")

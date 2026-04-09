@@ -10,7 +10,7 @@ import {
     syncTournamentSeriesAliases,
 } from "../../tournament/series/sync.js"
 import { allScoresEntered, getRoundScoreBlockReason } from "../../tournament/utils.js"
-import { canSaveSessionToHistory, endSession } from "./active.js"
+import { canSaveSessionToHistory, endSession } from "./history.js"
 import {
     onNextTournamentClick as onNextTournamentClickHandler,
     onPrevTournamentClick as onPrevTournamentClickHandler,

@@ -1,9 +1,15 @@
 import { getMinPlayersForTournament } from "../../../tournament/setup.js"
 
+const MIN_SINGLES_PLAYERS_PER_COURT = 2
+const MIN_FLEX_DOUBLES_PLAYERS_PER_COURT = 3
+const MIN_STRICT_DOUBLES_PLAYERS_PER_COURT = 4
+
 const MODE_HINTS = {
     default: "Choose free or tournament to unlock the setup step.",
     free: "Flexible shuffles for a quick session.",
     tournament: "Build a mini-tournament series with bracket controls.",
+    singles: "Legacy 1v1 court rotation loaded from history.",
+    doubles: "Legacy 2v2 court rotation loaded from history.",
 }
 
 const STEP_CAPTIONS = {
@@ -12,9 +18,24 @@ const STEP_CAPTIONS = {
     setup: {
         free: "Set team count for a free-form rotation.",
         tournament: "Set the tournament format, match type, and court count.",
+        singles: "Review the preserved court rotation before starting again.",
+        doubles: "Review the preserved court rotation before starting again.",
         default: "Choose the session style before configuring the setup.",
     },
     advanced: "Optional Round 1 overrides update the session draft live.",
+}
+
+function getStructuredMinPlayers(gameMode, structuredDraft) {
+    if (gameMode === "singles") {
+        return Math.max(MIN_SINGLES_PLAYERS_PER_COURT, MIN_SINGLES_PLAYERS_PER_COURT * structuredDraft.courtCount)
+    }
+    if (gameMode === "doubles") {
+        const perCourt = structuredDraft.allowNotStrictDoubles
+            ? MIN_FLEX_DOUBLES_PLAYERS_PER_COURT
+            : MIN_STRICT_DOUBLES_PLAYERS_PER_COURT
+        return Math.max(perCourt, perCourt * structuredDraft.courtCount)
+    }
+    return 0
 }
 
 function getStepCaption(currentStep, gameMode) {
@@ -25,9 +46,10 @@ function getStepCaption(currentStep, gameMode) {
 function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, getVisibleStepIds) {
     const selectedCount = draft.selectedPlayers.size
     const rosterComplete = selectedCount >= 2
-    const modeComplete = draft.gameMode === "free" || draft.gameMode === "tournament"
+    const modeComplete = ["free", "tournament", "singles", "doubles"].includes(draft.gameMode)
     const freeSetupComplete =
         rosterComplete && draft.free.teamCount >= 2 && draft.free.teamCount <= Math.max(2, selectedCount)
+    const structuredSetupComplete = selectedCount >= getStructuredMinPlayers(draft.gameMode, draft.structured)
     const tournamentMinPlayers = getMinPlayersForTournament(
         draft.tournament.teamSize,
         draft.tournament.allowNotStrictDoubles,
@@ -38,6 +60,8 @@ function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, get
         setupComplete = tournamentSetupComplete
     } else if (draft.gameMode === "free") {
         setupComplete = freeSetupComplete
+    } else if (draft.gameMode === "singles" || draft.gameMode === "doubles") {
+        setupComplete = structuredSetupComplete
     }
     const advancedComplete =
         draft.gameMode === "tournament" && setupComplete && getTournamentBlockingError().length === 0

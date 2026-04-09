@@ -1,9 +1,16 @@
 import { renderPlayerSelection, updateTeamSizeHint } from "../../active/render.js"
 import { applyTournamentAction, bindWizardControls } from "../wizard/actions.js"
 import { buildWizardState, normalizeCurrentStep } from "../wizard/state.js"
-import { createSessionSetupDraft, getFinalStepId, getVisibleStepIds, reconcileDraftWithRoster } from "./draft.js"
+import {
+    applySessionSetupPrefill,
+    clearSessionSetupNotice,
+    createSessionSetupDraft,
+    getFinalStepId,
+    getVisibleStepIds,
+    reconcileDraftWithRoster,
+} from "./draft.js"
 import { renderSetupStep } from "./panels.js"
-import { renderFreeSetup, renderModeStep, syncStepperUi } from "./render.js"
+import { renderFreeSetup, renderModeStep, renderSetupNotice, syncStepperUi } from "./render.js"
 import { clampTournamentCourtCount, updateCourtHint } from "./tournament/courts.js"
 import { getTournamentBlockingError, updateTournamentDerivedState } from "./tournament/derived.js"
 import {
@@ -56,6 +63,7 @@ function getNormalizedWizardState({
 }
 
 function renderWizardContent({
+    canUseTwoVsOne,
     draft,
     getMinPlayersForTournament,
     getPlayers,
@@ -68,16 +76,21 @@ function renderWizardContent({
 }) {
     ui.noRosterWarning.hidden = true
     ui.sessionConfig.hidden = false
+    renderSetupNotice(draft.setupNotice, ui.sessionSetupNotice)
     renderPlayerSelection(state.roster, draft.selectedPlayers, ui.playerSelection, onTournamentAction)
     renderModeStep({ draft, modeHint: ui.modeHint, modeSelector: ui.modeSelector })
     renderSetupStep({
+        allow2v1Checkbox: ui.allow2v1Checkbox,
+        canUseTwoVsOne,
         clearTournamentDistribution,
         draft,
         handleTournamentAction: onTournamentAction,
         courtHint: ui.courtHint,
+        courtsConfig: ui.courtsConfig,
         getPlayers,
         getMinPlayersForTournament,
         getTournamentMatchMode,
+        notStrictDoublesGroup: ui.notStrictDoublesGroup,
         renderFreeSetup: (sessionTeamRenderContext) =>
             renderFreeSetup({
                 ...sessionTeamRenderContext,
@@ -98,6 +111,7 @@ function renderWizardContent({
         teamSizeHint: ui.teamSizeHint,
         teamsConfig: ui.teamsConfig,
         tournamentAdvancedError: ui.tournamentAdvancedError,
+        tournamentConfig: ui.tournamentConfig,
         tournamentDistributionGroup: ui.tournamentDistributionGroup,
         tournamentDistributionHint: ui.tournamentDistributionHint,
         tournamentSetupPanel: ui.tournamentSetupPanel,
@@ -134,6 +148,7 @@ function createGameModeSetter(draft, createDefaultTournamentDraft) {
 
 function bindSetupControls({
     buildSelectedSession,
+    clearSetupNotice,
     createDefaultTournamentDraft,
     draft,
     getRoster,
@@ -148,7 +163,6 @@ function bindSetupControls({
         buildWizardState,
         courtsDecBtn: ui.courtsDecBtn,
         courtsIncBtn: ui.courtsIncBtn,
-        createDefaultTournamentDraft,
         deselectAllBtn: ui.deselectAllBtn,
         draft,
         getFinalStepId,
@@ -162,6 +176,7 @@ function bindSetupControls({
                 draft,
                 buildSelectedSession,
                 buildWizardState,
+                clearSetupNotice,
                 getFinalStepId,
                 getTournamentBlockingError,
                 getVisibleStepIds,
@@ -202,6 +217,7 @@ function createSessionSetupController({
         bindControls: ({ buildSelectedSession, getRoster, onChange, onSessionStart }) =>
             bindSetupControls({
                 buildSelectedSession,
+                clearSetupNotice: () => clearSessionSetupNotice(draft),
                 createDefaultTournamentDraft,
                 draft,
                 getRoster,
@@ -217,10 +233,12 @@ function createSessionSetupController({
             if (state.roster.length < 2) {
                 ui.noRosterWarning.hidden = false
                 ui.sessionConfig.hidden = true
+                renderSetupNotice("", ui.sessionSetupNotice)
                 return
             }
 
             renderWizardContent({
+                canUseTwoVsOne,
                 draft,
                 getMinPlayersForTournament,
                 getPlayers,
@@ -244,6 +262,10 @@ function createSessionSetupController({
                 }),
             })
         },
+        applyExternalSetupPrefill: (prefill) => {
+            applySessionSetupPrefill(draft, prefill, createDefaultTournamentDraft)
+        },
+        clearSetupNotice: () => clearSessionSetupNotice(draft),
     }
 }
 
