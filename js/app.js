@@ -1,13 +1,14 @@
 import { createDefaultAnalyticsQuery, resolveAnalyticsContext, updateAnalyticsQuery } from "./analytics/query.js"
+import { createAppStatusController } from "./app-status.js"
 import { loadState, saveState } from "./core/storage.js"
+import { createHistoryActions } from "./history/actions.js"
 import { createHistoryBackupController } from "./history/backup.js"
-import { HISTORY_REMIX_ACTIONS } from "./history/remix.js"
 import { renderHistory } from "./history/render.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
 import { initSession, launchHistoryRemix, refreshSessionView } from "./session/index.js"
 import { renderStats } from "./stats/render.js"
 
-const state = loadState()
+const { state, status: initialLoadStatus } = loadState()
 state.roster.sort((a, b) => a.localeCompare(b))
 
 const tabs = document.querySelectorAll(".tab")
@@ -18,6 +19,9 @@ const views = {
     history: document.getElementById("view-history"),
 }
 
+const appStatusBanner = document.getElementById("app-status-banner")
+const appStatusMessage = document.getElementById("app-status-message")
+const appStatusDismissBtn = document.getElementById("app-status-dismiss")
 const historyList = document.getElementById("history-list")
 const historyEmpty = document.getElementById("history-empty")
 const historyExportBtn = document.getElementById("history-export-btn")
@@ -38,6 +42,12 @@ let confirmCallback = null
 let confirmExtraCallback = null
 let analyticsQuery = createDefaultAnalyticsQuery()
 let historyPlayerFilter = "all"
+const appStatus = createAppStatusController({
+    banner: appStatusBanner,
+    dismissButton: appStatusDismissBtn,
+    initialStatus: initialLoadStatus?.ok ? null : initialLoadStatus,
+    message: appStatusMessage,
+})
 const historyBackupController = createHistoryBackupController({
     state,
     sortRoster,
@@ -58,13 +68,27 @@ const historyBackupController = createHistoryBackupController({
         status: historyBackupStatus,
     },
 })
+const historyActions = createHistoryActions({
+    state,
+    switchView,
+    showConfirmDialog,
+    persist,
+    refreshHistory,
+    launchHistoryRemix,
+})
 
 function sortRoster() {
     state.roster.sort((a, b) => a.localeCompare(b))
 }
 
 function persist() {
-    saveState(state)
+    const result = saveState(state)
+    if (result.ok) {
+        appStatus.clear("save")
+    } else {
+        appStatus.set(result)
+    }
+    return result
 }
 
 function switchView(viewName) {
@@ -137,79 +161,6 @@ function setupConfirmDialog() {
     })
 }
 
-function createRemixActions(session) {
-    const actions = [
-        {
-            label: "Reuse Players",
-            className: "btn btn-ghost btn-sm",
-            onClick: (entry) => launchHistoryRemix(entry, HISTORY_REMIX_ACTIONS.reusePlayers, switchView),
-        },
-    ]
-
-    if (session.mode === "tournament" && session.remix?.tournamentConfig) {
-        actions.push({
-            label: "New Seed",
-            className: "btn btn-ghost btn-sm",
-            onClick: (entry) => launchHistoryRemix(entry, HISTORY_REMIX_ACTIONS.newSeed, switchView),
-        })
-    }
-
-    if (session.mode === "tournament" && session.remix?.tournamentConfig?.seed) {
-        actions.push({
-            label: "Same Seed",
-            className: "btn btn-ghost btn-sm",
-            onClick: (entry) => launchHistoryRemix(entry, HISTORY_REMIX_ACTIONS.sameSeed, switchView),
-        })
-    }
-
-    return actions
-}
-
-function resolveActiveHistoryActions(session) {
-    return [
-        ...createRemixActions(session),
-        {
-            label: "Archive Session",
-            className: "btn btn-ghost btn-sm btn-danger",
-            onClick: (entry) => {
-                showConfirmDialog("Archive Session", "Move this session into the archive?", () => {
-                    state.history = state.history.filter((historyEntry) => historyEntry.id !== entry.id)
-                    state.archivedHistory.unshift(entry)
-                    persist()
-                    refreshHistory()
-                })
-            },
-        },
-    ]
-}
-
-function resolveArchivedHistoryActions(session) {
-    return [
-        ...createRemixActions(session),
-        {
-            label: "Restore",
-            className: "btn btn-ghost btn-sm",
-            onClick: (entry) => {
-                state.archivedHistory = state.archivedHistory.filter((historyEntry) => historyEntry.id !== entry.id)
-                state.history.push(entry)
-                persist()
-                refreshHistory()
-            },
-        },
-        {
-            label: "Delete Permanently",
-            className: "btn btn-ghost btn-sm btn-danger",
-            onClick: (entry) => {
-                showConfirmDialog("Delete Permanently", "Remove this archived session for good?", () => {
-                    state.archivedHistory = state.archivedHistory.filter((historyEntry) => historyEntry.id !== entry.id)
-                    persist()
-                    refreshHistory()
-                })
-            },
-        },
-    ]
-}
-
 function refreshHistory() {
     const analytics = resolveAnalyticsContext(state.history, {
         ...analyticsQuery,
@@ -224,8 +175,8 @@ function refreshHistory() {
         onQueryChange: handleHistoryQueryChange,
         onResetQuery: resetHistoryQuery,
         actions: {
-            active: resolveActiveHistoryActions,
-            archived: resolveArchivedHistoryActions,
+            active: historyActions.resolveActiveHistoryActions,
+            archived: historyActions.resolveArchivedHistoryActions,
         },
     })
     historyBackupController.refreshSummary()
@@ -275,6 +226,7 @@ function resetHistoryQuery() {
 function init() {
     setupTabs()
     setupConfirmDialog()
+    appStatus.bind()
     historyBackupController.setupActions()
     initRoster(state, persist, showConfirmDialog)
     initSession(state, persist, showConfirmDialog)

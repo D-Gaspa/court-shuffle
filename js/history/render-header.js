@@ -37,6 +37,56 @@ function getScoredTournamentRuns(session) {
     return session.tournamentSeries.tournaments.filter((run) => Array.isArray(run.rounds) && run.rounds.length > 0)
 }
 
+function resolveSessionChampionName(session) {
+    if (
+        session.mode === "tournament" &&
+        session.bracket?.champion !== null &&
+        session.bracket?.champion !== undefined
+    ) {
+        const champion = session.teams?.find((team) => team.id === session.bracket.champion)
+        if (champion) {
+            return champion.name
+        }
+    }
+
+    const seriesRuns = getScoredTournamentRuns(session)
+    if (!seriesRuns) {
+        return null
+    }
+
+    for (let index = seriesRuns.length - 1; index >= 0; index -= 1) {
+        const run = seriesRuns[index]
+        if (run.bracket?.champion === null || run.bracket?.champion === undefined) {
+            continue
+        }
+        const champion = run.teams?.find((team) => team.id === run.bracket.champion)
+        if (champion) {
+            return champion.name
+        }
+    }
+
+    return null
+}
+
+function buildHistoryCardMeta(session) {
+    const seriesTournaments = getScoredTournamentRuns(session)
+    const roundCount = seriesTournaments
+        ? seriesTournaments.reduce((sum, run) => sum + (run.rounds?.length || 0), 0)
+        : session.rounds.length
+    const modeLabel = getModeLabel(session)
+    let metaText = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
+    if (seriesTournaments && seriesTournaments.length > 0) {
+        metaText += ` · ${seriesTournaments.length} tournament${seriesTournaments.length !== 1 ? "s" : ""}`
+    }
+
+    const championName = resolveSessionChampionName(session)
+    if (championName) {
+        metaText += ` · Champion: ${championName}`
+    }
+
+    return metaText
+}
+
 function buildHistoryCardHeader(session, dateStr) {
     const headerEl = document.createElement("div")
     headerEl.className = "history-card-header"
@@ -50,27 +100,7 @@ function buildHistoryCardHeader(session, dateStr) {
 
     const meta = document.createElement("span")
     meta.className = "history-card-meta"
-    const seriesTournaments = getScoredTournamentRuns(session)
-    const roundCount = seriesTournaments
-        ? seriesTournaments.reduce((sum, run) => sum + (run.rounds?.length || 0), 0)
-        : session.rounds.length
-    const modeLabel = getModeLabel(session)
-    let metaText = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
-    if (seriesTournaments && seriesTournaments.length > 0) {
-        metaText += ` · ${seriesTournaments.length} tournament${seriesTournaments.length !== 1 ? "s" : ""}`
-    }
-
-    if (
-        session.mode === "tournament" &&
-        session.bracket?.champion !== null &&
-        session.bracket?.champion !== undefined
-    ) {
-        const champion = session.teams?.find((t) => t.id === session.bracket.champion)
-        if (champion) {
-            metaText += ` · Champion: ${champion.name}`
-        }
-    }
-    meta.textContent = metaText
+    meta.textContent = buildHistoryCardMeta(session)
 
     info.appendChild(dateSpan)
     info.appendChild(meta)
@@ -80,4 +110,4 @@ function buildHistoryCardHeader(session, dateStr) {
     return headerEl
 }
 
-export { buildHistoryCardHeader, formatDate, getScoredTournamentRuns }
+export { buildHistoryCardHeader, buildHistoryCardMeta, formatDate, getScoredTournamentRuns, resolveSessionChampionName }

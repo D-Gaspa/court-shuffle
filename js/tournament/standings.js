@@ -2,6 +2,7 @@
  * Tournament standings computation for round-robin format.
  */
 
+import { getScoreValidation, normalizeSets } from "../score-editor/sets.js"
 import { determineMatchWinner } from "./utils.js"
 
 function initStatsMap(teams) {
@@ -53,7 +54,13 @@ function applyMatchStats(stats, match, score) {
         return
     }
 
-    const { sets0, sets1, games0, games1 } = tallySetScores(score.sets)
+    const validation = getScoreValidation(normalizeSets(score))
+    const winner = determineMatchWinner(score)
+    if (validation.validSets.length === 0 || validation.hasInvalidCompletedSet || winner === null) {
+        return
+    }
+
+    const { sets0, sets1, games0, games1 } = tallySetScores(validation.validSets)
 
     stat0.setsWon += sets0
     stat0.setsLost += sets1
@@ -64,7 +71,6 @@ function applyMatchStats(stats, match, score) {
     stat1.gamesWon += games1
     stat1.gamesLost += games0
 
-    const winner = determineMatchWinner(score)
     if (winner === 0) {
         stat0.wins += 1
         stat1.losses += 1

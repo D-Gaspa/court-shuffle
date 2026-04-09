@@ -3,6 +3,8 @@
  * All app state is saved/loaded here.
  */
 
+import { validateStateShape } from "./storage-validation.js"
+
 const STORAGE_KEY = "court-shuffle-data"
 const STORAGE_SCHEMA_VERSION = 1
 const STORAGE_EXPORT_APP = "court-shuffle"
@@ -17,47 +19,110 @@ function createDefaultState() {
     }
 }
 
-function normalizeState(rawState) {
-    const parsed = rawState && typeof rawState === "object" ? rawState : {}
-    return {
-        roster: Array.isArray(parsed.roster) ? parsed.roster : [],
-        activeSession: parsed.activeSession ?? null,
-        history: Array.isArray(parsed.history) ? parsed.history : [],
-        archivedHistory: Array.isArray(parsed.archivedHistory) ? parsed.archivedHistory : [],
-        lastExportedAt: typeof parsed.lastExportedAt === "string" ? parsed.lastExportedAt : null,
-    }
+function createStatus({ ok, code, message, error = null, source }) {
+    return { ok, code, message, error, source }
 }
 
-export function loadState() {
+function getStorageOrThrow(storage = globalThis.localStorage) {
+    if (!storage || typeof storage.getItem !== "function" || typeof storage.setItem !== "function") {
+        throw new Error("Browser storage is unavailable.")
+    }
+    return storage
+}
+
+function validateStateOrThrow(rawState) {
+    return validateStateShape(rawState)
+}
+
+function wrapValidationError(prefix, error) {
+    const suffix = error instanceof Error && error.message ? ` ${error.message}` : ""
+    return new Error(`${prefix}${suffix}`)
+}
+
+function loadStateFromStorage(storage = globalThis.localStorage) {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const resolvedStorage = getStorageOrThrow(storage)
+        const raw = resolvedStorage.getItem(STORAGE_KEY)
         if (!raw) {
-            return createDefaultState()
+            return {
+                state: createDefaultState(),
+                status: createStatus({
+                    ok: true,
+                    code: "empty",
+                    message: "",
+                    source: "load",
+                }),
+            }
         }
-        return normalizeState(JSON.parse(raw))
-    } catch {
-        return createDefaultState()
+
+        const parsed = JSON.parse(raw)
+        const state = validateStateOrThrow(parsed)
+        return {
+            state,
+            status: createStatus({
+                ok: true,
+                code: "loaded",
+                message: "",
+                source: "load",
+            }),
+        }
+    } catch (error) {
+        const message =
+            error instanceof SyntaxError
+                ? "Stored browser data is corrupted. Court Shuffle started with a fresh local state."
+                : "Stored browser data is unavailable or invalid. Court Shuffle started with a fresh local state."
+        return {
+            state: createDefaultState(),
+            status: createStatus({
+                ok: false,
+                code: "load_failed",
+                message,
+                error,
+                source: "load",
+            }),
+        }
     }
 }
 
-export function saveState(state) {
+function saveStateToStorage(state, storage = globalThis.localStorage) {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeState(state)))
-    } catch {
-        /* Storage full or unavailable — silent fail */
+        const resolvedStorage = getStorageOrThrow(storage)
+        const normalizedState = validateStateOrThrow(state)
+        resolvedStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedState))
+        return createStatus({
+            ok: true,
+            code: "saved",
+            message: "",
+            source: "save",
+        })
+    } catch (error) {
+        return createStatus({
+            ok: false,
+            code: "save_failed",
+            message: "Browser storage could not be updated. Changes in this tab may be lost.",
+            error,
+            source: "save",
+        })
     }
 }
 
-export function createStateExport(state) {
+function createStateExport(state) {
+    let data
+    try {
+        data = validateStateOrThrow(state)
+    } catch (error) {
+        throw wrapValidationError("Cannot export invalid Court Shuffle data.", error)
+    }
+
     return {
         app: STORAGE_EXPORT_APP,
         schemaVersion: STORAGE_SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
-        data: normalizeState(state),
+        data,
     }
 }
 
-export function parseStateImport(rawText) {
+function parseStateImport(rawText) {
     let parsed
     try {
         parsed = JSON.parse(rawText)
@@ -74,26 +139,42 @@ export function parseStateImport(rawText) {
             ? parsed
             : null
 
-    if (exportData) {
-        if (exportData.schemaVersion > STORAGE_SCHEMA_VERSION) {
-            throw new Error("Backup file was created by a newer version of Court Shuffle.")
+    try {
+        if (exportData) {
+            if (exportData.schemaVersion > STORAGE_SCHEMA_VERSION) {
+                throw new Error("Backup file was created by a newer version of Court Shuffle.")
+            }
+            return {
+                exportedAt: typeof exportData.exportedAt === "string" ? exportData.exportedAt : null,
+                state: validateStateOrThrow(exportData.data),
+            }
         }
-        return {
-            exportedAt: typeof exportData.exportedAt === "string" ? exportData.exportedAt : null,
-            state: normalizeState(exportData.data),
-        }
-    }
 
-    if (parsed && typeof parsed === "object") {
-        return {
-            exportedAt: null,
-            state: normalizeState(parsed),
+        if (parsed && typeof parsed === "object") {
+            return {
+                exportedAt: null,
+                state: validateStateOrThrow(parsed),
+            }
         }
+    } catch (error) {
+        if (
+            error instanceof Error &&
+            error.message === "Backup file was created by a newer version of Court Shuffle."
+        ) {
+            throw error
+        }
+        throw new Error(`Backup file contains invalid data. ${error.message || "Please export a new backup."}`, {
+            cause: error,
+        })
     }
 
     throw new Error("Backup file does not contain Court Shuffle data.")
 }
 
-export function clearAllData() {
-    localStorage.removeItem(STORAGE_KEY)
+function clearAllData(storage = globalThis.localStorage) {
+    getStorageOrThrow(storage).removeItem(STORAGE_KEY)
 }
+
+export { clearAllData, createStateExport, loadStateFromStorage, parseStateImport, saveStateToStorage }
+export const loadState = loadStateFromStorage
+export const saveState = saveStateToStorage

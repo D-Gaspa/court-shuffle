@@ -1,5 +1,6 @@
 @import url("./foundation/base.css");
 @import url("./shared/components.css");
+@import url("./shared/status-banner.css");
 @import url("./features/analytics.css");
 @import url("./features/history-backup.css");
 @import url("./features/history.css");

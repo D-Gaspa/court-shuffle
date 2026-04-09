@@ -1,7 +1,10 @@
 import { iconButton } from "./dom.js"
 import { ICON_TRASH } from "./icons.js"
 import { createNextSetRowFieldScopeId, createScoreInput, createTiebreakInput } from "./set-row-inputs.js"
-import { parseScoreValue } from "./sets.js"
+import { getSetValidationMessage, parseScoreValue } from "./sets.js"
+
+const TIEBREAK_SET_WINNER_GAMES = 7
+const TIEBREAK_SET_LOSER_GAMES = 6
 
 function createLabel(setIndex) {
     const label = document.createElement("div")
@@ -69,44 +72,42 @@ function isTiebreakEligible(a, b) {
     if (a === null || b === null) {
         return false
     }
-    return Math.abs(a - b) === 1
+    return (
+        (a === TIEBREAK_SET_WINNER_GAMES && b === TIEBREAK_SET_LOSER_GAMES) ||
+        (a === TIEBREAK_SET_LOSER_GAMES && b === TIEBREAK_SET_WINNER_GAMES)
+    )
 }
 
-function getTiebreakValidationMessage(scoreA, scoreB, tbFirstValue, tbSecondValue) {
-    if (tbFirstValue === null || tbSecondValue === null) {
-        return ""
-    }
-    if (tbFirstValue === tbSecondValue) {
-        return "Tiebreak cannot be tied."
-    }
-    if (scoreA > scoreB && tbFirstValue <= tbSecondValue) {
-        return "Winning side tiebreak must be higher."
-    }
-    if (scoreB > scoreA && tbSecondValue <= tbFirstValue) {
-        return "Winning side tiebreak must be higher."
-    }
-    return ""
-}
-
-function applyTiebreakValidity(tbFields, message) {
+function buildSetScoreSnapshot(scoreA, scoreB, tbFields) {
+    const snapshot = [scoreA, scoreB]
     if (!tbFields) {
-        return
-    }
-    const invalid = message !== ""
-    tbFields.tbA.classList.toggle("invalid", invalid)
-    tbFields.tbB.classList.toggle("invalid", invalid)
-    tbFields.tbA.setCustomValidity(message)
-    tbFields.tbB.setCustomValidity(message)
-}
-
-function syncTiebreakValidity(tbFields, scoreA, scoreB) {
-    if (!tbFields) {
-        return
+        return snapshot
     }
     const tbFirstValue = parseScoreValue(tbFields.tbA.value)
     const tbSecondValue = parseScoreValue(tbFields.tbB.value)
-    const message = getTiebreakValidationMessage(scoreA, scoreB, tbFirstValue, tbSecondValue)
-    applyTiebreakValidity(tbFields, message)
+    if (tbFirstValue !== null || tbSecondValue !== null) {
+        snapshot.push({
+            tb: [tbFirstValue, tbSecondValue],
+        })
+    }
+    return snapshot
+}
+
+function applySetValidity(fields, message) {
+    for (const field of fields) {
+        if (!field) {
+            continue
+        }
+        field.classList.toggle("invalid", message !== "")
+        field.setCustomValidity(message)
+    }
+}
+
+function syncSetValidity(a, b, tbFields) {
+    const scoreA = parseScoreValue(a.value)
+    const scoreB = parseScoreValue(b.value)
+    const message = getSetValidationMessage(buildSetScoreSnapshot(scoreA, scoreB, tbFields))
+    applySetValidity([a, b, tbFields?.tbA, tbFields?.tbB], message)
 }
 
 function createTiebreakController({ pair, a, b, fieldScopeId, setIndex, onAnyUpdate, onTiebreakChange, onAutoSave }) {
@@ -117,7 +118,7 @@ function createTiebreakController({ pair, a, b, fieldScopeId, setIndex, onAnyUpd
     let currentTb = pair[2]?.tb || null
     let tbFields = null
 
-    const syncFromInputs = () => syncTiebreakValidity(tbFields, parseScoreValue(a.value), parseScoreValue(b.value))
+    const syncFromInputs = () => syncSetValidity(a, b, tbFields)
 
     const ensureFields = () => {
         if (tbFields) {
@@ -143,17 +144,25 @@ function createTiebreakController({ pair, a, b, fieldScopeId, setIndex, onAnyUpd
         tbContainer.hidden = !eligible
         if (eligible) {
             ensureFields()
-            syncTiebreakValidity(tbFields, scoreA, scoreB)
+            syncSetValidity(a, b, tbFields)
             return
         }
         if (currentTb) {
             currentTb = null
             onTiebreakChange?.(null)
         }
-        applyTiebreakValidity(tbFields, "")
+        if (tbFields) {
+            tbFields.tbA.value = ""
+            tbFields.tbB.value = ""
+        }
+        syncSetValidity(a, b, tbFields)
     }
 
-    return { tbContainer, update }
+    return {
+        tbContainer,
+        update,
+        sync: () => syncSetValidity(a, b, tbFields),
+    }
 }
 
 function wireInputs({ a, b, onChange, onAnyUpdate, onAutoSave }) {
@@ -226,6 +235,8 @@ function buildScoreFields(pair, { fieldScopeId, setIndex, onChange, onAnyUpdate,
         onAnyUpdate,
         onAutoSave,
     })
+
+    tiebreak.sync()
 
     return { fields, a }
 }

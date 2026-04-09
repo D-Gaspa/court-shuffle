@@ -1,3 +1,4 @@
+import { canSaveSessionToHistory, endSession } from "../session/active/history.js"
 import {
     hideFieldError,
     renameInPlayerList,
@@ -6,6 +7,7 @@ import {
     showFieldError,
 } from "../shared/utils.js"
 import { pairKey } from "../shuffle/core.js"
+import { buildPlayerRemovalPlan } from "./remove-player.js"
 import { renderRoster } from "./render.js"
 
 const playerNameInput = document.getElementById("player-name-input")
@@ -221,18 +223,26 @@ function updateSessionsWithNewName(oldName, newName) {
 }
 
 function openDeletePlayerDialog(index, name) {
-    const activeSessionIncludesPlayer = globalState.activeSession?.players.includes(name) === true
-    const message = activeSessionIncludesPlayer
-        ? `Remove "${name}" from the roster?\nThis will also end the active session because its saved schedule can no longer be reconciled safely.`
-        : `Remove "${name}" from the roster?`
+    const removalPlan = buildPlayerRemovalPlan(
+        name,
+        globalState.activeSession,
+        canSaveSessionToHistory(globalState.activeSession),
+    )
 
-    askConfirm("Remove Player", message, () => {
+    const removePlayer = (shouldSaveActiveSession) => {
         const [removed] = globalState.roster.splice(index, 1)
-        if (activeSessionIncludesPlayer && globalState.activeSession?.players.includes(removed)) {
-            globalState.activeSession = null
+        if (removalPlan.includesActivePlayer && globalState.activeSession?.players.includes(removed)) {
+            endSession(globalState, saveState, shouldSaveActiveSession)
         }
         saveState()
         refreshRoster()
+    }
+
+    askConfirm("Remove Player", removalPlan.message, () => removePlayer(removalPlan.canSaveActiveSession === true), {
+        okLabel: removalPlan.okLabel,
+        okClass: removalPlan.okClass,
+        extraLabel: removalPlan.extraLabel,
+        onExtra: removalPlan.extraLabel && removalPlan.includesActivePlayer ? () => removePlayer(false) : undefined,
     })
 }
 

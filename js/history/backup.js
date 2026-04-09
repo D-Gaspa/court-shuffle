@@ -65,9 +65,15 @@ function downloadBackup({ persist, state, statusElement, summaryElement }) {
     URL.revokeObjectURL(url)
 
     state.lastExportedAt = backup.exportedAt
-    persist()
+    const persistResult = persist()
     refreshSummary({ state, statusElement, summaryElement })
-    setStatus(statusElement, "Backup exported. Keep the JSON file somewhere you control.")
+    setStatus(
+        statusElement,
+        persistResult.ok
+            ? "Backup exported. Keep the JSON file somewhere you control."
+            : "Backup exported, but the local backup timestamp could not be saved in this browser.",
+        persistResult.ok ? "success" : "error",
+    )
 }
 
 async function importBackup({ file, persist, refreshAll, sortRoster, state, statusElement, switchView }) {
@@ -75,9 +81,15 @@ async function importBackup({ file, persist, refreshAll, sortRoster, state, stat
     const importedBackup = parseStateImport(rawText)
 
     assignImportedState(state, sortRoster, importedBackup.state, importedBackup.exportedAt)
-    persist()
+    const persistResult = persist()
     refreshAll()
-    setStatus(statusElement, "Backup imported. Local data has been restored.")
+    setStatus(
+        statusElement,
+        persistResult.ok
+            ? "Backup imported. Local data has been restored."
+            : "Backup loaded, but browser storage could not be updated. Keep this tab open until the storage issue is fixed.",
+        persistResult.ok ? "success" : "error",
+    )
 
     if (state.activeSession) {
         switchView("session")

@@ -1,5 +1,5 @@
 import { buildEditorContent } from "./editor-content.js"
-import { cloneSets, countSetWins, formatSets, normalizeSets } from "./sets.js"
+import { cloneSets, countSetWins, formatSets, getScoreValidation, normalizeSets } from "./sets.js"
 
 const MAX_SETS = 5
 
@@ -44,38 +44,43 @@ function buildDrawWarning() {
     return warn
 }
 
-function getCompleteSets(sets) {
-    return sets ? sets.filter(([a, b]) => a !== null && b !== null) : []
-}
-
-function updateDrawBadge(drawBadge, completeSets, maxSets) {
-    if (!drawBadge) {
+function updateStatusBadge(statusBadge, validation, maxSets) {
+    if (!statusBadge) {
         return
     }
-    if (completeSets.length === 0) {
-        drawBadge.hidden = true
-        return
-    }
-    const { winsA, winsB } = countSetWins(completeSets)
-    const isDraw = winsA === winsB
-    drawBadge.hidden = !isDraw
-    if (!isDraw) {
-        return
-    }
-    const warning = drawBadge.querySelector(".result-draw-warning")
+    const warning = statusBadge.querySelector(".result-draw-warning")
     if (!warning) {
         return
     }
+
+    if (validation.hasInvalidCompletedSet) {
+        statusBadge.hidden = false
+        warning.textContent = validation.firstInvalidMessage || "Invalid set score."
+        return
+    }
+
+    if (validation.validSets.length === 0) {
+        statusBadge.hidden = true
+        return
+    }
+
+    const { winsA, winsB } = countSetWins(validation.validSets)
+    const isDraw = winsA === winsB
+    statusBadge.hidden = !isDraw
+    if (!isDraw) {
+        return
+    }
+
     warning.textContent =
-        completeSets.length >= maxSets
+        validation.validSets.length >= maxSets
             ? `Draw — max ${maxSets} sets reached (edit a set to decide)`
             : "Draw — add a deciding set"
 }
 
-function renderScoreValue(value, completeSets, teamLabels) {
+function renderScoreValue(value, validation, teamLabels) {
     value.innerHTML = ""
     if (teamLabels) {
-        const summaryFrag = buildSummaryDom(completeSets, teamLabels)
+        const summaryFrag = buildSummaryDom(validation.validSets, teamLabels)
         if (summaryFrag) {
             value.appendChild(summaryFrag)
 
@@ -88,7 +93,7 @@ function renderScoreValue(value, completeSets, teamLabels) {
 
     const detailSpan = document.createElement("span")
     detailSpan.className = "result-detail"
-    detailSpan.textContent = formatSets(completeSets)
+    detailSpan.textContent = formatSets(validation.completeSets)
     value.appendChild(detailSpan)
 }
 
@@ -106,18 +111,18 @@ function updateResultDisplay({ elements, sets, editable, teamLabels, editing = f
     const { value, toggleBtn, drawBadge } = elements
     toggleBtn.hidden = !editable
 
-    const completeSets = getCompleteSets(sets)
+    const validation = getScoreValidation(sets)
 
-    if (completeSets.length > 0) {
-        renderScoreValue(value, completeSets, teamLabels)
+    if (validation.completeSets.length > 0) {
+        renderScoreValue(value, validation, teamLabels)
         value.classList.remove("muted")
         toggleBtn.textContent = getToggleLabel({ editable, editing, hasScore: true })
-        updateDrawBadge(drawBadge, completeSets, maxSets)
+        updateStatusBadge(drawBadge, validation, maxSets)
     } else {
         value.textContent = "No score"
         value.classList.add("muted")
         toggleBtn.textContent = getToggleLabel({ editable, editing, hasScore: false })
-        updateDrawBadge(drawBadge, completeSets, maxSets)
+        updateStatusBadge(drawBadge, validation, maxSets)
     }
 }
 

@@ -1,0 +1,35 @@
+.app-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin: 0 auto var(--space-md);
+    padding: 12px 16px;
+    width: min(1180px, calc(100vw - 2rem));
+    border-radius: var(--radius-md);
+    border: 1px solid #c4613a30;
+    background: #c4613a15;
+    color: var(--clay-light);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.app-status-banner[data-tone="info"] {
+    border-color: #2d6b4f40;
+    background: var(--court-glow);
+    color: var(--court-light);
+}
+
+.app-status-dismiss {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+}
+
+.app-status-dismiss:hover {
+    text-decoration: underline;
+}

@@ -2,38 +2,7 @@
  * Shared tournament utilities — score evaluation and team lookups.
  */
 
-function isTiebreakEligibleSetScore(s0, s1) {
-    if (s0 === null || s1 === null) {
-        return false
-    }
-    return Math.abs(s0 - s1) === 1
-}
-
-function isInvalidTiebreakForSet(setScore) {
-    const [s0, s1] = setScore
-    const tb = setScore[2]?.tb
-    const tiebreakEligible = isTiebreakEligibleSetScore(s0, s1)
-
-    if (!tb) {
-        return false
-    }
-    if (!tiebreakEligible) {
-        return true
-    }
-
-    const [tb0, tb1] = tb
-
-    if (tb0 === null || tb1 === null || tb0 === tb1) {
-        return true
-    }
-    if (s0 > s1) {
-        return tb0 <= tb1
-    }
-    if (s1 > s0) {
-        return tb1 <= tb0
-    }
-    return false
-}
+import { getScoreValidation, normalizeSets } from "../score-editor/sets.js"
 
 function getRoundScoreBlockReason(round) {
     if (!round?.scores) {
@@ -45,6 +14,10 @@ function getRoundScoreBlockReason(round) {
         }
     }
     for (let i = 0; i < round.matches.length; i += 1) {
+        const validation = getScoreValidation(normalizeSets(round.scores[i]))
+        if (validation.hasInvalidCompletedSet) {
+            return "Fix invalid set score"
+        }
         if (determineMatchWinner(round.scores[i]) === null) {
             return "Resolve drawn match"
         }
@@ -57,15 +30,13 @@ function getRoundScoreBlockReason(round) {
  * Returns 0, 1, or null if tied/undetermined.
  */
 function determineMatchWinner(scoreEntry) {
-    if (!scoreEntry?.sets || scoreEntry.sets.length === 0) {
+    const validation = getScoreValidation(normalizeSets(scoreEntry))
+    if (validation.validSets.length === 0 || validation.hasInvalidCompletedSet) {
         return null
     }
     let wins0 = 0
     let wins1 = 0
-    for (const setScore of scoreEntry.sets) {
-        if (isInvalidTiebreakForSet(setScore)) {
-            return null
-        }
+    for (const setScore of validation.validSets) {
         const [s0, s1] = setScore
         if (s0 > s1) {
             wins0 += 1
