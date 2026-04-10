@@ -47,6 +47,85 @@ function createSampleState() {
     }
 }
 
+function cloneSampleState() {
+    return JSON.parse(JSON.stringify(createSampleState()))
+}
+
+function createSinglesTeams() {
+    return [
+        { id: 1, name: "Ana", players: ["Ana"] },
+        { id: 2, name: "Bea", players: ["Bea"] },
+    ]
+}
+
+function createEmptyBracket() {
+    return {
+        pools: { winners: [], losers: [] },
+        eliminated: [],
+        champion: null,
+        standings: {},
+    }
+}
+
+function createTournamentRoundFixture() {
+    return {
+        matches: [{ court: 1, teams: [["Ana"], ["Bea"]], teamIds: [1, 2] }],
+        sitOuts: [],
+        scores: null,
+        byes: [],
+        losersByes: [],
+        tournamentRoundLabel: "Round 1",
+    }
+}
+
+function createTournamentRunFixture() {
+    return {
+        players: ["Ana", "Bea"],
+        tournamentLevelSitOuts: [],
+        rounds: [createTournamentRoundFixture()],
+        currentRound: 0,
+        tournamentComplete: false,
+        tournamentFormat: "elimination",
+        tournamentTeamSize: 1,
+        teams: createSinglesTeams(),
+        seeding: "random",
+        bracket: createEmptyBracket(),
+        tournamentRound: 0,
+        allRoundsGenerated: false,
+    }
+}
+
+function createTournamentSeriesFixture(currentTournamentIndex) {
+    return {
+        id: "active-2",
+        date: "2026-04-09T00:00:00.000Z",
+        players: ["Ana", "Bea"],
+        teamCount: 2,
+        mode: "tournament",
+        courtCount: 1,
+        rounds: [createTournamentRoundFixture()],
+        currentRound: 0,
+        tournamentFormat: "elimination",
+        tournamentTeamSize: 1,
+        teams: createSinglesTeams(),
+        bracket: createEmptyBracket(),
+        tournamentRound: 0,
+        allRoundsGenerated: false,
+        tournamentComplete: false,
+        tournamentSeries: {
+            matchType: "singles",
+            format: "elimination",
+            courtCount: 1,
+            courtHandling: "queue",
+            allowNotStrictDoubles: false,
+            seed: "seed",
+            maxTournaments: 1,
+            currentTournamentIndex,
+            tournaments: [createTournamentRunFixture()],
+        },
+    }
+}
+
 function createMemoryStorage(initial = {}) {
     const values = new Map(Object.entries(initial))
     return {
@@ -136,4 +215,62 @@ test("save failure returns metadata and preserves existing storage", () => {
     assert.equal(result.ok, false)
     assert.equal(result.code, "save_failed")
     assert.equal(failingStorage.getItem(STORAGE_KEY), previousRaw)
+})
+
+test("load returns failure metadata for out-of-bounds active round indexes", () => {
+    const state = cloneSampleState()
+    state.activeSession = {
+        id: "active-1",
+        date: "2026-04-09T00:00:00.000Z",
+        players: ["Ana", "Bea"],
+        teamCount: 2,
+        mode: "singles",
+        courtCount: 1,
+        rounds: [
+            {
+                matches: [{ court: 1, teams: [["Ana"], ["Bea"]] }],
+                sitOuts: [],
+                scores: null,
+                byes: [],
+                losersByes: [],
+            },
+        ],
+        currentRound: 4,
+    }
+
+    const storage = createMemoryStorage({
+        [STORAGE_KEY]: JSON.stringify(state),
+    })
+    const result = loadStateFromStorage(storage)
+
+    assert.equal(result.status.ok, false)
+    assert.equal(result.status.code, "load_failed")
+})
+
+test("parse rejects invalid session dates in backups", () => {
+    const state = cloneSampleState()
+    state.history[0].date = "not-a-date"
+
+    assert.throws(() => parseStateImport(JSON.stringify(state)), {
+        message: "Backup file contains invalid data. state.history[0].date must be a valid date string.",
+    })
+})
+
+test("parse rejects reserved delimiters in player names", () => {
+    const state = cloneSampleState()
+    state.roster = ["Ana||Bea"]
+
+    assert.throws(() => parseStateImport(JSON.stringify(state)), {
+        message: 'Backup file contains invalid data. state.roster[0] must not contain "||" or ",".',
+    })
+})
+
+test("parse rejects out-of-bounds tournament series indexes", () => {
+    const state = cloneSampleState()
+    state.activeSession = createTournamentSeriesFixture(3)
+
+    assert.throws(() => parseStateImport(JSON.stringify(state)), {
+        message:
+            "Backup file contains invalid data. state.activeSession.tournamentSeries.currentTournamentIndex must reference an existing tournament.",
+    })
 })

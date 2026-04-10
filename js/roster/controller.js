@@ -7,6 +7,7 @@ import {
     showFieldError,
 } from "../shared/utils.js"
 import { pairKey } from "../shuffle/core.js"
+import { validateRosterPlayerName } from "./player-name.js"
 import { buildPlayerRemovalPlan } from "./remove-player.js"
 import { renderRoster } from "./render.js"
 
@@ -164,6 +165,12 @@ function addPlayer() {
         return
     }
 
+    const nameValidationError = validateRosterPlayerName(name)
+    if (nameValidationError) {
+        showFieldError(playerError, nameValidationError)
+        return
+    }
+
     const duplicate = globalState.roster.some((p) => p.toLowerCase() === name.toLowerCase())
     if (duplicate) {
         showFieldError(playerError, "That name is already on the roster.")
@@ -192,6 +199,12 @@ function openRenameDialog(index, currentName) {
 function commitRename() {
     const newName = renameInput.value.trim()
     if (!newName || renameIndex < 0 || renameIndex >= globalState.roster.length) {
+        return
+    }
+
+    const nameValidationError = validateRosterPlayerName(newName)
+    if (nameValidationError) {
+        showFieldError(renameError, nameValidationError)
         return
     }
 

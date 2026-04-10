@@ -10,6 +10,43 @@ import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament/active.js"
 import { reconcileTournamentRoundsAfterScoreChange } from "./tournament/score-editing.js"
 
+function resolveRenderableRoundInfo(session) {
+    const rounds = Array.isArray(session?.rounds) ? session.rounds : []
+    if (rounds.length === 0) {
+        return null
+    }
+
+    const fallbackRoundIndex = Math.max(0, rounds.length - 1)
+    const requestedRoundIndex = Number.isInteger(session.currentRound) ? session.currentRound : fallbackRoundIndex
+    const current = Math.min(Math.max(requestedRoundIndex, 0), rounds.length - 1)
+    if (session.currentRound !== current) {
+        session.currentRound = current
+    }
+
+    return {
+        round: rounds[current],
+        current,
+        total: rounds.length,
+        isLast: current >= rounds.length - 1,
+    }
+}
+
+function renderUnavailableSessionState(session, ui) {
+    ui.roundInfo.textContent = `${session.players.length} players · ${getModeLabel(session)}`
+    if (ui.roundPrefix) {
+        ui.roundPrefix.hidden = false
+    }
+    ui.roundNumber.textContent = "—"
+    ui.roundTotal.textContent = 0
+    ui.bracketContainer.textContent = "Session data is unavailable."
+    ui.sitOutList.textContent = ""
+    ui.sitOutContainer.hidden = true
+    ui.prevRoundBtn.disabled = true
+    ui.nextRoundBtn.disabled = true
+    ui.nextRoundLabel.textContent = "Next Round"
+    ui.noMoreRounds.hidden = true
+}
+
 function renderSessionRoundView({ session, roundInfo, saveState, ui, commitScoreForSession }) {
     if (session.mode === "tournament") {
         renderTournamentActive({
@@ -35,16 +72,19 @@ function renderActiveSession(state, saveState, ui) {
         syncTournamentSeriesAliases(session)
     }
 
-    let current = session.currentRound ?? session.rounds.length - 1
-    const total = session.rounds.length
-    const isLast = current >= total - 1
-    const round = session.rounds[current]
+    const roundInfo = resolveRenderableRoundInfo(session)
+    if (!roundInfo) {
+        renderUnavailableSessionState(session, ui)
+        if (ui.tournamentSeriesNav) {
+            ui.tournamentSeriesNav.hidden = true
+        }
+        return
+    }
 
     const modeLabel = getModeLabel(session)
     let courts = ""
     if (session.mode === "tournament") {
-        current = session.currentRound ?? session.rounds.length - 1
-        const matchCount = session.rounds[current]?.matches?.length || 0
+        const matchCount = session.rounds[roundInfo.current]?.matches?.length || 0
         if (matchCount > 1) {
             courts = ` · ${matchCount} matches this round`
         }
@@ -56,7 +96,6 @@ function renderActiveSession(state, saveState, ui) {
         : ""
     ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
 
-    const roundInfo = { round, current, total, isLast }
     if (ui.tournamentSeriesNav) {
         ui.tournamentSeriesNav.hidden = true
     }
@@ -129,4 +168,4 @@ function renderSitOutsSection(round, ui) {
     }
 }
 
-export { renderActiveSession }
+export { renderActiveSession, resolveRenderableRoundInfo }

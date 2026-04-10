@@ -1,3 +1,4 @@
+import { clonePlayerNameArray, expectSessionDateString } from "./storage-validation-player.js"
 import {
     cloneRounds,
     cloneStringArray,
@@ -28,12 +29,46 @@ function validateSessionMode(source, path) {
 function createBaseSessionRecord(source, path, mode) {
     return {
         id: expectString(source.id, `${path}.id`),
-        date: expectString(source.date, `${path}.date`),
-        players: cloneStringArray(source.players, `${path}.players`),
+        date: expectSessionDateString(source.date, `${path}.date`),
+        players: clonePlayerNameArray(source.players, `${path}.players`),
         teamCount: expectInteger(source.teamCount ?? 2, `${path}.teamCount`, 1),
         mode,
         courtCount: expectInteger(source.courtCount ?? 1, `${path}.courtCount`, 1),
         rounds: cloneRounds(source.rounds, `${path}.rounds`),
+    }
+}
+
+function validateCurrentRound(next, path) {
+    if (next.currentRound === undefined) {
+        return
+    }
+    if (next.rounds.length === 0 || next.currentRound >= next.rounds.length) {
+        throw createValidationError(`${path}.currentRound`, "must reference an existing round.")
+    }
+}
+
+function validateTournamentSeries(next, path) {
+    const series = next.tournamentSeries
+    if (!series) {
+        return
+    }
+    if (series.tournaments.length === 0) {
+        throw createValidationError(`${path}.tournamentSeries.tournaments`, "must contain at least one tournament.")
+    }
+    if (series.currentTournamentIndex >= series.tournaments.length) {
+        throw createValidationError(
+            `${path}.tournamentSeries.currentTournamentIndex`,
+            "must reference an existing tournament.",
+        )
+    }
+    for (let index = 0; index < series.tournaments.length; index += 1) {
+        const run = series.tournaments[index]
+        if (run.rounds.length === 0 || run.currentRound >= run.rounds.length) {
+            throw createValidationError(
+                `${path}.tournamentSeries.tournaments[${index}].currentRound`,
+                "must reference an existing round.",
+            )
+        }
     }
 }
 
@@ -91,6 +126,10 @@ function cloneSessionRecord(value, path) {
     applyOptionalSessionTeams(source, path, next)
     applyOptionalTournamentSettings(source, path, next)
     applyOptionalTournamentFields(source, path, next)
+    if (path === "state.activeSession") {
+        validateCurrentRound(next, path)
+        validateTournamentSeries(next, path)
+    }
     return next
 }
 
@@ -111,7 +150,7 @@ function cloneSessionCollection(value, path) {
 function validateStateShape(value, path = "state") {
     const source = expectPlainObject(value, path)
     return {
-        roster: cloneStringArray(source.roster ?? [], `${path}.roster`),
+        roster: clonePlayerNameArray(source.roster ?? [], `${path}.roster`),
         activeSession: cloneOptionalSessionRecord(source.activeSession ?? null, `${path}.activeSession`),
         history: cloneSessionCollection(source.history ?? [], `${path}.history`),
         archivedHistory: cloneSessionCollection(source.archivedHistory ?? [], `${path}.archivedHistory`),

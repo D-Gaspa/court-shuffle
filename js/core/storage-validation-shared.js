@@ -1,3 +1,5 @@
+import { clonePlayerNameArray, expectNullablePlayerName, expectPlayerName } from "./storage-validation-player.js"
+
 const SESSION_MODES = new Set(["free", "singles", "doubles", "tournament"])
 const TOURNAMENT_FORMATS = new Set(["elimination", "consolation", "round-robin"])
 const TOURNAMENT_MATCH_TYPES = new Set(["singles", "doubles"])
@@ -74,7 +76,7 @@ function clonePairRows(value, path) {
         if (!(Array.isArray(pair) && pair.length === 2)) {
             throw createValidationError(`${path}[${index}]`, "must be a two-player row.")
         }
-        return [expectString(pair[0], `${path}[${index}][0]`), expectString(pair[1], `${path}[${index}][1]`)]
+        return [expectPlayerName(pair[0], `${path}[${index}][0]`), expectPlayerName(pair[1], `${path}[${index}][1]`)]
     })
 }
 
@@ -83,7 +85,7 @@ function cloneTeamRows(value, path) {
         throw createValidationError(path, "must be an array.")
     }
     return value.map((team, index) => {
-        const players = cloneStringArray(team, `${path}[${index}]`)
+        const players = clonePlayerNameArray(team, `${path}[${index}]`)
         if (players.length === 0 || players.length > MAX_TEAM_ROW_LENGTH) {
             throw createValidationError(`${path}[${index}]`, "must contain one or two player names.")
         }
@@ -92,7 +94,7 @@ function cloneTeamRows(value, path) {
 }
 
 function cloneTeamPlayers(value, path) {
-    const players = cloneStringArray(value, path)
+    const players = clonePlayerNameArray(value, path)
     if (players.length < MIN_TEAM_ROW_LENGTH) {
         throw createValidationError(path, "must contain at least one player.")
     }
@@ -105,10 +107,10 @@ function cloneAdvancedSettings(value, path) {
         singlesOpeningMatchups: clonePairRows(source.singlesOpeningMatchups ?? [], `${path}.singlesOpeningMatchups`),
         doublesLockedPairs: clonePairRows(source.doublesLockedPairs ?? [], `${path}.doublesLockedPairs`),
         doublesRestrictedTeams: clonePairRows(source.doublesRestrictedTeams ?? [], `${path}.doublesRestrictedTeams`),
-        forcedSitOutPlayer: expectNullableString(source.forcedSitOutPlayer, `${path}.forcedSitOutPlayer`),
-        singlesByePlayers: cloneStringArray(source.singlesByePlayers ?? [], `${path}.singlesByePlayers`),
+        forcedSitOutPlayer: expectNullablePlayerName(source.forcedSitOutPlayer, `${path}.forcedSitOutPlayer`),
+        singlesByePlayers: clonePlayerNameArray(source.singlesByePlayers ?? [], `${path}.singlesByePlayers`),
         doublesByeTeams: cloneTeamRows(source.doublesByeTeams ?? [], `${path}.doublesByeTeams`),
-        singlesNextUpPlayers: cloneStringArray(source.singlesNextUpPlayers ?? [], `${path}.singlesNextUpPlayers`),
+        singlesNextUpPlayers: clonePlayerNameArray(source.singlesNextUpPlayers ?? [], `${path}.singlesNextUpPlayers`),
         doublesNextUpTeams: cloneTeamRows(source.doublesNextUpTeams ?? [], `${path}.doublesNextUpTeams`),
     }
 }
@@ -230,7 +232,7 @@ function cloneRound(value, path) {
 
     const next = {
         matches: source.matches.map((match, index) => cloneMatch(match, `${path}.matches[${index}]`)),
-        sitOuts: cloneStringArray(source.sitOuts ?? [], `${path}.sitOuts`),
+        sitOuts: clonePlayerNameArray(source.sitOuts ?? [], `${path}.sitOuts`),
         scores: cloneScores(source.scores ?? null, `${path}.scores`),
         byes: cloneIntegerArray(source.byes ?? [], `${path}.byes`),
         losersByes: cloneIntegerArray(source.losersByes ?? [], `${path}.losersByes`),

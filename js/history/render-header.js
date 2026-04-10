@@ -3,6 +3,9 @@ import { getModeLabel } from "../shared/utils.js"
 function formatDate(isoString) {
     try {
         const d = new Date(isoString)
+        if (Number.isNaN(d.getTime())) {
+            return isoString
+        }
         return d.toLocaleDateString(undefined, {
             weekday: "short",
             year: "numeric",

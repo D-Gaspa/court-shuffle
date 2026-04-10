@@ -83,9 +83,17 @@ function buildTournamentSeriesHistory(series) {
             rounds: buildTournamentHistoryRounds(run.rounds),
         }))
         .filter((run) => run.rounds.length > 0)
+        .map((run, index) => ({
+            ...run,
+            currentRound: Math.min(run.currentRound ?? 0, Math.max(0, run.rounds.length - 1)),
+            index,
+        }))
+
+    const currentTournamentIndex = Math.min(series.currentTournamentIndex ?? 0, Math.max(0, historyRuns.length - 1))
 
     return {
         ...series,
+        currentTournamentIndex,
         tournaments: historyRuns,
     }
 }

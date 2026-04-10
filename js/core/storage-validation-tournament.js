@@ -1,3 +1,4 @@
+import { clonePlayerNameArray, expectPlayerName } from "./storage-validation-player.js"
 import {
     cloneAdvancedSettings,
     cloneIntegerArray,
@@ -70,7 +71,7 @@ function cloneTournamentConstraints(value, path) {
     const tournamentSitOutCounts = {}
 
     for (const [player, count] of Object.entries(sitOutCountsSource)) {
-        tournamentSitOutCounts[expectString(player, `${path}.tournamentSitOutCounts key`)] = expectInteger(
+        tournamentSitOutCounts[expectPlayerName(player, `${path}.tournamentSitOutCounts key`)] = expectInteger(
             count,
             `${path}.tournamentSitOutCounts.${player}`,
         )
@@ -122,8 +123,11 @@ function cloneTournamentRun(value, path) {
     }
 
     const next = {
-        players: cloneStringArray(source.players, `${path}.players`),
-        tournamentLevelSitOuts: cloneStringArray(source.tournamentLevelSitOuts ?? [], `${path}.tournamentLevelSitOuts`),
+        players: clonePlayerNameArray(source.players, `${path}.players`),
+        tournamentLevelSitOuts: clonePlayerNameArray(
+            source.tournamentLevelSitOuts ?? [],
+            `${path}.tournamentLevelSitOuts`,
+        ),
         rounds: cloneRounds(source.rounds, `${path}.rounds`),
         currentRound: expectInteger(source.currentRound ?? 0, `${path}.currentRound`),
         tournamentComplete: expectBoolean(source.tournamentComplete ?? false, `${path}.tournamentComplete`),
@@ -156,7 +160,7 @@ function cloneTournamentSeries(value, path) {
         throw createValidationError(`${path}.tournaments`, "must be an array.")
     }
 
-    return {
+    const next = {
         matchType,
         format,
         courtCount: expectInteger(source.courtCount ?? 1, `${path}.courtCount`, 1),
@@ -174,6 +178,8 @@ function cloneTournamentSeries(value, path) {
                 ? undefined
                 : cloneTournamentConstraints(source.constraints, `${path}.constraints`),
     }
+
+    return next
 }
 
 function cloneStructuredConfig(value, path) {
@@ -206,7 +212,7 @@ function cloneRemix(value, path) {
     const next = {
         version: expectInteger(source.version ?? 1, `${path}.version`, 1),
         sourceMode: mode,
-        players: cloneStringArray(source.players ?? [], `${path}.players`),
+        players: clonePlayerNameArray(source.players ?? [], `${path}.players`),
     }
 
     if (source.tournamentConfig !== undefined) {

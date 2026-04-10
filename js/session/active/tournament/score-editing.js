@@ -21,10 +21,20 @@ function canEditTournamentRoundScores(session, roundIndex) {
     if (!isMutableBracketFormat(session)) {
         return true
     }
-    if (session?.tournamentComplete) {
+    return !hasStartedFutureRounds(session, roundIndex)
+}
+
+function shouldRebuildBracketAfterScoreChange(session, roundIndex) {
+    if (!isMutableBracketFormat(session)) {
         return false
     }
-    return !hasStartedFutureRounds(session, roundIndex)
+
+    const futureRounds = session.rounds.slice(roundIndex + 1)
+    if (futureRounds.some(roundHasSavedScores)) {
+        return false
+    }
+
+    return futureRounds.length > 0 || session.tournamentComplete === true
 }
 
 function replayBracketState(session, preservedRounds) {
@@ -49,19 +59,7 @@ function replayBracketState(session, preservedRounds) {
     session.tournamentRound = Math.max(0, session.rounds.length - 1)
 }
 
-function reconcileTournamentRoundsAfterScoreChange(session, roundIndex) {
-    if (!isMutableBracketFormat(session)) {
-        return false
-    }
-
-    const futureRounds = session.rounds.slice(roundIndex + 1)
-    if (futureRounds.length === 0 || futureRounds.some(roundHasSavedScores)) {
-        return false
-    }
-
-    const preservedRounds = session.rounds.slice(0, roundIndex + 1)
-    replayBracketState(session, preservedRounds)
-
+function syncReplayedBracketFrontier(session) {
     const currentRound = session.rounds.at(-1)
     if (!(currentRound && allScoresEntered(currentRound))) {
         session.tournamentComplete = false
@@ -86,6 +84,16 @@ function reconcileTournamentRoundsAfterScoreChange(session, roundIndex) {
     session.tournamentComplete = false
     session.currentRound = Math.min(session.currentRound || 0, session.rounds.length - 1)
     return true
+}
+
+function reconcileTournamentRoundsAfterScoreChange(session, roundIndex) {
+    if (!shouldRebuildBracketAfterScoreChange(session, roundIndex)) {
+        return false
+    }
+
+    const preservedRounds = session.rounds.slice(0, roundIndex + 1)
+    replayBracketState(session, preservedRounds)
+    return syncReplayedBracketFrontier(session)
 }
 
 export { canEditTournamentRoundScores, reconcileTournamentRoundsAfterScoreChange }
