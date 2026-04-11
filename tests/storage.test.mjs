@@ -161,6 +161,21 @@ test("imports a valid legacy plain-state backup", () => {
     assert.equal(imported.exportedAt, null)
 })
 
+test("imports history with arbitrary completed tournament scores", () => {
+    const state = cloneSampleState()
+    state.history[0].mode = "tournament"
+    state.history[0].tournamentFormat = "elimination"
+    state.history[0].tournamentTeamSize = 1
+    state.history[0].teams = createSinglesTeams()
+    state.history[0].bracket = createEmptyBracket()
+    state.history[0].rounds[0].matches[0].teamIds = [1, 2]
+    state.history[0].rounds[0].scores[0].sets = [[3, 2, { tb: [7, 5] }]]
+
+    const imported = parseStateImport(JSON.stringify(state))
+
+    assert.deepEqual(imported.state.history[0].rounds[0].scores[0].sets, [[3, 2, { tb: [7, 5] }]])
+})
+
 test("rejects malformed backups with a stable validation error", () => {
     assert.throws(
         () =>

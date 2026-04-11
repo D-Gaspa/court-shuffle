@@ -1,4 +1,4 @@
-import { getScoreValidation, normalizeSets } from "../../score-editor/sets.js"
+import { normalizeSets } from "../../score-editor/sets.js"
 import { determineMatchWinner } from "../../tournament/utils.js"
 
 function createPlayerSummary() {
@@ -66,6 +66,18 @@ function incrementPairCount(matrix, a, b) {
     rowB.set(a, (rowB.get(a) || 0) + 1)
 }
 
+function isCompleteSet(setScore) {
+    return Array.isArray(setScore) && Number.isFinite(setScore[0]) && Number.isFinite(setScore[1])
+}
+
+function getCompleteSets(scoreEntry) {
+    const sets = normalizeSets(scoreEntry)
+    if (!Array.isArray(sets)) {
+        return []
+    }
+    return sets.filter(isCompleteSet)
+}
+
 function getRoundGroups(session) {
     const runs = session.tournamentSeries?.tournaments
     if (!Array.isArray(runs)) {
@@ -79,13 +91,13 @@ function getScoredMatch(round, matchIndex) {
     if (!entry) {
         return null
     }
-    const validation = getScoreValidation(normalizeSets(entry))
-    if (validation.validSets.length === 0 || validation.hasInvalidCompletedSet) {
+    const completeSets = getCompleteSets(entry)
+    if (completeSets.length === 0) {
         return null
     }
     return {
-        completeSets: validation.validSets,
-        winnerIdx: determineMatchWinner({ ...entry, sets: validation.validSets }),
+        completeSets,
+        winnerIdx: determineMatchWinner({ ...entry, sets: completeSets }),
     }
 }
 
