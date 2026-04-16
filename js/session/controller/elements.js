@@ -2,6 +2,13 @@ const sessionSetup = document.getElementById("session-setup")
 const sessionActive = document.getElementById("session-active")
 const noRosterWarning = document.getElementById("no-roster-warning")
 const sessionConfig = document.getElementById("session-config")
+const sessionSetupTitle = document.getElementById("session-setup-title")
+const sessionSetupSubtitle = document.getElementById("session-setup-subtitle")
+const sessionContinuationBanner = document.getElementById("session-continuation-banner")
+const sessionContinuationTitle = document.getElementById("session-continuation-title")
+const sessionContinuationDetail = document.getElementById("session-continuation-detail")
+const sessionContinuationPhaseTag = document.getElementById("session-continuation-phase-tag")
+const sessionContinuationTournamentTag = document.getElementById("session-continuation-tournament-tag")
 const sessionSetupNotice = document.getElementById("session-setup-notice")
 const playerSelection = document.getElementById("player-selection")
 const selectAllBtn = document.getElementById("select-all-btn")
@@ -19,11 +26,14 @@ const teamsIncBtn = document.getElementById("teams-inc")
 const teamCountValue = document.getElementById("team-count-value")
 const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
+const startSessionLabel = document.getElementById("start-session-label")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
 const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
 const tournamentDistributionHint = document.getElementById("tournament-distribution-hint")
 const tournamentAdvancedError = document.getElementById("tournament-advanced-error")
+const continuationSummary = document.getElementById("continuation-summary")
+const continuationSummaryBody = document.getElementById("continuation-summary-body")
 const tournamentConfig = document.getElementById("tournament-config")
 const formatSelector = document.getElementById("format-selector")
 const teamSizeSelector = document.getElementById("tournament-team-size")
@@ -39,6 +49,7 @@ const sessionStepButtons = [...document.querySelectorAll("[data-session-step]")]
 const sessionStepPanels = [...document.querySelectorAll("[data-session-step-panel]")]
 
 const uiState = {
+    continueSessionBtn: document.getElementById("continue-session-btn"),
     roundPrefix: document.getElementById("round-prefix"),
     roundNumber: document.getElementById("round-number"),
     roundTotal: document.getElementById("round-total"),
@@ -70,6 +81,8 @@ export {
     courtsConfig,
     courtsDecBtn,
     courtsIncBtn,
+    continuationSummary,
+    continuationSummaryBody,
     deselectAllBtn,
     endSessionBtn,
     formatSelector,
@@ -84,12 +97,20 @@ export {
     sessionConfig,
     sessionNextBtn,
     sessionSetupNotice,
+    sessionContinuationBanner,
+    sessionContinuationDetail,
+    sessionContinuationPhaseTag,
+    sessionContinuationTitle,
+    sessionContinuationTournamentTag,
+    sessionSetupSubtitle,
+    sessionSetupTitle,
     sessionStepButtons,
     sessionStepCaption,
     sessionStepPanels,
     sessionStepper,
     sessionSetup,
     startSessionBtn,
+    startSessionLabel,
     teamCountValue,
     teamSizeHint,
     teamSizeSelector,

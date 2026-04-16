@@ -1,16 +1,8 @@
-import { hasSavedScoreEntry } from "../../../../score-editor/sets.js"
-import { collectLockedPairKeySet, normalizeTeamKey } from "./helpers.js"
+import { extractRestrictedTeamsFromRuns, hasScoredMatches } from "./restriction-collection.js"
 
 function toTimestamp(value) {
     const parsed = Date.parse(value || "")
     return Number.isFinite(parsed) ? parsed : 0
-}
-
-function hasScoredMatches(run) {
-    if (!Array.isArray(run?.rounds) || run.rounds.length === 0) {
-        return false
-    }
-    return run.rounds.some((round) => Array.isArray(round?.scores) && round.scores.some(hasSavedScoreEntry))
 }
 
 function getHistoryRunCandidates(historySessions) {
@@ -96,82 +88,6 @@ function findLatestSavedDoublesSession(historySessions) {
         return b.sessionIndex - a.sessionIndex
     })
     return candidates[0]?.runs || null
-}
-
-function toImportableTeam(team, allowNotStrictDoubles, activePlayers) {
-    if (!Array.isArray(team)) {
-        return null
-    }
-
-    const uniquePlayers = [...new Set(team.filter((player) => typeof player === "string" && player.length > 0))]
-    const validTeamSize = uniquePlayers.length === 2 || (allowNotStrictDoubles && uniquePlayers.length === 1)
-    if (!validTeamSize) {
-        return null
-    }
-    if (!uniquePlayers.every((player) => activePlayers.has(player))) {
-        return null
-    }
-
-    return uniquePlayers.length === 1 ? [uniquePlayers[0], ""] : [uniquePlayers[0], uniquePlayers[1]]
-}
-
-function addImportedTeam({ team, teamsByKey, lockedKeys, allowNotStrictDoubles, activePlayers }) {
-    const normalizedTeam = toImportableTeam(team, allowNotStrictDoubles, activePlayers)
-    if (!normalizedTeam) {
-        return
-    }
-
-    const key = normalizeTeamKey(normalizedTeam.filter(Boolean))
-    if (lockedKeys.has(key) || teamsByKey.has(key)) {
-        return
-    }
-    teamsByKey.set(key, normalizedTeam)
-}
-
-function collectTeamsFromMatch({ match, teamsByKey, lockedKeys, allowNotStrictDoubles, activePlayers }) {
-    for (const team of match?.teams || []) {
-        addImportedTeam({
-            team,
-            teamsByKey,
-            lockedKeys,
-            allowNotStrictDoubles,
-            activePlayers,
-        })
-    }
-}
-
-function collectTeamsFromRun({ run, teamsByKey, lockedKeys, allowNotStrictDoubles, activePlayers }) {
-    for (const round of run?.rounds || []) {
-        for (let i = 0; i < (round?.matches || []).length; i += 1) {
-            if (!hasSavedScoreEntry(round?.scores?.[i])) {
-                continue
-            }
-            collectTeamsFromMatch({
-                match: round.matches[i],
-                teamsByKey,
-                lockedKeys,
-                allowNotStrictDoubles,
-                activePlayers,
-            })
-        }
-    }
-}
-
-function extractRestrictedTeamsFromRuns({ runs, activePlayers, allowNotStrictDoubles, lockedPairs }) {
-    const teamsByKey = new Map()
-    const lockedKeys = collectLockedPairKeySet(lockedPairs, allowNotStrictDoubles)
-
-    for (const run of runs || []) {
-        collectTeamsFromRun({
-            run,
-            teamsByKey,
-            lockedKeys,
-            allowNotStrictDoubles,
-            activePlayers,
-        })
-    }
-
-    return [...teamsByKey.values()]
 }
 
 function buildRestrictedTeamsFromLastTournament({

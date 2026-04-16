@@ -5,6 +5,7 @@ function moveStep({
     getTournamentBlockingError,
     getFinalStepId,
     getVisibleStepIds,
+    onCancelContinuation,
     setCurrentStep,
 }) {
     const wizardState = buildWizardState(
@@ -16,6 +17,9 @@ function moveStep({
     const currentIndex = wizardState.visibleSteps.indexOf(draft.currentStep)
     const nextIndex = currentIndex + direction
     if (nextIndex < 0 || nextIndex >= wizardState.visibleSteps.length) {
+        if (direction < 0 && nextIndex < 0 && draft.continuation && onCancelContinuation) {
+            onCancelContinuation()
+        }
         return
     }
     if (direction > 0 && wizardState.completed[draft.currentStep] !== true) {
@@ -34,9 +38,15 @@ function applyTournamentAction(draft, action) {
 
     switch (action.type) {
         case "format":
+            if (draft.continuation?.lockedFields?.format) {
+                break
+            }
             draft.tournament.format = action.value
             break
         case "team-size":
+            if (draft.continuation?.lockedFields?.teamSize) {
+                break
+            }
             draft.tournament.teamSize = action.value
             break
         case "allow-2v1":
@@ -69,6 +79,7 @@ function startSession({
     getPlayers,
     getTournamentBlockingError,
     getVisibleStepIds,
+    onContinuationStart,
     onSessionStart,
 }) {
     const players = getPlayers()
@@ -94,7 +105,13 @@ function startSession({
         tournamentConfig: draft.tournament.buildConfig,
     })
     if (session) {
+        const { continuation } = draft
         clearSetupNotice()
+        draft.continuation = null
+        if (continuation && onContinuationStart) {
+            onContinuationStart({ continuation, players, sessionDraft: session })
+            return
+        }
         onSessionStart(session)
     }
 }
@@ -136,6 +153,9 @@ function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, cour
     })
 
     courtsDecBtn.addEventListener("click", () => {
+        if (draft.continuation && draft.gameMode === "tournament") {
+            return
+        }
         const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
         if (courtCountTarget.courtCount <= 1) {
             return
@@ -144,6 +164,9 @@ function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, cour
         refreshSessionView()
     })
     courtsIncBtn.addEventListener("click", () => {
+        if (draft.continuation && draft.gameMode === "tournament") {
+            return
+        }
         const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
         courtCountTarget.courtCount += 1
         refreshSessionView()
@@ -156,6 +179,7 @@ function bindWizardNavigation({
     getFinalStepId,
     getTournamentBlockingError,
     getVisibleStepIds,
+    onCancelContinuation,
     sessionBackBtn,
     sessionNextBtn,
     sessionStepButtons,
@@ -169,6 +193,7 @@ function bindWizardNavigation({
             getTournamentBlockingError,
             getFinalStepId,
             getVisibleStepIds,
+            onCancelContinuation,
             setCurrentStep,
         })
 
@@ -205,6 +230,7 @@ function bindWizardControls({
     getVisibleStepIds,
     initTournamentSetup,
     modeSelector,
+    onCancelContinuation,
     onStartSession,
     refreshSessionView,
     selectAllBtn,
@@ -227,6 +253,7 @@ function bindWizardControls({
         getFinalStepId,
         getTournamentBlockingError,
         getVisibleStepIds,
+        onCancelContinuation,
         sessionBackBtn,
         sessionNextBtn,
         sessionStepButtons,

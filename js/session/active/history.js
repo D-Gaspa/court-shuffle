@@ -98,6 +98,54 @@ function buildTournamentSeriesHistory(series) {
     }
 }
 
+function cloneContinuationForHistory(continuation) {
+    if (!continuation) {
+        return null
+    }
+
+    return {
+        sourcePhaseIndex: continuation.sourcePhaseIndex ?? null,
+        sourceTournamentIndex: continuation.sourceTournamentIndex ?? null,
+        inheritedPhaseIndexes: Array.isArray(continuation.inheritedPhaseIndexes)
+            ? [...continuation.inheritedPhaseIndexes]
+            : [],
+        addedPlayers: Array.isArray(continuation.addedPlayers) ? [...continuation.addedPlayers] : [],
+        removedPlayers: Array.isArray(continuation.removedPlayers) ? [...continuation.removedPlayers] : [],
+        abandonedFutureTournamentIndexes: Array.isArray(continuation.abandonedFutureTournamentIndexes)
+            ? [...continuation.abandonedFutureTournamentIndexes]
+            : [],
+        createdAt: continuation.createdAt || null,
+        inheritedConfig: continuation.inheritedConfig ? { ...continuation.inheritedConfig } : null,
+        editedConfig: continuation.editedConfig ? { ...continuation.editedConfig } : null,
+    }
+}
+
+function buildTournamentHistoryPhase(phase) {
+    const tournamentSeries = buildTournamentSeriesHistory(phase?.tournamentSeries)
+    if (tournamentSeries.tournaments.length === 0) {
+        return null
+    }
+
+    return {
+        id: phase.id,
+        createdAt: phase.createdAt,
+        players: Array.isArray(phase.players) ? [...phase.players] : [],
+        courtCount: phase.courtCount || tournamentSeries.courtCount || 1,
+        allowNotStrictDoubles: Boolean(phase.allowNotStrictDoubles),
+        tournamentConfig: phase.tournamentConfig ? { ...phase.tournamentConfig } : null,
+        tournamentSeries,
+        continuation: cloneContinuationForHistory(phase.continuation),
+    }
+}
+
+function buildTournamentHistoryPhases(session) {
+    if (!Array.isArray(session?.phases)) {
+        return []
+    }
+
+    return session.phases.map(buildTournamentHistoryPhase).filter(Boolean)
+}
+
 function buildPlayedSessionRounds(rounds) {
     if (!Array.isArray(rounds)) {
         return []
@@ -129,6 +177,21 @@ function buildBaseHistoryEntry(session) {
 }
 
 function buildTournamentHistoryEntry(session, historyEntry) {
+    const phases = buildTournamentHistoryPhases(session)
+    if (phases.length > 0) {
+        const currentPhase = phases.at(-1)
+        historyEntry.currentPhaseIndex = phases.length - 1
+        historyEntry.phases = phases
+        historyEntry.players = currentPhase.players
+        historyEntry.courtCount = currentPhase.courtCount
+        historyEntry.allowNotStrictDoubles = currentPhase.allowNotStrictDoubles
+        historyEntry.tournamentConfig = currentPhase.tournamentConfig
+        historyEntry.tournamentSeries = currentPhase.tournamentSeries
+        historyEntry.tournamentFormat = currentPhase.tournamentSeries.format
+        historyEntry.tournamentTeamSize = currentPhase.tournamentSeries.matchType === "singles" ? 1 : 2
+        return historyEntry
+    }
+
     if (session.tournamentSeries) {
         const tournamentSeries = buildTournamentSeriesHistory(session.tournamentSeries)
         if (tournamentSeries.tournaments.length === 0) {

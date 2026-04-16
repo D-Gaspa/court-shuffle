@@ -1,0 +1,27 @@
+.continuation-summary {
+    border: 1px solid color-mix(in srgb, var(--clay), var(--border) 55%);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--clay-glow), transparent 58%);
+    padding: 14px 16px;
+}
+
+.continuation-summary-body {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.continuation-summary-title {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.continuation-summary-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}

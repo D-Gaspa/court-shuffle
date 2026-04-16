@@ -6,6 +6,7 @@ import {
     persistTournamentSeriesAliases,
     syncTournamentSeriesAliases,
 } from "../../tournament/series/sync.js"
+import { canContinueTournamentSession } from "../continuation/eligibility.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament/active.js"
 import { reconcileTournamentRoundsAfterScoreChange } from "./tournament/score-editing.js"
@@ -33,6 +34,10 @@ function resolveRenderableRoundInfo(session) {
 
 function renderUnavailableSessionState(session, ui) {
     ui.roundInfo.textContent = `${session.players.length} players · ${getModeLabel(session)}`
+    if (ui.continueSessionBtn) {
+        ui.continueSessionBtn.hidden = true
+        ui.continueSessionBtn.disabled = true
+    }
     if (ui.roundPrefix) {
         ui.roundPrefix.hidden = false
     }
@@ -95,6 +100,12 @@ function renderActiveSession(state, saveState, ui) {
         ? ` · Tournament ${(session.tournamentSeries.currentTournamentIndex || 0) + 1} of ${session.tournamentSeries.maxTournaments}`
         : ""
     ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
+    if (ui.continueSessionBtn) {
+        const canContinue = canContinueTournamentSession(session)
+        ui.continueSessionBtn.textContent = "Change Roster"
+        ui.continueSessionBtn.hidden = !canContinue
+        ui.continueSessionBtn.disabled = !canContinue
+    }
 
     if (ui.tournamentSeriesNav) {
         ui.tournamentSeriesNav.hidden = true

@@ -94,7 +94,7 @@ function buildSuccessfulPreview(run, seed, courtCount) {
 }
 
 function buildDoublesPreview({ players, format, allowNotStrictDoubles, advanced, courtCount, seed, state }) {
-    const result = buildOptimizedDoublesSeriesRuns({
+    const result = buildDoublesFirstRun({
         players,
         format,
         allowNotStrictDoubles,
@@ -105,11 +105,10 @@ function buildDoublesPreview({ players, format, allowNotStrictDoubles, advanced,
         courtCount,
         rng: state.rng,
     })
-    const [run] = result.runs || []
-    if (!run) {
+    if (!result.run) {
         return buildFailedPreview(result.errors, seed)
     }
-    return buildSuccessfulPreview(run, seed, courtCount)
+    return buildSuccessfulPreview(result.run, seed, courtCount)
 }
 
 function buildTournamentPreview({ players, format, teamSize, courtCount, allowNotStrictDoubles, seed, advanced }) {

@@ -13,6 +13,7 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
         selectedPlayers: new Set(),
         gameMode: null,
         setupNotice: "",
+        continuation: null,
         free: {
             teamCount: 2,
         },
@@ -21,7 +22,10 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
     }
 }
 
-function getVisibleStepIds() {
+function getVisibleStepIds(draft) {
+    if (draft?.continuation) {
+        return ["roster", "setup"]
+    }
     return ["roster", "mode", "setup"]
 }
 
@@ -46,6 +50,7 @@ function applySessionSetupPrefill(draft, prefill, createDefaultTournamentDraft) 
     draft.selectedPlayers = new Set(prefill.selectedPlayers || [])
     draft.gameMode = prefill.gameMode || null
     draft.setupNotice = prefill.notice || ""
+    draft.continuation = prefill.continuation || null
     draft.free = {
         teamCount: prefill.free?.teamCount || 2,
     }
@@ -82,9 +87,9 @@ function reconcileDraftWithRoster(draft, roster, reconcileTournamentDraft) {
     clampFreeTeamCount(draft)
     reconcileTournamentDraft(draft.tournament, [...draft.selectedPlayers])
 
-    const visibleStepIds = getVisibleStepIds(draft.gameMode)
+    const visibleStepIds = getVisibleStepIds(draft)
     if (!visibleStepIds.includes(draft.currentStep)) {
-        draft.currentStep = getFinalStepId(draft.gameMode)
+        draft.currentStep = getFinalStepId(draft)
     }
 }
 

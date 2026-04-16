@@ -1,6 +1,7 @@
 import { createAnalyticsQueryPanel } from "../analytics/view.js"
 import { buildHistoryCardHeader, formatDate } from "./render-header.js"
 import { buildHistoryCardBody } from "./render-rounds.js"
+import { isMultiPhaseHistorySession } from "./session-phases.js"
 
 function renderHistorySection({ title, subtitle, sessions, container, actions }) {
     const section = document.createElement("section")
@@ -93,11 +94,14 @@ function renderHistory({
     summary.className = "history-query-summary"
     summary.appendChild(createSummaryPill(analytics.summary.resultSummary))
     summary.appendChild(createSummaryPill("Active history only"))
+    if (analytics.filteredSessions.some((session) => isMultiPhaseHistorySession(session))) {
+        summary.appendChild(createSummaryPill("Includes continuation phases"))
+    }
     container.appendChild(summary)
 
     renderHistorySection({
         title: hasArchived ? "Saved Sessions" : "Session History",
-        subtitle: analytics.summary.timeLabel,
+        subtitle: buildHistorySectionSubtitle(analytics.summary.timeLabel, analytics.filteredSessions),
         sessions: analytics.filteredSessions,
         container,
         actions: actions.active,
@@ -119,6 +123,13 @@ function createSummaryPill(text) {
     pill.className = "history-query-pill"
     pill.textContent = text
     return pill
+}
+
+function buildHistorySectionSubtitle(timeLabel, sessions) {
+    if (!sessions.some((session) => isMultiPhaseHistorySession(session))) {
+        return timeLabel
+    }
+    return `${timeLabel} Continued nights stay grouped under one saved session.`
 }
 
 export { renderHistory }

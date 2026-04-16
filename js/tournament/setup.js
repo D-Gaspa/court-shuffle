@@ -14,6 +14,9 @@ const MIN_REQUIRED_SIT_OUT_POOL = 3
 
 const formatSelector = document.getElementById("format-selector")
 const teamSizeSelector = document.getElementById("tournament-team-size")
+const tournamentFormatGroup = document.getElementById("tournament-format-group")
+const tournamentTeamSizeGroup = document.getElementById("tournament-team-size-group")
+const tournamentAdvancedActions = document.getElementById("tournament-advanced-actions")
 const tournamentHint = document.getElementById("tournament-hint")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
@@ -72,9 +75,19 @@ function getTournamentHint(format) {
     return formatLabels[format] || ""
 }
 
+function getContinuationTournamentHint(tournamentDraft) {
+    return `Continuation keeps ${getTournamentHint(tournamentDraft.format).toLowerCase()} and the previous match type. Court count stays locked${tournamentDraft.teamSize === 2 ? ", but you can still adjust 2v1 availability" : "."}`
+}
+
 function syncSelectorSelection(selector, attributeName, selectedValue) {
     for (const button of selector?.querySelectorAll("button") || []) {
         button.classList.toggle("selected", button.dataset[attributeName] === String(selectedValue))
+    }
+}
+
+function setSelectorDisabledState(selector, disabled) {
+    for (const button of selector?.querySelectorAll("button") || []) {
+        button.disabled = disabled
     }
 }
 
@@ -119,13 +132,21 @@ function validateTournamentAdvancedState({ tournamentDraft, selectedPlayers }) {
         courtCount: tournamentDraft.courtCount,
     })
 }
-function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange }) {
+function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange, continuation = null }) {
     const players = Array.isArray(selectedPlayers) ? selectedPlayers : []
+    const isContinuation = Boolean(continuation)
     reconcileTournamentDraft(tournamentDraft, players)
 
     syncSelectorSelection(formatSelector, "format", tournamentDraft.format)
     syncSelectorSelection(teamSizeSelector, "teamSize", tournamentDraft.teamSize)
-    tournamentHint.textContent = getTournamentHint(tournamentDraft.format)
+    setSelectorDisabledState(formatSelector, Boolean(continuation?.lockedFields?.format))
+    setSelectorDisabledState(teamSizeSelector, Boolean(continuation?.lockedFields?.teamSize))
+    tournamentFormatGroup.hidden = Boolean(continuation?.lockedFields?.format)
+    tournamentTeamSizeGroup.hidden = Boolean(continuation?.lockedFields?.teamSize)
+    tournamentAdvancedActions.hidden = isContinuation
+    tournamentHint.textContent = isContinuation
+        ? getContinuationTournamentHint(tournamentDraft)
+        : getTournamentHint(tournamentDraft.format)
 
     const showAllowToggle = tournamentDraft.teamSize === 2
     const canEnableTwoVsOne = canUseTwoVsOne(players, tournamentDraft.teamSize)
@@ -136,7 +157,12 @@ function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange }) {
         allow2v1Checkbox.checked = false
     }
 
-    advancedDialogController.render({ tournamentDraft, selectedPlayers: players, onChange })
+    advancedDialogController.render({
+        tournamentDraft,
+        selectedPlayers: players,
+        onChange,
+        lockAdvanced: isContinuation,
+    })
 }
 
 function initTournamentSetup({ onChange }) {

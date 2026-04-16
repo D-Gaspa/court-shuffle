@@ -43,10 +43,25 @@ function getStepCaption(currentStep, gameMode) {
     return typeof caption === "string" ? caption : caption?.[gameMode] || caption?.default || ""
 }
 
+function hasContinuationRosterChange(draft) {
+    const previousPlayers = new Set(draft?.continuation?.basePlayers || [])
+    if (previousPlayers.size !== draft.selectedPlayers.size) {
+        return true
+    }
+    for (const player of draft.selectedPlayers) {
+        if (!previousPlayers.has(player)) {
+            return true
+        }
+    }
+    return false
+}
+
 function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, getVisibleStepIds) {
     const selectedCount = draft.selectedPlayers.size
-    const rosterComplete = selectedCount >= 2
-    const modeComplete = ["free", "tournament", "singles", "doubles"].includes(draft.gameMode)
+    const continuationRosterChanged = !draft.continuation || hasContinuationRosterChange(draft)
+    const rosterComplete = selectedCount >= 2 && continuationRosterChanged
+    const modeComplete =
+        Boolean(draft.continuation) || ["free", "tournament", "singles", "doubles"].includes(draft.gameMode)
     const freeSetupComplete =
         rosterComplete && draft.free.teamCount >= 2 && draft.free.teamCount <= Math.max(2, selectedCount)
     const structuredSetupComplete = selectedCount >= getStructuredMinPlayers(draft.gameMode, draft.structured)
@@ -54,7 +69,8 @@ function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, get
         draft.tournament.teamSize,
         draft.tournament.allowNotStrictDoubles,
     )
-    const tournamentSetupComplete = selectedCount >= tournamentMinPlayers && Boolean(draft.tournament.preview?.ok)
+    const tournamentSetupComplete =
+        selectedCount >= tournamentMinPlayers && Boolean(draft.tournament.preview?.ok) && continuationRosterChanged
     let setupComplete = false
     if (draft.gameMode === "tournament") {
         setupComplete = tournamentSetupComplete
@@ -65,18 +81,18 @@ function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, get
     }
     const advancedComplete =
         draft.gameMode === "tournament" && setupComplete && getTournamentBlockingError().length === 0
-    const visibleSteps = getVisibleStepIds(draft.gameMode)
+    const visibleSteps = getVisibleStepIds(draft)
     let unlockedIndex = 0
-    if (rosterComplete) {
+    if (rosterComplete && visibleSteps.length > 1) {
         unlockedIndex = Math.min(1, visibleSteps.length - 1)
     }
-    if (rosterComplete && modeComplete) {
+    if (rosterComplete && modeComplete && visibleSteps.length > 2) {
         unlockedIndex = Math.min(2, visibleSteps.length - 1)
     }
 
     return {
         visibleSteps,
-        finalStep: getFinalStepId(draft.gameMode),
+        finalStep: getFinalStepId(draft),
         completed: {
             roster: rosterComplete,
             mode: modeComplete,

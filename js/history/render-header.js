@@ -1,4 +1,5 @@
 import { getModeLabel } from "../shared/utils.js"
+import { getHistorySessionPlayers, getHistoryTournamentPhases, getHistoryTournamentRuns } from "./session-phases.js"
 
 function formatDate(isoString) {
     try {
@@ -33,13 +34,6 @@ function buildChevronSvg() {
     return svg
 }
 
-function getScoredTournamentRuns(session) {
-    if (!Array.isArray(session.tournamentSeries?.tournaments)) {
-        return null
-    }
-    return session.tournamentSeries.tournaments.filter((run) => Array.isArray(run.rounds) && run.rounds.length > 0)
-}
-
 function resolveSessionChampionName(session) {
     if (
         session.mode === "tournament" &&
@@ -52,8 +46,8 @@ function resolveSessionChampionName(session) {
         }
     }
 
-    const seriesRuns = getScoredTournamentRuns(session)
-    if (!seriesRuns) {
+    const seriesRuns = getHistoryTournamentRuns(session)
+    if (seriesRuns.length === 0) {
         return null
     }
 
@@ -72,14 +66,20 @@ function resolveSessionChampionName(session) {
 }
 
 function buildHistoryCardMeta(session) {
-    const seriesTournaments = getScoredTournamentRuns(session)
-    const roundCount = seriesTournaments
+    const seriesTournaments = getHistoryTournamentRuns(session)
+    const phaseCount = getHistoryTournamentPhases(session).length
+    const playerCount = getHistorySessionPlayers(session).length
+    const hasSeriesRuns = seriesTournaments.length > 0
+    const roundCount = hasSeriesRuns
         ? seriesTournaments.reduce((sum, run) => sum + (run.rounds?.length || 0), 0)
         : session.rounds.length
     const modeLabel = getModeLabel(session)
-    let metaText = `${session.players.length} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
-    if (seriesTournaments && seriesTournaments.length > 0) {
+    let metaText = `${playerCount} players · ${roundCount} round${roundCount !== 1 ? "s" : ""} · ${modeLabel}`
+    if (hasSeriesRuns) {
         metaText += ` · ${seriesTournaments.length} tournament${seriesTournaments.length !== 1 ? "s" : ""}`
+    }
+    if (phaseCount > 1) {
+        metaText += ` · ${phaseCount} phases`
     }
 
     const championName = resolveSessionChampionName(session)
@@ -113,4 +113,4 @@ function buildHistoryCardHeader(session, dateStr) {
     return headerEl
 }
 
-export { buildHistoryCardHeader, buildHistoryCardMeta, formatDate, getScoredTournamentRuns, resolveSessionChampionName }
+export { buildHistoryCardHeader, buildHistoryCardMeta, formatDate, resolveSessionChampionName }

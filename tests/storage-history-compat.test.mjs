@@ -114,4 +114,7 @@ test("parse accepts compacted history tournament series with legacy current tour
 
     assert.equal(imported.state.history[0].tournamentSeries.currentTournamentIndex, 1)
     assert.equal(imported.state.history[0].tournamentSeries.tournaments.length, 1)
+    assert.equal(imported.state.history[0].currentPhaseIndex, 0)
+    assert.equal(imported.state.history[0].phases.length, 1)
+    assert.equal(imported.state.history[0].phases[0].id, "session-1-phase-0")
 })

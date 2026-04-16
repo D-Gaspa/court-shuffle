@@ -1,9 +1,11 @@
 import { HISTORY_REMIX_ACTIONS } from "./remix.js"
+import { isMultiPhaseHistorySession } from "./session-phases.js"
 
 function createRemixActions(session, { launchHistoryRemix, switchView }) {
+    const reuseLabel = isMultiPhaseHistorySession(session) ? "Reuse Latest Phase" : "Reuse Players"
     const actions = [
         {
-            label: "Reuse Players",
+            label: reuseLabel,
             className: "btn btn-ghost btn-sm",
             onClick: (entry) => launchHistoryRemix(entry, HISTORY_REMIX_ACTIONS.reusePlayers, switchView),
         },
@@ -30,13 +32,16 @@ function createRemixActions(session, { launchHistoryRemix, switchView }) {
 
 function createHistoryActions({ launchHistoryRemix, persist, refreshHistory, showConfirmDialog, state, switchView }) {
     function resolveActiveHistoryActions(session) {
+        const archiveMessage = isMultiPhaseHistorySession(session)
+            ? "Move this saved session and all of its continuation phases into the archive?"
+            : "Move this session into the archive?"
         return [
             ...createRemixActions(session, { launchHistoryRemix, switchView }),
             {
                 label: "Archive Session",
                 className: "btn btn-ghost btn-sm btn-danger",
                 onClick: (entry) => {
-                    showConfirmDialog("Archive Session", "Move this session into the archive?", () => {
+                    showConfirmDialog("Archive Session", archiveMessage, () => {
                         state.history = state.history.filter((historyEntry) => historyEntry.id !== entry.id)
                         state.archivedHistory.unshift(entry)
                         persist()

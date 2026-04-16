@@ -1,15 +1,117 @@
 import { attachTournamentCourtSchedule } from "../courts.js"
 
+function createOriginalPhaseContinuation(createdAt) {
+    return {
+        sourcePhaseIndex: null,
+        sourceTournamentIndex: null,
+        inheritedPhaseIndexes: [],
+        addedPlayers: [],
+        removedPlayers: [],
+        abandonedFutureTournamentIndexes: [],
+        createdAt,
+        inheritedConfig: {
+            format: false,
+            teamSize: false,
+            courtCount: false,
+            allowNotStrictDoubles: false,
+        },
+        editedConfig: {
+            courtCount: false,
+            allowNotStrictDoubles: false,
+        },
+    }
+}
+
+function createTournamentSessionPhase({
+    allowNotStrictDoubles,
+    continuation,
+    courtCount,
+    createdAt,
+    id,
+    players,
+    tournamentConfig,
+    tournamentSeries,
+}) {
+    return {
+        id,
+        createdAt,
+        players: [...players],
+        courtCount,
+        allowNotStrictDoubles,
+        tournamentConfig,
+        tournamentSeries,
+        continuation: continuation || createOriginalPhaseContinuation(createdAt),
+    }
+}
+
+function buildLegacyPhaseFromSession(session) {
+    return createTournamentSessionPhase({
+        id: `${session.id}-phase-0`,
+        createdAt: session.date,
+        players: session.players || [],
+        courtCount: session.courtCount || 1,
+        allowNotStrictDoubles: Boolean(session.allowNotStrictDoubles),
+        tournamentConfig: session.tournamentConfig,
+        tournamentSeries: session.tournamentSeries,
+    })
+}
+
+function ensureTournamentSessionPhases(session) {
+    if (!(session?.mode === "tournament")) {
+        return null
+    }
+
+    if (!Array.isArray(session.phases) || session.phases.length === 0) {
+        if (!session.tournamentSeries) {
+            return null
+        }
+        session.phases = [buildLegacyPhaseFromSession(session)]
+        session.currentPhaseIndex = 0
+    }
+
+    if (!Number.isInteger(session.currentPhaseIndex) || session.currentPhaseIndex < 0) {
+        session.currentPhaseIndex = 0
+    }
+    if (session.currentPhaseIndex >= session.phases.length) {
+        session.currentPhaseIndex = session.phases.length - 1
+    }
+
+    return session.phases[session.currentPhaseIndex] || null
+}
+
+function getCurrentSessionPhase(session) {
+    return ensureTournamentSessionPhases(session)
+}
+
+function getCurrentTournamentSeries(session) {
+    const phase = getCurrentSessionPhase(session)
+    return phase?.tournamentSeries || session?.tournamentSeries || null
+}
+
 function getCurrentTournamentRun(session) {
-    const series = session?.tournamentSeries
+    const series = getCurrentTournamentSeries(session)
     if (!series) {
         return null
     }
     return series.tournaments?.[series.currentTournamentIndex] || null
 }
 
-function syncTournamentSeriesAliases(session) {
-    const series = session?.tournamentSeries
+function syncCurrentPhaseToSession(session) {
+    const phase = getCurrentSessionPhase(session)
+    if (!phase) {
+        return null
+    }
+
+    session.players = phase.players
+    session.courtCount = phase.courtCount
+    session.allowNotStrictDoubles = phase.allowNotStrictDoubles
+    session.tournamentConfig = phase.tournamentConfig
+    session.tournamentSeries = phase.tournamentSeries
+    return phase
+}
+
+function syncTournamentRunAliases(session) {
+    const series = getCurrentTournamentSeries(session)
     if (!series) {
         return null
     }
@@ -28,7 +130,7 @@ function syncTournamentSeriesAliases(session) {
     session.tournamentRound = run.tournamentRound
     session.allRoundsGenerated = run.allRoundsGenerated
     session.tournamentComplete = run.tournamentComplete === true
-    session.courtCount = series.courtCount || 1
+    session.courtCount = series.courtCount || session.courtCount || 1
     session.allowNotStrictDoubles = series.allowNotStrictDoubles
     session.tournamentLevelSitOuts = run.tournamentLevelSitOuts || []
     if (Array.isArray(run.rounds)) {
@@ -39,7 +141,21 @@ function syncTournamentSeriesAliases(session) {
     return run
 }
 
-function persistTournamentSeriesAliases(session) {
+function persistSessionToCurrentPhase(session) {
+    const phase = getCurrentSessionPhase(session)
+    if (!phase) {
+        return null
+    }
+
+    phase.players = session.players
+    phase.courtCount = session.courtCount
+    phase.allowNotStrictDoubles = session.allowNotStrictDoubles
+    phase.tournamentConfig = session.tournamentConfig
+    phase.tournamentSeries = session.tournamentSeries
+    return phase
+}
+
+function persistTournamentRunAliases(session) {
     const run = getCurrentTournamentRun(session)
     if (!run) {
         return null
@@ -57,8 +173,19 @@ function persistTournamentSeriesAliases(session) {
     return run
 }
 
+function syncTournamentSeriesAliases(session) {
+    syncCurrentPhaseToSession(session)
+    return syncTournamentRunAliases(session)
+}
+
+function persistTournamentSeriesAliases(session) {
+    const run = persistTournamentRunAliases(session)
+    persistSessionToCurrentPhase(session)
+    return run
+}
+
 function moveToNextTournamentInSeries(session) {
-    const series = session?.tournamentSeries
+    const series = getCurrentTournamentSeries(session)
     if (!series) {
         return false
     }
@@ -72,7 +199,7 @@ function moveToNextTournamentInSeries(session) {
 }
 
 function moveToPrevTournamentInSeries(session) {
-    const series = session?.tournamentSeries
+    const series = getCurrentTournamentSeries(session)
     if (!series) {
         return false
     }
@@ -86,14 +213,14 @@ function moveToPrevTournamentInSeries(session) {
 }
 
 function isSeriesTournamentSession(session) {
-    return Boolean(session?.mode === "tournament" && session?.tournamentSeries)
+    return Boolean(session?.mode === "tournament" && getCurrentTournamentSeries(session))
 }
 
 function hasMultipleTournamentsInSeries(session) {
     if (!isSeriesTournamentSession(session)) {
         return false
     }
-    const series = session.tournamentSeries
+    const series = getCurrentTournamentSeries(session)
     const count =
         Array.isArray(series.tournaments) && series.tournaments.length > 0
             ? series.tournaments.length
@@ -102,11 +229,18 @@ function hasMultipleTournamentsInSeries(session) {
 }
 
 export {
+    createOriginalPhaseContinuation,
+    createTournamentSessionPhase,
+    ensureTournamentSessionPhases,
+    getCurrentSessionPhase,
     getCurrentTournamentRun,
+    getCurrentTournamentSeries,
     hasMultipleTournamentsInSeries,
     isSeriesTournamentSession,
     moveToNextTournamentInSeries,
     moveToPrevTournamentInSeries,
+    persistSessionToCurrentPhase,
     persistTournamentSeriesAliases,
+    syncCurrentPhaseToSession,
     syncTournamentSeriesAliases,
 }

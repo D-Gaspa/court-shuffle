@@ -36,11 +36,12 @@ function clampCourtCount({ draft, matchMode, courtCountValue, courtCountLabel, c
     const maxCourts = Math.max(1, Math.floor(playerCount / playersPerCourt))
     const nextCourtCount = Math.min(Math.max(1, state.courtCount), maxCourts)
     state.setCourtCount(nextCourtCount)
+    const lockedForContinuation = Boolean(draft.continuation) && draft.gameMode === "tournament"
 
     courtCountValue.textContent = nextCourtCount
     courtCountLabel.textContent = nextCourtCount === 1 ? "court" : "courts"
-    courtsDecBtn.disabled = nextCourtCount <= 1
-    courtsIncBtn.disabled = nextCourtCount >= maxCourts || playerCount < 2
+    courtsDecBtn.disabled = lockedForContinuation || nextCourtCount <= 1
+    courtsIncBtn.disabled = lockedForContinuation || nextCourtCount >= maxCourts || playerCount < 2
 }
 
 function updateCourtHint({ draft, matchMode, courtHint }) {

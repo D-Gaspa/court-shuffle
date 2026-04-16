@@ -6,7 +6,7 @@ import { ID_RADIX, ID_SLICE_END, ID_SLICE_START } from "../../core/constants.js"
 import { generateOptimalRoundSequence, wrapFreeRounds } from "../../shuffle/free.js"
 import { generateStructuredRounds } from "../../shuffle/structured.js"
 import { buildTournamentPreview, buildTournamentSeries } from "../../tournament/series/build.js"
-import { syncTournamentSeriesAliases } from "../../tournament/series/sync.js"
+import { createTournamentSessionPhase, syncTournamentSeriesAliases } from "../../tournament/series/sync.js"
 
 function generateSessionId() {
     return Date.now().toString(ID_RADIX) + Math.random().toString(ID_RADIX).slice(ID_SLICE_START, ID_SLICE_END)
@@ -25,9 +25,22 @@ function buildTournamentSessionConfig(config, courtCount, seed) {
 }
 
 function buildTournamentSessionState({ players, courtCount, config, seed, series }) {
+    const id = generateSessionId()
+    const date = new Date().toISOString()
+    const tournamentConfig = buildTournamentSessionConfig(config, courtCount, seed)
+    const initialPhase = createTournamentSessionPhase({
+        id: `${id}-phase-0`,
+        createdAt: date,
+        players,
+        courtCount,
+        allowNotStrictDoubles: config.allowNotStrictDoubles,
+        tournamentConfig,
+        tournamentSeries: series,
+    })
+
     return {
-        id: generateSessionId(),
-        date: new Date().toISOString(),
+        id,
+        date,
         players,
         teamCount: 2,
         mode: "tournament",
@@ -42,8 +55,10 @@ function buildTournamentSessionState({ players, courtCount, config, seed, series
         tournamentRound: 0,
         allRoundsGenerated: false,
         allowNotStrictDoubles: config.allowNotStrictDoubles,
-        tournamentConfig: buildTournamentSessionConfig(config, courtCount, seed),
+        tournamentConfig,
         tournamentSeries: series,
+        currentPhaseIndex: 0,
+        phases: [initialPhase],
     }
 }
 

@@ -1,5 +1,65 @@
 import { getStepCaption, MODE_HINTS } from "../wizard/state.js"
 
+const DEFAULT_SETUP_TITLE = "New Session"
+const DEFAULT_SETUP_SUBTITLE = "Pick who's playing today and configure teams."
+const DEFAULT_START_LABEL = "Shuffle & Start"
+const CONTINUATION_START_LABEL = "Start Roster Change"
+const CONTINUATION_BACK_LABEL = "Cancel Continuation"
+const DEFAULT_BACK_LABEL = "Back"
+
+function buildContinuationPhaseTag(continuation) {
+    const phaseIndex = continuation?.sourcePhaseIndex
+    return Number.isInteger(phaseIndex) ? `Phase ${phaseIndex + 1}` : "Continuation"
+}
+
+function buildContinuationTournamentTag(continuation) {
+    const tournamentIndex = continuation?.sourceTournamentIndex
+    return Number.isInteger(tournamentIndex) ? `After Tournament ${tournamentIndex + 1}` : "Latest completion"
+}
+
+function buildContinuationDetail(setupNotice) {
+    if (setupNotice) {
+        return setupNotice
+    }
+    return "Make a real roster change, keep the locked tournament shape, and then start the next phase after the latest completed mini tournament."
+}
+
+function renderSetupShell({
+    draft,
+    sessionBackBtn,
+    sessionConfig,
+    sessionContinuationBanner,
+    sessionContinuationDetail,
+    sessionContinuationPhaseTag,
+    sessionContinuationTitle,
+    sessionContinuationTournamentTag,
+    sessionSetupSubtitle,
+    sessionSetupTitle,
+    startSessionLabel,
+}) {
+    const isContinuation = Boolean(draft.continuation)
+    sessionConfig.classList.toggle("is-continuation", isContinuation)
+    sessionContinuationBanner.hidden = !isContinuation
+
+    if (!isContinuation) {
+        sessionSetupTitle.textContent = DEFAULT_SETUP_TITLE
+        sessionSetupSubtitle.textContent = DEFAULT_SETUP_SUBTITLE
+        sessionBackBtn.textContent = DEFAULT_BACK_LABEL
+        startSessionLabel.textContent = DEFAULT_START_LABEL
+        return
+    }
+
+    sessionSetupTitle.textContent = "Change Roster For Next Phase"
+    sessionSetupSubtitle.textContent =
+        "Add or remove players first, then create the next phase from the latest completed mini tournament."
+    sessionContinuationTitle.textContent = "Roster change required before the next phase"
+    sessionContinuationDetail.textContent = buildContinuationDetail(draft.setupNotice)
+    sessionContinuationPhaseTag.textContent = buildContinuationPhaseTag(draft.continuation)
+    sessionContinuationTournamentTag.textContent = buildContinuationTournamentTag(draft.continuation)
+    startSessionLabel.textContent = CONTINUATION_START_LABEL
+    sessionBackBtn.textContent = draft.currentStep === "roster" ? CONTINUATION_BACK_LABEL : DEFAULT_BACK_LABEL
+}
+
 function syncStepperUi({
     draft,
     wizardState,
@@ -11,6 +71,7 @@ function syncStepperUi({
     startSessionBtn,
 }) {
     const currentIndex = wizardState.visibleSteps.indexOf(draft.currentStep)
+    const canCancelContinuation = Boolean(draft.continuation) && currentIndex <= 0
     for (const button of sessionStepButtons) {
         const stepId = button.dataset.sessionStep
         const visibleIndex = wizardState.visibleSteps.indexOf(stepId)
@@ -25,6 +86,10 @@ function syncStepperUi({
         button.classList.toggle("is-complete", isComplete && !isActive)
         button.classList.toggle("is-locked", isLocked)
         button.setAttribute("aria-selected", String(isActive))
+        const indexElement = button.querySelector(".session-step-index")
+        if (indexElement && isVisible) {
+            indexElement.textContent = String(visibleIndex + 1)
+        }
     }
 
     for (const panel of sessionStepPanels) {
@@ -35,7 +100,7 @@ function syncStepperUi({
     }
 
     sessionStepCaption.textContent = getStepCaption(draft.currentStep, draft.gameMode)
-    sessionBackBtn.disabled = currentIndex <= 0
+    sessionBackBtn.disabled = currentIndex <= 0 && !canCancelContinuation
     const isFinalStep = draft.currentStep === wizardState.finalStep
     sessionNextBtn.hidden = isFinalStep
     startSessionBtn.hidden = !isFinalStep
@@ -74,4 +139,4 @@ function renderSetupNotice(setupNotice, noticeElement) {
     noticeElement.textContent = setupNotice || ""
 }
 
-export { renderFreeSetup, renderModeStep, renderSetupNotice, syncStepperUi }
+export { renderFreeSetup, renderModeStep, renderSetupNotice, renderSetupShell, syncStepperUi }

@@ -118,8 +118,8 @@
                     <!-- Phase 1: Setup -->
                     <div id="session-setup" class="session-phase">
                         <div class="view-header">
-                            <h1>New Session</h1>
-                            <p>Pick who's playing today and configure teams.</p>
+                            <h1 id="session-setup-title">New Session</h1>
+                            <p id="session-setup-subtitle">Pick who's playing today and configure teams.</p>
                         </div>
 
                         <div id="no-roster-warning" class="warning-banner" hidden>
@@ -132,6 +132,19 @@
                         </div>
 
                         <div id="session-config" class="session-config">
+                            <div id="session-continuation-banner" class="session-continuation-banner" hidden>
+                                <div class="session-continuation-copy">
+                                    <span class="session-continuation-kicker">Continuation Phase</span>
+                                    <strong id="session-continuation-title">Roster change required before the next phase</strong>
+                                    <p id="session-continuation-detail">
+                                        Start a new phase from the latest completed mini tournament without discarding the session.
+                                    </p>
+                                </div>
+                                <div class="session-continuation-tags">
+                                    <span id="session-continuation-phase-tag" class="session-continuation-tag">Phase 1</span>
+                                    <span id="session-continuation-tournament-tag" class="session-continuation-tag">Tournament 1</span>
+                                </div>
+                            </div>
                             <div id="session-setup-notice" class="info-banner" hidden></div>
                             <div class="session-wizard-header">
                                 <div id="session-stepper" class="session-stepper" role="tablist" aria-label="Session setup steps">
@@ -265,21 +278,25 @@
                                             <div class="tournament-settings-header">
                                                 <span class="tournament-settings-badge">Tournament Settings</span>
                                             </div>
-                                            <h2 class="section-label">Format</h2>
-                                            <div id="format-selector" class="mode-selector">
-                                                <button type="button" class="format-btn mode-btn selected" data-format="consolation">Consolation</button>
-                                                <button type="button" class="format-btn mode-btn" data-format="elimination">Elimination</button>
-                                                <button type="button" class="format-btn mode-btn" data-format="round-robin">Round Robin</button>
+                                            <div id="tournament-format-group">
+                                                <h2 class="section-label">Format</h2>
+                                                <div id="format-selector" class="mode-selector">
+                                                    <button type="button" class="format-btn mode-btn selected" data-format="consolation">Consolation</button>
+                                                    <button type="button" class="format-btn mode-btn" data-format="elimination">Elimination</button>
+                                                    <button type="button" class="format-btn mode-btn" data-format="round-robin">Round Robin</button>
+                                                </div>
                                             </div>
 
-                                            <h2 class="section-label">Match Type</h2>
-                                            <div id="tournament-team-size" class="mode-selector mode-selector-2">
-                                                <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
-                                                <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
+                                            <div id="tournament-team-size-group">
+                                                <h2 class="section-label">Match Type</h2>
+                                                <div id="tournament-team-size" class="mode-selector mode-selector-2">
+                                                    <button type="button" class="team-size-btn mode-btn selected" data-team-size="1">Singles (1v1)</button>
+                                                    <button type="button" class="team-size-btn mode-btn" data-team-size="2">Doubles (2v2)</button>
+                                                </div>
                                             </div>
 
                                             <div id="tournament-hint" class="hint"></div>
-                                            <div class="tournament-advanced-actions">
+                                            <div id="tournament-advanced-actions" class="tournament-advanced-actions">
                                                 <span id="tournament-advanced-state" class="tournament-advanced-state" aria-live="polite">Auto</span>
                                                 <button type="button" id="tournament-advanced-btn" class="btn btn-ghost btn-sm">Advanced Settings</button>
                                             </div>
@@ -318,6 +335,11 @@
                                             <div id="tournament-distribution-hint" class="hint hint-distribution"></div>
                                             <div id="tournament-advanced-error" class="field-error" hidden></div>
                                         </div>
+
+                                        <div id="continuation-summary" class="config-group continuation-summary" hidden>
+                                            <h2 class="section-label">Before You Continue</h2>
+                                            <div id="continuation-summary-body" class="continuation-summary-body"></div>
+                                        </div>
                                     </div>
                                 </section>
 
@@ -334,7 +356,7 @@
                                         <line x1="15" y1="15" x2="21" y2="21" />
                                         <line x1="4" y1="4" x2="9" y2="9" />
                                     </svg>
-                                    Shuffle &amp; Start
+                                    <span id="start-session-label">Shuffle &amp; Start</span>
                                 </button>
                             </div>
                         </div>
@@ -348,6 +370,7 @@
                                 <p id="round-info" class="session-subtitle"></p>
                             </div>
                             <div class="session-actions">
+                                <button type="button" id="continue-session-btn" class="btn btn-accent btn-sm" hidden>Change Roster</button>
                                 <button type="button" id="prev-round-btn" class="btn btn-ghost btn-sm">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                                         <polyline points="15 18 9 12 15 6" />
@@ -424,23 +447,33 @@
                         <p>Past sessions, plus an archive for accidental removals.</p>
                     </div>
 
-                    <section class="history-backup-panel" aria-labelledby="history-backup-title">
-                        <div class="history-backup-copy">
-                            <p class="history-backup-kicker">Backup &amp; Restore</p>
-                            <h2 id="history-backup-title">Keep your local history portable</h2>
+                    <details class="history-backup-panel">
+                        <summary class="history-backup-summary-toggle" aria-labelledby="history-backup-title">
+                            <div class="history-backup-copy">
+                                <p class="history-backup-kicker">Backup &amp; Restore</p>
+                                <h2 id="history-backup-title">Keep your local history portable</h2>
+                                <p class="history-backup-summary-line">Collapsed by default to save space.</p>
+                            </div>
+                            <span class="history-backup-toggle" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                    <polyline points="18 9 12 15 6 9" />
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="history-backup-body">
                             <p class="history-backup-note">
                                 Export a full backup file before clearing browser data or switching devices, then import it later to restore your roster,
-                                active session, and history.
+                                active session, saved history, and any continuation phases inside those saved sessions.
                             </p>
+                            <div class="history-backup-actions">
+                                <button type="button" id="history-export-btn" class="btn btn-accent">Export Backup</button>
+                                <button type="button" id="history-import-btn" class="btn btn-ghost">Import Backup</button>
+                                <input type="file" id="history-import-input" accept="application/json,.json" hidden />
+                            </div>
+                            <p id="history-backup-summary" class="history-backup-summary"></p>
+                            <p id="history-backup-status" class="history-backup-status" aria-live="polite"></p>
                         </div>
-                        <div class="history-backup-actions">
-                            <button type="button" id="history-export-btn" class="btn btn-accent">Export Backup</button>
-                            <button type="button" id="history-import-btn" class="btn btn-ghost">Import Backup</button>
-                            <input type="file" id="history-import-input" accept="application/json,.json" hidden />
-                        </div>
-                        <p id="history-backup-summary" class="history-backup-summary"></p>
-                        <p id="history-backup-status" class="history-backup-status" aria-live="polite"></p>
-                    </section>
+                    </details>
 
                     <div id="history-list" class="history-list">
                         <!-- Populated by JS -->

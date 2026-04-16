@@ -1,5 +1,12 @@
 import { createStateExport, parseStateImport } from "../core/storage.js"
 
+function buildBackupSummaryMessage(state) {
+    const activeSessionLabel = state.activeSession ? "1 active session in progress" : "no active session"
+    return `${state.roster.length} roster players, ${state.history.length} saved sessions, ${state.archivedHistory.length} archived sessions, ${activeSessionLabel}. Saved sessions can include continuation phases. Last backup: ${formatBackupTimestamp(
+        state.lastExportedAt,
+    )}.`
+}
+
 function formatBackupTimestamp(isoString) {
     if (!isoString) {
         return "not yet exported"
@@ -26,14 +33,13 @@ function setStatus(statusElement, message, tone = "success") {
 
 function refreshSummary({ state, statusElement, summaryElement }) {
     const totalSavedSessions = state.history.length + state.archivedHistory.length
-    const activeSessionLabel = state.activeSession ? "1 active session in progress" : "no active session"
-
-    summaryElement.textContent = `${state.roster.length} roster players, ${state.history.length} saved sessions, ${state.archivedHistory.length} archived sessions, ${activeSessionLabel}. Last backup: ${formatBackupTimestamp(
-        state.lastExportedAt,
-    )}.`
+    summaryElement.textContent = buildBackupSummaryMessage(state)
 
     if (!statusElement.textContent) {
-        setStatus(statusElement, "Export a backup before clearing browser data or moving to another browser.")
+        setStatus(
+            statusElement,
+            "Export a backup before clearing browser data or moving to another browser. Continuation phases are preserved inside saved sessions.",
+        )
     }
     if (totalSavedSessions === 0 && !state.activeSession && state.roster.length === 0) {
         setStatus(statusElement, "Import an existing backup to restore your Court Shuffle data.")
@@ -70,7 +76,7 @@ function downloadBackup({ persist, state, statusElement, summaryElement }) {
     setStatus(
         statusElement,
         persistResult.ok
-            ? "Backup exported. Keep the JSON file somewhere you control."
+            ? "Backup exported. Keep the JSON file somewhere you control; saved continuation phases are included."
             : "Backup exported, but the local backup timestamp could not be saved in this browser.",
         persistResult.ok ? "success" : "error",
     )
@@ -86,7 +92,7 @@ async function importBackup({ file, persist, refreshAll, sortRoster, state, stat
     setStatus(
         statusElement,
         persistResult.ok
-            ? "Backup imported. Local data has been restored."
+            ? "Backup imported. Local data, including saved continuation phases, has been restored."
             : "Backup loaded, but browser storage could not be updated. Keep this tab open until the storage issue is fixed.",
         persistResult.ok ? "success" : "error",
     )
@@ -145,7 +151,7 @@ function setupActions({ elements, showConfirmDialog, ...controller }) {
     })
 }
 
-export function createHistoryBackupController({
+function createHistoryBackupController({
     elements,
     persist,
     refreshAll,
@@ -173,3 +179,5 @@ export function createHistoryBackupController({
         },
     }
 }
+
+export { buildBackupSummaryMessage, createHistoryBackupController }

@@ -1,6 +1,6 @@
 import { formatSets } from "../score-editor/sets.js"
 import { determineMatchWinner } from "../tournament/utils.js"
-import { getScoredTournamentRuns } from "./render-header.js"
+import { getHistoryTournamentPhases, getScoredTournamentRunsFromSeries } from "./session-phases.js"
 
 function createDiv(className, text) {
     const el = document.createElement("div")
@@ -197,6 +197,25 @@ function appendTournamentRun(body, run, index, total) {
     }
 }
 
+function appendPhaseLabel(body, phase, index, total) {
+    if (total <= 1) {
+        return
+    }
+
+    const title = document.createElement("div")
+    title.className = "history-round-label"
+    title.textContent = `Phase ${index + 1} of ${total}`
+    body.appendChild(title)
+
+    const meta = createDiv("history-round-content")
+    if (Array.isArray(phase.players) && phase.players.length > 0) {
+        appendChipGroup(meta, "Roster", phase.players)
+    }
+    if (meta.childElementCount > 0) {
+        body.appendChild(meta)
+    }
+}
+
 function appendActionButton(row, action, session) {
     const button = document.createElement("button")
     button.type = "button"
@@ -223,10 +242,15 @@ function buildHistoryCardBody(session, actions = []) {
     const body = document.createElement("div")
     body.className = "history-card-body"
 
-    const scoredSeriesRuns = getScoredTournamentRuns(session)
-    if (scoredSeriesRuns && scoredSeriesRuns.length > 0) {
-        for (let ti = 0; ti < scoredSeriesRuns.length; ti += 1) {
-            appendTournamentRun(body, scoredSeriesRuns[ti], ti, scoredSeriesRuns.length)
+    const phases = getHistoryTournamentPhases(session)
+    if (phases.length > 0) {
+        for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex += 1) {
+            const phase = phases[phaseIndex]
+            appendPhaseLabel(body, phase, phaseIndex, phases.length)
+            const scoredRuns = getScoredTournamentRunsFromSeries(phase.tournamentSeries)
+            for (let tournamentIndex = 0; tournamentIndex < scoredRuns.length; tournamentIndex += 1) {
+                appendTournamentRun(body, scoredRuns[tournamentIndex], tournamentIndex, scoredRuns.length)
+            }
         }
     } else {
         for (let r = 0; r < session.rounds.length; r += 1) {

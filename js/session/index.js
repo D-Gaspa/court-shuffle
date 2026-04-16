@@ -1,5 +1,6 @@
 import { buildHistoryRemixPrefill } from "../history/remix.js"
 import { buildTournamentPreview } from "../tournament/series/build.js"
+import { syncCurrentPhaseToSession } from "../tournament/series/sync.js"
 import {
     buildTournamentConfig,
     canUseTwoVsOne,
@@ -24,46 +25,17 @@ import {
     onPrevTournamentClick,
     onSkipTournamentClick,
 } from "./active/navigation.js"
+import { appendContinuationPhase, buildContinuationPhase } from "./continuation/build.js"
+import { buildContinuationPrefill } from "./continuation/prefill.js"
 import {
-    allow2v1Checkbox,
-    courtCountLabel,
-    courtCountValue,
-    courtHint,
-    courtsConfig,
-    courtsDecBtn,
-    courtsIncBtn,
-    deselectAllBtn,
     endSessionBtn,
-    modeHint,
-    modeSelector,
-    noRosterWarning,
-    notStrictDoublesGroup,
-    playerSelection,
-    selectAllBtn,
     sessionActive,
-    sessionBackBtn,
-    sessionConfig,
-    sessionNextBtn,
     sessionSetup,
-    sessionSetupNotice,
-    sessionStepButtons,
-    sessionStepCaption,
-    sessionStepPanels,
-    startSessionBtn,
-    teamCountValue,
-    teamSizeHint,
-    teamsConfig,
-    teamsDecBtn,
-    teamsIncBtn,
-    tournamentAdvancedError,
-    tournamentConfig,
-    tournamentDistributionGroup,
-    tournamentDistributionHint,
     tournamentSeriesNavToggleBtn,
-    tournamentSetupPanel,
     uiState,
 } from "./controller/elements.js"
 import { createSessionSetupController } from "./controller/setup/controller.js"
+import { sessionSetupUi } from "./controller/setup/ui.js"
 import { bindActiveSessionNavButtons, bindTournamentSeriesToggle } from "./controller/view/bindings.js"
 import {
     renderActiveSessionView,
@@ -88,54 +60,19 @@ const setupController = createSessionSetupController({
     initTournamentSetup,
     reconcileTournamentDraft,
     renderTournamentSetup,
-    ui: {
-        courtCountLabel,
-        courtCountValue,
-        courtHint,
-        courtsDecBtn,
-        courtsIncBtn,
-        deselectAllBtn,
-        modeHint,
-        modeSelector,
-        noRosterWarning,
-        playerSelection,
-        selectAllBtn,
-        sessionActive,
-        sessionBackBtn,
-        sessionConfig,
-        sessionNextBtn,
-        sessionSetupNotice,
-        sessionSetup,
-        sessionStepButtons,
-        sessionStepCaption,
-        sessionStepPanels,
-        startSessionBtn,
-        teamCountValue,
-        teamSizeHint,
-        teamsConfig,
-        teamsDecBtn,
-        teamsIncBtn,
-        allow2v1Checkbox,
-        courtsConfig,
-        notStrictDoublesGroup,
-        tournamentAdvancedError,
-        tournamentConfig,
-        tournamentDistributionGroup,
-        tournamentDistributionHint,
-        tournamentSetupPanel,
-    },
+    ui: sessionSetupUi,
     validateTournamentAdvancedState,
 })
 
 function refreshSessionView() {
-    if (globalState.activeSession) {
+    if (globalState.activeSession && !setupController.draft.continuation) {
         renderActiveSessionView({
             sessionSetup,
             sessionActive,
             globalState,
             saveState,
             uiState,
-            renderActiveSession,
+            renderActiveSession: renderCurrentActiveSession,
             syncGoTopButtonVisibility,
         })
         return
@@ -155,11 +92,41 @@ function refreshSessionView() {
     })
 }
 
+function renderCurrentActiveSession() {
+    renderActiveSession(globalState, saveState, uiState)
+}
+
+function launchContinuationSetup() {
+    if (!globalState.activeSession) {
+        return
+    }
+    const prefill = buildContinuationPrefill(globalState.activeSession, globalState.roster)
+    if (!prefill) {
+        return
+    }
+    setupController.applyExternalSetupPrefill(prefill)
+    refreshSessionView()
+}
+
 function bindSetupControls() {
     setupController.bindControls({
         buildSelectedSession,
         getRoster: () => globalState.roster,
         onChange: refreshSessionView,
+        onContinuationStart: ({ players }) => {
+            const phase = buildContinuationPhase({
+                session: globalState.activeSession,
+                players,
+                courtCount: setupController.draft.tournament.courtCount,
+                allowNotStrictDoubles: setupController.draft.tournament.allowNotStrictDoubles,
+            })
+            if (!phase) {
+                return
+            }
+            appendContinuationPhase(globalState.activeSession, phase)
+            saveState()
+            refreshSessionView()
+        },
         onSessionStart: ({
             clearSetupNotice,
             draft,
@@ -230,6 +197,7 @@ function launchHistoryRemix(session, action, switchView) {
 function bindActiveSessionControls(state, persistFn, confirmFn) {
     bindActiveSessionNavButtons({
         uiState,
+        onContinueSessionClick: launchContinuationSetup,
         onPrevRoundClick,
         onNextRoundClick,
         onPrevTournamentClick,
@@ -243,7 +211,7 @@ function bindActiveSessionControls(state, persistFn, confirmFn) {
         state,
         saveFn: persistFn,
         confirmFn,
-        renderFn: () => renderActiveSession(globalState, saveState, uiState),
+        renderFn: renderCurrentActiveSession,
         refreshFn: refreshSessionView,
     })
 }
@@ -252,6 +220,9 @@ function initSession(state, persistFn, confirmFn) {
     globalState = state
     saveState = persistFn
     askConfirm = confirmFn
+    if (globalState.activeSession?.mode === "tournament") {
+        syncCurrentPhaseToSession(globalState.activeSession)
+    }
     setTournamentAdvancedHistorySource(() => ({
         history: globalState.history,
         archivedHistory: globalState.archivedHistory,

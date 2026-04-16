@@ -1,21 +1,21 @@
 .history-backup-panel {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
     margin-bottom: var(--space-lg);
-    padding: var(--space-lg);
     background:
         radial-gradient(circle at top right, var(--court-glow), transparent 42%),
         linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated), var(--bg-card) 35%), var(--bg-card));
     border: 1px solid color-mix(in srgb, var(--court), var(--border) 45%);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
+    overflow: hidden;
 }
 
 .history-backup-copy {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
 }
 
 .history-backup-kicker {
@@ -26,16 +26,55 @@
     color: var(--court-light);
 }
 
-.history-backup-panel h2 {
-    font-size: 1.15rem;
+.history-backup-summary-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: transparent;
+    border: 0;
+    list-style: none;
+    cursor: pointer;
+}
+
+.history-backup-summary-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.history-backup-summary-toggle::marker {
+    content: "";
+}
+
+.history-backup-panel[open] .history-backup-summary-toggle {
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid color-mix(in srgb, var(--border), var(--court) 12%);
+}
+
+.history-backup-summary-toggle:hover {
+    background: color-mix(in srgb, var(--bg-elevated), transparent 70%);
+}
+
+.history-backup-summary-toggle:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--court-light), transparent 45%);
+    outline-offset: 3px;
+}
+
+.history-backup-summary-toggle h2 {
+    font-size: 1.08rem;
     color: var(--text);
 }
 
+.history-backup-summary-line,
 .history-backup-note,
 .history-backup-summary,
 .history-backup-status {
     font-size: 0.88rem;
     line-height: 1.55;
+}
+
+.history-backup-summary-line {
+    color: var(--text-secondary);
 }
 
 .history-backup-note,
@@ -56,4 +95,31 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
+}
+
+.history-backup-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.history-backup-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.history-backup-toggle svg {
+    width: 18px;
+    height: 18px;
+    transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.history-backup-panel[open] .history-backup-toggle svg {
+    transform: rotate(180deg);
 }

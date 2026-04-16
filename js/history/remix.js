@@ -3,6 +3,7 @@ import {
     getDefaultAdvancedSettings,
     normalizeAdvancedForConfig,
 } from "../tournament/setup/advanced/model/index.js"
+import { isMultiPhaseHistorySession } from "./session-phases.js"
 
 const HISTORY_REMIX_VERSION = 1
 
@@ -89,12 +90,13 @@ function countMissingPlayers(players, rosterSet) {
     return missing
 }
 
-function buildHistoryLoadNotice(action, skippedPlayers) {
-    let message = "Loaded from history"
+function buildHistoryLoadNotice(session, action, skippedPlayers) {
+    const phaseLabel = isMultiPhaseHistorySession(session) ? "latest saved phase" : "history"
+    let message = `Loaded from ${phaseLabel}`
     if (action === HISTORY_REMIX_ACTIONS.sameSeed) {
-        message = "Loaded from history with the original seed locked"
+        message = `Loaded from ${phaseLabel} with the original seed locked`
     } else if (action === HISTORY_REMIX_ACTIONS.newSeed) {
-        message = "Loaded from history with a fresh seed"
+        message = `Loaded from ${phaseLabel} with a fresh seed`
     }
 
     if (skippedPlayers <= 0) {
@@ -102,7 +104,7 @@ function buildHistoryLoadNotice(action, skippedPlayers) {
     }
 
     if (action === HISTORY_REMIX_ACTIONS.sameSeed) {
-        message = "Loaded from history; the original seed lock was cleared because the roster changed"
+        message = `Loaded from ${phaseLabel}; the original seed lock was cleared because the roster changed`
     }
 
     const noun = skippedPlayers === 1 ? "player was" : "players were"
@@ -199,7 +201,7 @@ function buildFreePrefill(session) {
 
 function buildHistoryRemixPrefill(session, action, roster) {
     const { selectedPlayers, skippedPlayers } = resolveSelectedPlayers(session, roster)
-    const notice = buildHistoryLoadNotice(action, skippedPlayers)
+    const notice = buildHistoryLoadNotice(session, action, skippedPlayers)
     const mode = session?.remix?.sourceMode || session?.mode || "free"
     let modePrefill
 

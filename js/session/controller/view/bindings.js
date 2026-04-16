@@ -1,5 +1,6 @@
 function bindActiveSessionNavButtons({
     uiState,
+    onContinueSessionClick,
     onPrevRoundClick,
     onNextRoundClick,
     onPrevTournamentClick,
@@ -8,6 +9,7 @@ function bindActiveSessionNavButtons({
     endSessionBtn,
     onEndSessionClick,
 }) {
+    uiState.continueSessionBtn?.addEventListener("click", onContinueSessionClick)
     uiState.prevRoundBtn.addEventListener("click", onPrevRoundClick)
     uiState.nextRoundBtn.addEventListener("click", onNextRoundClick)
     uiState.goTopBtn?.addEventListener("click", () => globalThis.scrollTo({ top: 0, behavior: "smooth" }))

@@ -14,7 +14,7 @@ import {
 } from "./helpers.js"
 import { createAdvancedModalUiController } from "./modal-ui.js"
 
-function syncActiveSummaryState(state, tournamentDraft, players) {
+function syncActiveSummaryState(state, tournamentDraft, players, lockAdvanced) {
     state.currentAdvancedSummary = summarizeAdvancedSettings(
         tournamentDraft.advanced,
         buildSummaryContext(
@@ -33,8 +33,14 @@ function syncActiveSummaryState(state, tournamentDraft, players) {
     }
     if (state.dom.advancedBtn) {
         const hasVisibleOptions = hasVisibleAdvancedOptions(state.currentAdvancedSummary)
-        state.dom.advancedBtn.disabled = !hasVisibleOptions
-        state.dom.advancedBtn.title = hasVisibleOptions ? "Advanced Settings" : "No advanced overrides available"
+        state.dom.advancedBtn.disabled = lockAdvanced || !hasVisibleOptions
+        if (lockAdvanced) {
+            state.dom.advancedBtn.title = "Advanced overrides are locked during continuation"
+        } else if (hasVisibleOptions) {
+            state.dom.advancedBtn.title = "Advanced Settings"
+        } else {
+            state.dom.advancedBtn.title = "No advanced overrides available"
+        }
     }
     state.advancedUi.renderMeta()
 }
@@ -211,7 +217,7 @@ function bindAdvancedDialogInteractions(state) {
     state.advancedUi.bindInteractions()
 }
 
-function renderAdvancedDialogController(state, { tournamentDraft, selectedPlayers, onChange }) {
+function renderAdvancedDialogController(state, { tournamentDraft, selectedPlayers, onChange, lockAdvanced = false }) {
     const players = Array.isArray(selectedPlayers) ? selectedPlayers : []
     state.latestRenderState = { tournamentDraft, selectedPlayers: players, onChange }
 
@@ -226,7 +232,7 @@ function renderAdvancedDialogController(state, { tournamentDraft, selectedPlayer
         setAdvancedModalError(state.dom.advancedModalError, "")
     }
 
-    syncActiveSummaryState(state, tournamentDraft, players)
+    syncActiveSummaryState(state, tournamentDraft, players, lockAdvanced)
 }
 
 function createAdvancedDialogController({ dom, minRequiredSitOutPool }) {

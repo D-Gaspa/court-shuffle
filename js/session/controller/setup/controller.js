@@ -1,133 +1,15 @@
-import { renderPlayerSelection, updateTeamSizeHint } from "../../active/render.js"
 import { applyTournamentAction, bindWizardControls } from "../wizard/actions.js"
-import { buildWizardState, normalizeCurrentStep } from "../wizard/state.js"
+import { buildWizardState } from "../wizard/state.js"
 import {
     applySessionSetupPrefill,
     clearSessionSetupNotice,
     createSessionSetupDraft,
     getFinalStepId,
     getVisibleStepIds,
-    reconcileDraftWithRoster,
 } from "./draft.js"
-import { renderSetupStep } from "./panels.js"
-import { renderFreeSetup, renderModeStep, renderSetupNotice, syncStepperUi } from "./render.js"
-import { clampTournamentCourtCount, updateCourtHint } from "./tournament/courts.js"
-import { getTournamentBlockingError, updateTournamentDerivedState } from "./tournament/derived.js"
-import {
-    buildTournamentSeed,
-    clearTournamentDistribution,
-    renderTournamentDistributionSummary,
-    showTournamentPreviewError,
-    showTournamentPreviewPendingState,
-} from "./tournament/preview.js"
-
-function buildCurrentWizardState(draft) {
-    return buildWizardState(draft, () => getTournamentBlockingError(draft), getFinalStepId, getVisibleStepIds)
-}
-
-function getNormalizedWizardState({
-    buildTournamentConfig,
-    buildTournamentPreview,
-    canUseTwoVsOne,
-    draft,
-    getMinPlayersForTournament,
-    getPlayers,
-    getTournamentMatchMode,
-    reconcileTournamentDraft,
-    state,
-    ui,
-    validateTournamentAdvancedState,
-}) {
-    reconcileDraftWithRoster(draft, state.roster, reconcileTournamentDraft)
-    updateTournamentDerivedState({
-        draft,
-        players: getPlayers(),
-        buildTournamentConfig,
-        buildTournamentPreview,
-        buildTournamentSeed,
-        canUseTwoVsOne,
-        clampTournamentCourtCount,
-        courtCountLabel: ui.courtCountLabel,
-        courtCountValue: ui.courtCountValue,
-        courtsDecBtn: ui.courtsDecBtn,
-        courtsIncBtn: ui.courtsIncBtn,
-        getMinPlayersForTournament,
-        getTournamentMatchMode,
-        reconcileTournamentDraft,
-        validateTournamentAdvancedState,
-    })
-
-    const wizardState = buildCurrentWizardState(draft)
-    normalizeCurrentStep(draft, wizardState)
-    return buildCurrentWizardState(draft)
-}
-
-function renderWizardContent({
-    canUseTwoVsOne,
-    draft,
-    getMinPlayersForTournament,
-    getPlayers,
-    getTournamentMatchMode,
-    onTournamentAction,
-    renderTournamentSetup,
-    state,
-    ui,
-    wizardState,
-}) {
-    ui.noRosterWarning.hidden = true
-    ui.sessionConfig.hidden = false
-    renderSetupNotice(draft.setupNotice, ui.sessionSetupNotice)
-    renderPlayerSelection(state.roster, draft.selectedPlayers, ui.playerSelection, onTournamentAction)
-    renderModeStep({ draft, modeHint: ui.modeHint, modeSelector: ui.modeSelector })
-    renderSetupStep({
-        allow2v1Checkbox: ui.allow2v1Checkbox,
-        canUseTwoVsOne,
-        clearTournamentDistribution,
-        draft,
-        handleTournamentAction: onTournamentAction,
-        courtHint: ui.courtHint,
-        courtsConfig: ui.courtsConfig,
-        getPlayers,
-        getMinPlayersForTournament,
-        getTournamentMatchMode,
-        notStrictDoublesGroup: ui.notStrictDoublesGroup,
-        renderFreeSetup: (sessionTeamRenderContext) =>
-            renderFreeSetup({
-                ...sessionTeamRenderContext,
-                updateTeamSizeHint,
-            }),
-        renderTournamentDistributionSummary,
-        renderTournamentSetup,
-        sessionTeamRenderContext: {
-            draft,
-            teamsConfig: ui.teamsConfig,
-            teamCountValue: ui.teamCountValue,
-            teamsDecBtn: ui.teamsDecBtn,
-            teamsIncBtn: ui.teamsIncBtn,
-            teamSizeHint: ui.teamSizeHint,
-        },
-        showTournamentPreviewError,
-        showTournamentPreviewPendingState,
-        teamSizeHint: ui.teamSizeHint,
-        teamsConfig: ui.teamsConfig,
-        tournamentAdvancedError: ui.tournamentAdvancedError,
-        tournamentConfig: ui.tournamentConfig,
-        tournamentDistributionGroup: ui.tournamentDistributionGroup,
-        tournamentDistributionHint: ui.tournamentDistributionHint,
-        tournamentSetupPanel: ui.tournamentSetupPanel,
-        updateCourtHint,
-    })
-    syncStepperUi({
-        draft,
-        wizardState,
-        sessionStepButtons: ui.sessionStepButtons,
-        sessionStepPanels: ui.sessionStepPanels,
-        sessionStepCaption: ui.sessionStepCaption,
-        sessionBackBtn: ui.sessionBackBtn,
-        sessionNextBtn: ui.sessionNextBtn,
-        startSessionBtn: ui.startSessionBtn,
-    })
-}
+import { renderSetupNotice } from "./render.js"
+import { getTournamentBlockingError } from "./tournament/derived.js"
+import { getNormalizedWizardState, renderWizardContent } from "./wizard-render.js"
 
 function createTournamentActionHandler(draft, onChange) {
     return (action) => {
@@ -138,6 +20,9 @@ function createTournamentActionHandler(draft, onChange) {
 
 function createGameModeSetter(draft, createDefaultTournamentDraft) {
     return (nextMode) => {
+        if (draft.continuation) {
+            return
+        }
         if (draft.gameMode === nextMode) {
             return
         }
@@ -149,11 +34,13 @@ function createGameModeSetter(draft, createDefaultTournamentDraft) {
 function bindSetupControls({
     buildSelectedSession,
     clearSetupNotice,
+    clearContinuation,
     createDefaultTournamentDraft,
     draft,
     getRoster,
     initTournamentSetup,
     onChange,
+    onContinuationStart,
     onSessionStart,
     ui,
 }) {
@@ -171,6 +58,11 @@ function bindSetupControls({
         getVisibleStepIds,
         initTournamentSetup,
         modeSelector: ui.modeSelector,
+        onCancelContinuation: () => {
+            clearContinuation()
+            onChange()
+        },
+        onContinuationStart,
         onStartSession: () =>
             onSessionStart({
                 draft,
@@ -180,6 +72,7 @@ function bindSetupControls({
                 getFinalStepId,
                 getTournamentBlockingError,
                 getVisibleStepIds,
+                onContinuationStart,
             }),
         onTournamentAction: handleTournamentAction,
         refreshSessionView: onChange,
@@ -195,6 +88,35 @@ function bindSetupControls({
         startSessionBtn: ui.startSessionBtn,
         teamsDecBtn: ui.teamsDecBtn,
         teamsIncBtn: ui.teamsIncBtn,
+    })
+}
+
+function createControllerBindings({
+    buildSelectedSession,
+    createDefaultTournamentDraft,
+    draft,
+    getRoster,
+    initTournamentSetup,
+    onChange,
+    onContinuationStart,
+    onSessionStart,
+    ui,
+}) {
+    return bindSetupControls({
+        buildSelectedSession,
+        clearSetupNotice: () => clearSessionSetupNotice(draft),
+        clearContinuation: () => {
+            draft.continuation = null
+            draft.setupNotice = ""
+        },
+        createDefaultTournamentDraft,
+        draft,
+        getRoster,
+        initTournamentSetup,
+        onChange,
+        onContinuationStart,
+        onSessionStart,
+        ui,
     })
 }
 
@@ -214,15 +136,15 @@ function createSessionSetupController({
     const draft = createSessionSetupDraft(createDefaultTournamentDraft)
 
     return {
-        bindControls: ({ buildSelectedSession, getRoster, onChange, onSessionStart }) =>
-            bindSetupControls({
+        bindControls: ({ buildSelectedSession, getRoster, onChange, onContinuationStart, onSessionStart }) =>
+            createControllerBindings({
                 buildSelectedSession,
-                clearSetupNotice: () => clearSessionSetupNotice(draft),
                 createDefaultTournamentDraft,
                 draft,
                 getRoster,
                 initTournamentSetup,
                 onChange,
+                onContinuationStart,
                 onSessionStart,
                 ui,
             }),

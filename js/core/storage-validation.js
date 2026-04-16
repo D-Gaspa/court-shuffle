@@ -17,6 +17,7 @@ import {
     cloneTournamentConfig,
     cloneTournamentSeries,
 } from "./storage-validation-tournament.js"
+import { cloneOrNormalizeTournamentPhases } from "./storage-validation-tournament-phases.js"
 
 function validateSessionMode(source, path) {
     const mode = expectString(source.mode, `${path}.mode`)
@@ -72,6 +73,34 @@ function validateTournamentSeries(next, path) {
     }
 }
 
+function validateTournamentPhases(next, path) {
+    if (!(next.mode === "tournament" && Array.isArray(next.phases))) {
+        return
+    }
+    if (next.currentPhaseIndex >= next.phases.length) {
+        throw createValidationError(`${path}.currentPhaseIndex`, "must reference an existing phase.")
+    }
+    const requireStrictTournamentIndexes = path === "state.activeSession"
+    for (let index = 0; index < next.phases.length; index += 1) {
+        const phase = next.phases[index]
+        if (phase.tournamentSeries.tournaments.length === 0) {
+            throw createValidationError(
+                `${path}.phases[${index}].tournamentSeries.tournaments`,
+                "must contain at least one tournament.",
+            )
+        }
+        if (
+            requireStrictTournamentIndexes &&
+            phase.tournamentSeries.currentTournamentIndex >= phase.tournamentSeries.tournaments.length
+        ) {
+            throw createValidationError(
+                `${path}.phases[${index}].tournamentSeries.currentTournamentIndex`,
+                "must reference an existing tournament.",
+            )
+        }
+    }
+}
+
 function applyOptionalSessionTeams(source, path, next) {
     if (source.teams === undefined) {
         return
@@ -103,6 +132,12 @@ function applyOptionalTournamentFields(source, path, next) {
             next[field] = reader(source[field])
         }
     }
+
+    if (next.mode === "tournament") {
+        const phaseData = cloneOrNormalizeTournamentPhases(source, path, next.id, next.date)
+        next.currentPhaseIndex = phaseData.currentPhaseIndex
+        next.phases = phaseData.phases
+    }
 }
 
 function applyOptionalTournamentSettings(source, path, next) {
@@ -130,6 +165,7 @@ function cloneSessionRecord(value, path) {
         validateCurrentRound(next, path)
         validateTournamentSeries(next, path)
     }
+    validateTournamentPhases(next, path)
     return next
 }
 

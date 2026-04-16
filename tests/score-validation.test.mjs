@@ -1,5 +1,3 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: inline tennis-score fixtures are intentional in tests.
 import assert from "node:assert/strict"
 import test from "node:test"
 
@@ -9,52 +7,80 @@ import { buildStatsModel } from "../js/stats/model/index.js"
 import { computeStandings } from "../js/tournament/standings.js"
 import { determineMatchWinner } from "../js/tournament/utils.js"
 
+const TEAM_ONE_ID = 1
+const TEAM_TWO_ID = 2
+const SINGLE_COURT = 1
+const TWO_TEAMS = 2
+const FIRST_WINNER_INDEX = 0
+const SECOND_WINNER_INDEX = 1
+const STRAIGHT_SET_GAMES_WON = 1
+const STRAIGHT_SET_GAMES_LOST = 0
+const CLOSE_SET_GAMES_WON = 3
+const CLOSE_SET_GAMES_LOST = 2
+const LOSING_SET_GAMES_WON = 5
+const LOSING_SET_GAMES_LOST = 6
+const COMEBACK_SET_GAMES_WON = 2
+const COMEBACK_SET_GAMES_LOST = 4
+const TIEBREAK_GAMES_WON = 7
+const TIEBREAK_GAMES_LOST = 5
+const TIEBREAK_LOSS_GAMES_WON = 4
+const TIEBREAK_LOSS_GAMES_LOST = 7
+const SINGLE_SET_SCORE = [[STRAIGHT_SET_GAMES_WON, STRAIGHT_SET_GAMES_LOST]]
+const CLOSE_TIEBREAK_SCORE = [
+    [CLOSE_SET_GAMES_WON, CLOSE_SET_GAMES_LOST, { tb: [TIEBREAK_GAMES_WON, TIEBREAK_GAMES_LOST] }],
+    [STRAIGHT_SET_GAMES_WON, STRAIGHT_SET_GAMES_LOST],
+]
+const COMEBACK_LOSS_SCORE = [
+    [LOSING_SET_GAMES_WON, LOSING_SET_GAMES_LOST, { tb: [TIEBREAK_LOSS_GAMES_WON, TIEBREAK_LOSS_GAMES_LOST] }],
+    [COMEBACK_SET_GAMES_WON, COMEBACK_SET_GAMES_LOST],
+]
+const CLOSE_TIEBREAK_SINGLE_SET = [CLOSE_TIEBREAK_SCORE[0]]
+const TOTAL_SESSION_COUNT = 1
+const TOTAL_PLAYER_COUNT = 2
+
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("completed arbitrary tournament scores resolve a winner", () => {
     assert.equal(
         determineMatchWinner({
-            sets: [
-                [3, 2, { tb: [7, 5] }],
-                [1, 0],
-            ],
+            sets: CLOSE_TIEBREAK_SCORE,
         }),
-        0,
+        FIRST_WINNER_INDEX,
     )
 
     assert.equal(
         determineMatchWinner({
-            sets: [
-                [5, 6, { tb: [4, 7] }],
-                [2, 4],
-            ],
+            sets: COMEBACK_LOSS_SCORE,
         }),
-        1,
+        SECOND_WINNER_INDEX,
     )
 })
 
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("completed arbitrary scores remain saved", () => {
-    assert.equal(hasSavedScoreEntry({ sets: [[1, 0]] }), true)
-    assert.equal(hasSavedScoreEntry({ sets: [[3, 2, { tb: [7, 5] }]] }), true)
+    assert.equal(hasSavedScoreEntry({ sets: SINGLE_SET_SCORE }), true)
+    assert.equal(hasSavedScoreEntry({ sets: CLOSE_TIEBREAK_SINGLE_SET }), true)
 })
 
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("standings count arbitrary tournament scores", () => {
     const standings = computeStandings(
         [
-            { id: 1, name: "Ana", players: ["Ana"] },
-            { id: 2, name: "Bea", players: ["Bea"] },
+            { id: TEAM_ONE_ID, name: "Ana", players: ["Ana"] },
+            { id: TEAM_TWO_ID, name: "Bea", players: ["Bea"] },
         ],
         [
             {
                 matches: [
                     {
-                        court: 1,
-                        teamIds: [1, 2],
+                        court: SINGLE_COURT,
+                        teamIds: [TEAM_ONE_ID, TEAM_TWO_ID],
                         teams: [["Ana"], ["Bea"]],
                     },
                 ],
                 scores: [
                     {
-                        court: 1,
-                        sets: [[3, 2, { tb: [7, 5] }]],
+                        court: SINGLE_COURT,
+                        sets: CLOSE_TIEBREAK_SINGLE_SET,
                     },
                 ],
             },
@@ -72,12 +98,29 @@ test("standings count arbitrary tournament scores", () => {
             gamesLost,
         })),
         [
-            { teamName: "Ana", wins: 1, losses: 0, setsWon: 1, setsLost: 0, gamesWon: 3, gamesLost: 2 },
-            { teamName: "Bea", wins: 0, losses: 1, setsWon: 0, setsLost: 1, gamesWon: 2, gamesLost: 3 },
+            {
+                teamName: "Ana",
+                wins: TOTAL_SESSION_COUNT,
+                losses: FIRST_WINNER_INDEX,
+                setsWon: TOTAL_SESSION_COUNT,
+                setsLost: FIRST_WINNER_INDEX,
+                gamesWon: CLOSE_SET_GAMES_WON,
+                gamesLost: CLOSE_SET_GAMES_LOST,
+            },
+            {
+                teamName: "Bea",
+                wins: FIRST_WINNER_INDEX,
+                losses: TOTAL_SESSION_COUNT,
+                setsWon: FIRST_WINNER_INDEX,
+                setsLost: TOTAL_SESSION_COUNT,
+                gamesWon: CLOSE_SET_GAMES_LOST,
+                gamesLost: CLOSE_SET_GAMES_WON,
+            },
         ],
     )
 })
 
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("stats count arbitrary scored matches", () => {
     const model = buildStatsModel(
         [
@@ -85,21 +128,21 @@ test("stats count arbitrary scored matches", () => {
                 id: "session-1",
                 date: "2026-04-09T00:00:00.000Z",
                 players: ["Ana", "Bea"],
-                teamCount: 2,
+                teamCount: TWO_TEAMS,
                 mode: "singles",
-                courtCount: 1,
+                courtCount: SINGLE_COURT,
                 rounds: [
                     {
                         matches: [
                             {
-                                court: 1,
+                                court: SINGLE_COURT,
                                 teams: [["Ana"], ["Bea"]],
                             },
                         ],
                         scores: [
                             {
-                                court: 1,
-                                sets: [[1, 0]],
+                                court: SINGLE_COURT,
+                                sets: SINGLE_SET_SCORE,
                             },
                         ],
                         sitOuts: [],
@@ -111,38 +154,39 @@ test("stats count arbitrary scored matches", () => {
         ],
         {
             queryMeta: {
-                totalSessionCount: 1,
-                totalPlayerCount: 2,
+                totalSessionCount: TOTAL_SESSION_COUNT,
+                totalPlayerCount: TOTAL_PLAYER_COUNT,
             },
         },
     )
 
     assert.equal(model.hasPlayedMatches, true)
-    assert.equal(model.global.playedMatchCount, 1)
-    assert.equal(model.global.decidedMatchCount, 1)
+    assert.equal(model.global.playedMatchCount, TOTAL_SESSION_COUNT)
+    assert.equal(model.global.decidedMatchCount, TOTAL_SESSION_COUNT)
 })
 
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("history keeps non-standard tournament scores", () => {
     const historyEntry = buildHistoryEntryForSession({
         id: "session-1",
         date: "2026-04-09T00:00:00.000Z",
         players: ["Ana", "Bea"],
-        teamCount: 2,
+        teamCount: TWO_TEAMS,
         mode: "tournament",
-        courtCount: 1,
+        courtCount: SINGLE_COURT,
         rounds: [
             {
                 matches: [
                     {
-                        court: 1,
+                        court: SINGLE_COURT,
                         teams: [["Ana"], ["Bea"]],
-                        teamIds: [1, 2],
+                        teamIds: [TEAM_ONE_ID, TEAM_TWO_ID],
                     },
                 ],
                 scores: [
                     {
-                        court: 1,
-                        sets: [[3, 2, { tb: [7, 5] }]],
+                        court: SINGLE_COURT,
+                        sets: CLOSE_TIEBREAK_SINGLE_SET,
                     },
                 ],
                 sitOuts: [],
@@ -152,18 +196,21 @@ test("history keeps non-standard tournament scores", () => {
             },
         ],
         tournamentFormat: "elimination",
-        tournamentTeamSize: 1,
+        tournamentTeamSize: SINGLE_COURT,
         teams: [
-            { id: 1, name: "Ana", players: ["Ana"] },
-            { id: 2, name: "Bea", players: ["Bea"] },
+            { id: TEAM_ONE_ID, name: "Ana", players: ["Ana"] },
+            { id: TEAM_TWO_ID, name: "Bea", players: ["Bea"] },
         ],
         bracket: {
             pools: { winners: [], losers: [] },
             eliminated: [],
-            champion: 1,
+            champion: TEAM_ONE_ID,
             standings: {},
         },
     })
 
-    assert.deepEqual(historyEntry?.rounds[0]?.scores?.[0]?.sets, [[3, 2, { tb: [7, 5] }]])
+    assert.deepEqual(
+        historyEntry?.rounds[FIRST_WINNER_INDEX]?.scores?.[FIRST_WINNER_INDEX]?.sets,
+        CLOSE_TIEBREAK_SINGLE_SET,
+    )
 })
