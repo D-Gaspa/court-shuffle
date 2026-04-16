@@ -5,6 +5,7 @@ const DEFAULT_SETUP_SUBTITLE = "Pick who's playing today and configure teams."
 const DEFAULT_START_LABEL = "Shuffle & Start"
 const CONTINUATION_START_LABEL = "Start Roster Change"
 const CONTINUATION_BACK_LABEL = "Cancel Continuation"
+const HISTORY_SEED_CANCEL_LABEL = "Back"
 const DEFAULT_BACK_LABEL = "Back"
 
 function buildContinuationPhaseTag(continuation) {
@@ -24,6 +25,26 @@ function buildContinuationDetail(setupNotice) {
     return "Make a real roster change, keep the locked tournament shape, and then start the next phase after the latest completed mini tournament."
 }
 
+function buildHistorySeedTitle(historySeed) {
+    return historySeed?.variant === "same-seed"
+        ? "Saved seed locked from history"
+        : "Saved settings loaded from history"
+}
+
+function buildHistorySeedSubtitle(historySeed) {
+    return historySeed?.variant === "same-seed"
+        ? "Review the roster and start a new tournament session with the original saved seed."
+        : "Review the roster and start a new tournament session with the saved tournament settings."
+}
+
+function buildHistorySeedKicker(historySeed) {
+    return historySeed?.variant === "same-seed" ? "Same Seed" : "Reuse Settings"
+}
+
+function buildHistorySeedStartLabel(historySeed) {
+    return historySeed?.variant === "same-seed" ? "Start Saved Seed" : "Start Fresh Seed"
+}
+
 function renderSetupShell({
     draft,
     sessionBackBtn,
@@ -33,15 +54,19 @@ function renderSetupShell({
     sessionContinuationPhaseTag,
     sessionContinuationTitle,
     sessionContinuationTournamentTag,
+    sessionPrefillCancelBtn,
     sessionSetupSubtitle,
     sessionSetupTitle,
     startSessionLabel,
 }) {
     const isContinuation = Boolean(draft.continuation)
+    const isHistorySeed = Boolean(draft.historySeed)
     sessionConfig.classList.toggle("is-continuation", isContinuation)
-    sessionContinuationBanner.hidden = !isContinuation
+    sessionConfig.classList.toggle("is-history-seed", isHistorySeed)
+    sessionContinuationBanner.hidden = !(isContinuation || isHistorySeed)
+    sessionPrefillCancelBtn.hidden = !isHistorySeed
 
-    if (!isContinuation) {
+    if (!(isContinuation || isHistorySeed)) {
         sessionSetupTitle.textContent = DEFAULT_SETUP_TITLE
         sessionSetupSubtitle.textContent = DEFAULT_SETUP_SUBTITLE
         sessionBackBtn.textContent = DEFAULT_BACK_LABEL
@@ -49,15 +74,32 @@ function renderSetupShell({
         return
     }
 
-    sessionSetupTitle.textContent = "Change Roster For Next Phase"
-    sessionSetupSubtitle.textContent =
-        "Add or remove players first, then create the next phase from the latest completed mini tournament."
-    sessionContinuationTitle.textContent = "Roster change required before the next phase"
-    sessionContinuationDetail.textContent = buildContinuationDetail(draft.setupNotice)
-    sessionContinuationPhaseTag.textContent = buildContinuationPhaseTag(draft.continuation)
-    sessionContinuationTournamentTag.textContent = buildContinuationTournamentTag(draft.continuation)
-    startSessionLabel.textContent = CONTINUATION_START_LABEL
-    sessionBackBtn.textContent = draft.currentStep === "roster" ? CONTINUATION_BACK_LABEL : DEFAULT_BACK_LABEL
+    if (isContinuation) {
+        sessionSetupTitle.textContent = "Change Roster For Next Phase"
+        sessionSetupSubtitle.textContent =
+            "Add or remove players first, then create the next phase from the latest completed mini tournament."
+        sessionContinuationBanner.querySelector(".session-continuation-kicker").textContent = "Continuation Phase"
+        sessionContinuationTitle.textContent = "Roster change required before the next phase"
+        sessionContinuationDetail.textContent = buildContinuationDetail(draft.setupNotice)
+        sessionContinuationPhaseTag.textContent = buildContinuationPhaseTag(draft.continuation)
+        sessionContinuationTournamentTag.textContent = buildContinuationTournamentTag(draft.continuation)
+        startSessionLabel.textContent = CONTINUATION_START_LABEL
+        sessionBackBtn.textContent = draft.currentStep === "roster" ? CONTINUATION_BACK_LABEL : DEFAULT_BACK_LABEL
+        return
+    }
+
+    sessionSetupTitle.textContent = buildHistorySeedTitle(draft.historySeed)
+    sessionSetupSubtitle.textContent = buildHistorySeedSubtitle(draft.historySeed)
+    sessionContinuationBanner.querySelector(".session-continuation-kicker").textContent = buildHistorySeedKicker(
+        draft.historySeed,
+    )
+    sessionContinuationTitle.textContent = buildHistorySeedTitle(draft.historySeed)
+    sessionContinuationDetail.textContent = draft.historySeed?.detail || ""
+    sessionContinuationPhaseTag.textContent = draft.historySeed?.sourceLabel || "Saved Session"
+    sessionContinuationTournamentTag.textContent =
+        draft.historySeed?.variant === "same-seed" ? "Original Seed Locked" : "Fresh Seed On Start"
+    startSessionLabel.textContent = buildHistorySeedStartLabel(draft.historySeed)
+    sessionBackBtn.textContent = HISTORY_SEED_CANCEL_LABEL
 }
 
 function syncStepperUi({
@@ -72,6 +114,7 @@ function syncStepperUi({
 }) {
     const currentIndex = wizardState.visibleSteps.indexOf(draft.currentStep)
     const canCancelContinuation = Boolean(draft.continuation) && currentIndex <= 0
+    const canCancelHistorySeed = Boolean(draft.historySeed) && currentIndex <= 0
     for (const button of sessionStepButtons) {
         const stepId = button.dataset.sessionStep
         const visibleIndex = wizardState.visibleSteps.indexOf(stepId)
@@ -100,7 +143,7 @@ function syncStepperUi({
     }
 
     sessionStepCaption.textContent = getStepCaption(draft.currentStep, draft.gameMode)
-    sessionBackBtn.disabled = currentIndex <= 0 && !canCancelContinuation
+    sessionBackBtn.disabled = currentIndex <= 0 && !canCancelContinuation && !canCancelHistorySeed
     const isFinalStep = draft.currentStep === wizardState.finalStep
     sessionNextBtn.hidden = isFinalStep
     startSessionBtn.hidden = !isFinalStep

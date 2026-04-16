@@ -79,6 +79,14 @@ function getContinuationTournamentHint(tournamentDraft) {
     return `Continuation keeps ${getTournamentHint(tournamentDraft.format).toLowerCase()} and the previous match type. Court count stays locked${tournamentDraft.teamSize === 2 ? ", but you can still adjust 2v1 availability" : "."}`
 }
 
+function getHistorySeedTournamentHint(historySeed, tournamentDraft) {
+    const baseHint = getTournamentHint(tournamentDraft.format).toLowerCase()
+    if (historySeed?.variant === "same-seed") {
+        return `Saved history keeps ${baseHint}, the previous match type, court count, 2v1 setting, advanced settings, and the original seed.`
+    }
+    return `Saved history keeps ${baseHint}, the previous match type, court count, 2v1 setting, and advanced settings. A fresh seed will be generated when you start.`
+}
+
 function syncSelectorSelection(selector, attributeName, selectedValue) {
     for (const button of selector?.querySelectorAll("button") || []) {
         button.classList.toggle("selected", button.dataset[attributeName] === String(selectedValue))
@@ -132,27 +140,46 @@ function validateTournamentAdvancedState({ tournamentDraft, selectedPlayers }) {
         courtCount: tournamentDraft.courtCount,
     })
 }
-function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange, continuation = null }) {
+function renderTournamentSetup({
+    tournamentDraft,
+    selectedPlayers,
+    onChange,
+    continuation = null,
+    historySeed = null,
+}) {
     const players = Array.isArray(selectedPlayers) ? selectedPlayers : []
     const isContinuation = Boolean(continuation)
+    const hasHistorySeed = Boolean(historySeed)
     reconcileTournamentDraft(tournamentDraft, players)
 
     syncSelectorSelection(formatSelector, "format", tournamentDraft.format)
     syncSelectorSelection(teamSizeSelector, "teamSize", tournamentDraft.teamSize)
-    setSelectorDisabledState(formatSelector, Boolean(continuation?.lockedFields?.format))
-    setSelectorDisabledState(teamSizeSelector, Boolean(continuation?.lockedFields?.teamSize))
-    tournamentFormatGroup.hidden = Boolean(continuation?.lockedFields?.format)
-    tournamentTeamSizeGroup.hidden = Boolean(continuation?.lockedFields?.teamSize)
-    tournamentAdvancedActions.hidden = isContinuation
-    tournamentHint.textContent = isContinuation
-        ? getContinuationTournamentHint(tournamentDraft)
-        : getTournamentHint(tournamentDraft.format)
+    setSelectorDisabledState(
+        formatSelector,
+        Boolean(continuation?.lockedFields?.format) || Boolean(historySeed?.lockedFields?.format),
+    )
+    setSelectorDisabledState(
+        teamSizeSelector,
+        Boolean(continuation?.lockedFields?.teamSize) || Boolean(historySeed?.lockedFields?.teamSize),
+    )
+    tournamentFormatGroup.hidden =
+        Boolean(continuation?.lockedFields?.format) || Boolean(historySeed?.lockedFields?.format)
+    tournamentTeamSizeGroup.hidden =
+        Boolean(continuation?.lockedFields?.teamSize) || Boolean(historySeed?.lockedFields?.teamSize)
+    tournamentAdvancedActions.hidden = isContinuation || Boolean(historySeed?.lockedFields?.advanced)
+    if (isContinuation) {
+        tournamentHint.textContent = getContinuationTournamentHint(tournamentDraft)
+    } else if (hasHistorySeed) {
+        tournamentHint.textContent = getHistorySeedTournamentHint(historySeed, tournamentDraft)
+    } else {
+        tournamentHint.textContent = getTournamentHint(tournamentDraft.format)
+    }
 
     const showAllowToggle = tournamentDraft.teamSize === 2
     const canEnableTwoVsOne = canUseTwoVsOne(players, tournamentDraft.teamSize)
     notStrictDoublesGroup.hidden = !showAllowToggle
     allow2v1Checkbox.checked = tournamentDraft.allowNotStrictDoubles
-    allow2v1Checkbox.disabled = !canEnableTwoVsOne
+    allow2v1Checkbox.disabled = !canEnableTwoVsOne || Boolean(historySeed?.lockedFields?.allowNotStrictDoubles)
     if (!canEnableTwoVsOne) {
         allow2v1Checkbox.checked = false
     }
@@ -161,7 +188,7 @@ function renderTournamentSetup({ tournamentDraft, selectedPlayers, onChange, con
         tournamentDraft,
         selectedPlayers: players,
         onChange,
-        lockAdvanced: isContinuation,
+        lockAdvanced: isContinuation || Boolean(historySeed?.lockedFields?.advanced),
     })
 }
 

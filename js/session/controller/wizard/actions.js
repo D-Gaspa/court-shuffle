@@ -6,6 +6,7 @@ function moveStep({
     getFinalStepId,
     getVisibleStepIds,
     onCancelContinuation,
+    onCancelHistorySeed,
     setCurrentStep,
 }) {
     const wizardState = buildWizardState(
@@ -19,6 +20,8 @@ function moveStep({
     if (nextIndex < 0 || nextIndex >= wizardState.visibleSteps.length) {
         if (direction < 0 && nextIndex < 0 && draft.continuation && onCancelContinuation) {
             onCancelContinuation()
+        } else if (direction < 0 && nextIndex < 0 && draft.historySeed && onCancelHistorySeed) {
+            onCancelHistorySeed()
         }
         return
     }
@@ -38,18 +41,21 @@ function applyTournamentAction(draft, action) {
 
     switch (action.type) {
         case "format":
-            if (draft.continuation?.lockedFields?.format) {
+            if (draft.continuation?.lockedFields?.format || draft.historySeed?.lockedFields?.format) {
                 break
             }
             draft.tournament.format = action.value
             break
         case "team-size":
-            if (draft.continuation?.lockedFields?.teamSize) {
+            if (draft.continuation?.lockedFields?.teamSize || draft.historySeed?.lockedFields?.teamSize) {
                 break
             }
             draft.tournament.teamSize = action.value
             break
         case "allow-2v1":
+            if (draft.historySeed?.lockedFields?.allowNotStrictDoubles && draft.gameMode === "tournament") {
+                break
+            }
             if (draft.gameMode === "doubles") {
                 draft.structured.allowNotStrictDoubles = Boolean(action.value)
             } else {
@@ -108,6 +114,7 @@ function startSession({
         const { continuation } = draft
         clearSetupNotice()
         draft.continuation = null
+        draft.historySeed = null
         if (continuation && onContinuationStart) {
             onContinuationStart({ continuation, players, sessionDraft: session })
             return
@@ -118,10 +125,16 @@ function startSession({
 
 function bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, refreshSessionView }) {
     selectAllBtn.addEventListener("click", () => {
+        if (draft.historySeed?.lockedFields?.roster) {
+            return
+        }
         draft.selectedPlayers = new Set(getRoster())
         refreshSessionView()
     })
     deselectAllBtn.addEventListener("click", () => {
+        if (draft.historySeed?.lockedFields?.roster) {
+            return
+        }
         draft.selectedPlayers = new Set()
         refreshSessionView()
     })
@@ -153,7 +166,7 @@ function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, cour
     })
 
     courtsDecBtn.addEventListener("click", () => {
-        if (draft.continuation && draft.gameMode === "tournament") {
+        if ((draft.continuation || draft.historySeed?.lockedFields?.courtCount) && draft.gameMode === "tournament") {
             return
         }
         const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
@@ -164,7 +177,7 @@ function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, cour
         refreshSessionView()
     })
     courtsIncBtn.addEventListener("click", () => {
-        if (draft.continuation && draft.gameMode === "tournament") {
+        if ((draft.continuation || draft.historySeed?.lockedFields?.courtCount) && draft.gameMode === "tournament") {
             return
         }
         const courtCountTarget = draft.gameMode === "tournament" ? draft.tournament : draft.structured
@@ -180,6 +193,7 @@ function bindWizardNavigation({
     getTournamentBlockingError,
     getVisibleStepIds,
     onCancelContinuation,
+    onCancelHistorySeed,
     sessionBackBtn,
     sessionNextBtn,
     sessionStepButtons,
@@ -194,6 +208,7 @@ function bindWizardNavigation({
             getFinalStepId,
             getVisibleStepIds,
             onCancelContinuation,
+            onCancelHistorySeed,
             setCurrentStep,
         })
 
@@ -231,11 +246,13 @@ function bindWizardControls({
     initTournamentSetup,
     modeSelector,
     onCancelContinuation,
+    onCancelHistorySeed,
     onStartSession,
     refreshSessionView,
     selectAllBtn,
     sessionBackBtn,
     sessionNextBtn,
+    sessionPrefillCancelBtn,
     sessionStepButtons,
     setCurrentStep,
     setGameMode,
@@ -254,10 +271,16 @@ function bindWizardControls({
         getTournamentBlockingError,
         getVisibleStepIds,
         onCancelContinuation,
+        onCancelHistorySeed,
         sessionBackBtn,
         sessionNextBtn,
         sessionStepButtons,
         setCurrentStep,
+    })
+    sessionPrefillCancelBtn?.addEventListener("click", () => {
+        if (draft.historySeed && onCancelHistorySeed) {
+            onCancelHistorySeed()
+        }
     })
     startSessionBtn.addEventListener("click", onStartSession)
     initTournamentSetup({ onChange: onTournamentAction })

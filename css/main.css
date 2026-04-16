@@ -4,10 +4,12 @@
 @import url("./features/analytics.css");
 @import url("./features/history-backup.css");
 @import url("./features/history.css");
+@import url("./features/history-card-sticky.css");
 @import url("./features/history-query.css");
 @import url("./features/roster.css");
 @import url("./features/session/session-config.css");
 @import url("./features/session/session-continuation.css");
+@import url("./features/session/session-history-remix.css");
 @import url("./features/session/session-wizard.css");
 @import url("./features/session/session-advanced.css");
 @import url("./features/session/session-display.css");

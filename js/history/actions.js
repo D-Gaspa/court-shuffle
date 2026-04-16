@@ -13,7 +13,7 @@ function createRemixActions(session, { launchHistoryRemix, switchView }) {
 
     if (session.mode === "tournament" && session.remix?.tournamentConfig) {
         actions.push({
-            label: "New Seed",
+            label: "Reuse Settings",
             className: "btn btn-ghost btn-sm",
             onClick: (entry) => launchHistoryRemix(entry, HISTORY_REMIX_ACTIONS.newSeed, switchView),
         })

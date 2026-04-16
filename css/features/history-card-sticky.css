@@ -1,0 +1,35 @@
+.history-card {
+    position: relative;
+}
+
+.history-card.expanded {
+    max-height: min(64dvh, 760px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.history-card-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-card);
+}
+
+.history-card-body {
+    background: var(--bg-card);
+}
+
+.history-actions {
+    padding-bottom: 2px;
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bg-card), transparent 12%), var(--bg-card) 18%), var(--bg-card);
+}
+
+@media (max-width: 640px) {
+    .history-card.expanded {
+        max-height: min(60dvh, 640px);
+    }
+}

@@ -222,13 +222,18 @@ export function updateTeamSizeHint(selectedCount, teamCount, hintEl) {
     }
 }
 
-export function renderPlayerSelection(roster, selectedSet, container, onChange) {
+export function renderPlayerSelection({ roster, selectedSet, container, onChange, locked = false }) {
+    const isLocked = Boolean(locked)
     container.textContent = ""
 
     for (const player of roster) {
         const chip = document.createElement("button")
         chip.type = "button"
         chip.className = `player-chip${selectedSet.has(player) ? " selected" : ""}`
+        chip.disabled = isLocked
+        if (isLocked) {
+            chip.classList.add("is-locked")
+        }
 
         const check = document.createElement("span")
         check.className = "chip-check"
@@ -243,6 +248,9 @@ export function renderPlayerSelection(roster, selectedSet, container, onChange) 
         chip.appendChild(nameSpan)
 
         chip.addEventListener("click", () => {
+            if (isLocked) {
+                return
+            }
             if (selectedSet.has(player)) {
                 selectedSet.delete(player)
             } else {

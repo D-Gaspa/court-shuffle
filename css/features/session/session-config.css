@@ -67,10 +67,25 @@
     border-color: var(--border-light);
     background: var(--bg-elevated);
 }
+.player-chip:disabled,
+.player-chip.is-locked {
+    cursor: not-allowed;
+    opacity: 0.72;
+}
+.player-chip:disabled:hover,
+.player-chip.is-locked:hover {
+    border-color: var(--border);
+    background: var(--bg-card);
+}
 .player-chip.selected {
     border-color: var(--court);
     background: var(--court-glow);
     color: var(--text);
+}
+.player-chip.selected:disabled,
+.player-chip.selected.is-locked {
+    border-color: color-mix(in srgb, var(--court), var(--border) 25%);
+    background: color-mix(in srgb, var(--court-glow), var(--bg-card) 35%);
 }
 .player-chip .chip-check {
     width: 20px;

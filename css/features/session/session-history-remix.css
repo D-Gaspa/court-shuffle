@@ -1,0 +1,47 @@
+.session-continuation-side {
+    display: grid;
+    justify-items: end;
+    gap: var(--space-sm);
+}
+
+.session-config.is-history-seed .session-continuation-banner {
+    border-color: color-mix(in srgb, var(--court), var(--border) 38%);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--court-glow), transparent 12%), transparent 72%),
+        color-mix(in srgb, var(--bg-card), #000 3%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--court-light), transparent 82%);
+}
+
+.session-config.is-history-seed .session-continuation-kicker {
+    color: var(--court-light);
+}
+
+.session-config.is-history-seed .session-continuation-tag {
+    border-color: color-mix(in srgb, var(--court), var(--border) 45%);
+    background: color-mix(in srgb, var(--court), transparent 90%);
+}
+
+.session-config.is-history-seed .session-step-btn.is-active {
+    border-color: var(--court);
+    background: color-mix(in srgb, var(--court-glow), var(--bg-card) 20%);
+}
+
+.session-config.is-history-seed .session-step-btn.is-active .session-step-index {
+    border-color: var(--court);
+    background: color-mix(in srgb, var(--court), transparent 72%);
+}
+
+.session-config.is-history-seed .session-step-panel {
+    border-color: color-mix(in srgb, var(--court), var(--border) 50%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--court-light), transparent 84%);
+}
+
+.session-prefill-cancel-btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .session-continuation-side {
+        justify-items: start;
+    }
+}

@@ -9,6 +9,7 @@ const sessionContinuationTitle = document.getElementById("session-continuation-t
 const sessionContinuationDetail = document.getElementById("session-continuation-detail")
 const sessionContinuationPhaseTag = document.getElementById("session-continuation-phase-tag")
 const sessionContinuationTournamentTag = document.getElementById("session-continuation-tournament-tag")
+const sessionPrefillCancelBtn = document.getElementById("session-prefill-cancel-btn")
 const sessionSetupNotice = document.getElementById("session-setup-notice")
 const playerSelection = document.getElementById("player-selection")
 const selectAllBtn = document.getElementById("select-all-btn")
@@ -102,6 +103,7 @@ export {
     sessionContinuationPhaseTag,
     sessionContinuationTitle,
     sessionContinuationTournamentTag,
+    sessionPrefillCancelBtn,
     sessionSetupSubtitle,
     sessionSetupTitle,
     sessionStepButtons,

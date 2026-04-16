@@ -23,6 +23,7 @@ function renderTournamentSetupPanel({
         previewError: draft.tournament.previewError,
         advancedError: draft.tournament.advancedError,
         continuation: draft.continuation,
+        historySeed: draft.historySeed,
         onChange: handleTournamentAction,
     })
     updateCourtHint({

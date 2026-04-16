@@ -14,6 +14,7 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
         gameMode: null,
         setupNotice: "",
         continuation: null,
+        historySeed: null,
         free: {
             teamCount: 2,
         },
@@ -23,7 +24,7 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
 }
 
 function getVisibleStepIds(draft) {
-    if (draft?.continuation) {
+    if (draft?.continuation || draft?.historySeed) {
         return ["roster", "setup"]
     }
     return ["roster", "mode", "setup"]
@@ -51,6 +52,7 @@ function applySessionSetupPrefill(draft, prefill, createDefaultTournamentDraft) 
     draft.gameMode = prefill.gameMode || null
     draft.setupNotice = prefill.notice || ""
     draft.continuation = prefill.continuation || null
+    draft.historySeed = prefill.historySeed || null
     draft.free = {
         teamCount: prefill.free?.teamCount || 2,
     }

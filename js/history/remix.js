@@ -13,6 +13,11 @@ const HISTORY_REMIX_ACTIONS = {
     sameSeed: "same-seed",
 }
 
+const HISTORY_SEED_VARIANTS = {
+    newSeed: "new-seed",
+    sameSeed: "same-seed",
+}
+
 function buildTournamentSeedSignature(players, tournamentConfig) {
     return JSON.stringify({
         players,
@@ -90,21 +95,17 @@ function countMissingPlayers(players, rosterSet) {
     return missing
 }
 
-function buildHistoryLoadNotice(session, action, skippedPlayers) {
+function buildSeededHistoryDetail(session, action, skippedPlayers) {
     const phaseLabel = isMultiPhaseHistorySession(session) ? "latest saved phase" : "history"
-    let message = `Loaded from ${phaseLabel}`
+    let message = `Tournament settings loaded from ${phaseLabel}`
     if (action === HISTORY_REMIX_ACTIONS.sameSeed) {
-        message = `Loaded from ${phaseLabel} with the original seed locked`
+        message = `Tournament settings loaded from ${phaseLabel} with the original seed locked`
     } else if (action === HISTORY_REMIX_ACTIONS.newSeed) {
-        message = `Loaded from ${phaseLabel} with a fresh seed`
+        message = `Tournament settings loaded from ${phaseLabel}; a fresh seed will be generated when you start`
     }
 
     if (skippedPlayers <= 0) {
         return message
-    }
-
-    if (action === HISTORY_REMIX_ACTIONS.sameSeed) {
-        message = `Loaded from ${phaseLabel}; the original seed lock was cleared because the roster changed`
     }
 
     const noun = skippedPlayers === 1 ? "player was" : "players were"
@@ -199,10 +200,38 @@ function buildFreePrefill(session) {
     }
 }
 
+function buildHistorySeedMetadata(session, action) {
+    const latestPhaseLabel = isMultiPhaseHistorySession(session) ? "Latest Saved Phase" : "Saved Session"
+    return {
+        sourceLabel: latestPhaseLabel,
+        variant:
+            action === HISTORY_REMIX_ACTIONS.sameSeed ? HISTORY_SEED_VARIANTS.sameSeed : HISTORY_SEED_VARIANTS.newSeed,
+        detail: buildSeededHistoryDetail(session, action, 0),
+        lockedFields: {
+            roster: true,
+            format: true,
+            teamSize: true,
+            courtCount: true,
+            allowNotStrictDoubles: true,
+            advanced: true,
+        },
+    }
+}
+
 function buildHistoryRemixPrefill(session, action, roster) {
     const { selectedPlayers, skippedPlayers } = resolveSelectedPlayers(session, roster)
-    const notice = buildHistoryLoadNotice(session, action, skippedPlayers)
     const mode = session?.remix?.sourceMode || session?.mode || "free"
+    if (action === HISTORY_REMIX_ACTIONS.reusePlayers) {
+        return {
+            currentStep: "roster",
+            selectedPlayers,
+            notice: "",
+            gameMode: null,
+            continuation: null,
+            historySeed: null,
+        }
+    }
+
     let modePrefill
 
     if (mode === "tournament") {
@@ -216,9 +245,13 @@ function buildHistoryRemixPrefill(session, action, roster) {
     return {
         currentStep: "setup",
         selectedPlayers,
-        notice,
+        notice: "",
+        historySeed: {
+            ...buildHistorySeedMetadata(session, action),
+            detail: buildSeededHistoryDetail(session, action, skippedPlayers),
+        },
         ...modePrefill,
     }
 }
 
-export { HISTORY_REMIX_ACTIONS, buildHistoryRemixPayload, buildHistoryRemixPrefill }
+export { HISTORY_REMIX_ACTIONS, HISTORY_SEED_VARIANTS, buildHistoryRemixPayload, buildHistoryRemixPrefill }

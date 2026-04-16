@@ -6,6 +6,7 @@ import { buildHistoryRemixPrefill, HISTORY_REMIX_ACTIONS } from "../js/history/r
 
 const LATEST_PHASE_PATTERN = /latest saved phase/
 const SEED_LOCK_PATTERN = /seed lock/
+const FRESH_SEED_PATTERN = /fresh seed/
 
 function createPhasedSession() {
     return {
@@ -68,8 +69,44 @@ test("history remix copy references the latest saved phase for continued session
         "Dana",
     ])
 
-    assert.match(prefill.notice, LATEST_PHASE_PATTERN)
-    assert.match(prefill.notice, SEED_LOCK_PATTERN)
+    assert.equal(prefill.currentStep, "setup")
+    assert.equal(prefill.notice, "")
+    assert.equal(prefill.historySeed.variant, "same-seed")
+    assert.equal(prefill.historySeed.lockedFields.roster, true)
+    assert.equal(prefill.historySeed.lockedFields.courtCount, true)
+    assert.match(prefill.historySeed.detail, LATEST_PHASE_PATTERN)
+    assert.match(prefill.historySeed.detail, SEED_LOCK_PATTERN)
+})
+
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
+test("reuse players only prefills the roster and stays on the roster step", () => {
+    const prefill = buildHistoryRemixPrefill(createPhasedSession(), HISTORY_REMIX_ACTIONS.reusePlayers, [
+        "Ana",
+        "Bea",
+        "Cora",
+        "Dana",
+    ])
+
+    assert.equal(prefill.currentStep, "roster")
+    assert.equal(prefill.gameMode, null)
+    assert.equal(prefill.notice, "")
+    assert.equal(prefill.historySeed, null)
+})
+
+// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
+test("reuse settings stores a fresh-seed seeded-history context", () => {
+    const prefill = buildHistoryRemixPrefill(createPhasedSession(), HISTORY_REMIX_ACTIONS.newSeed, [
+        "Ana",
+        "Bea",
+        "Cora",
+        "Dana",
+    ])
+
+    assert.equal(prefill.currentStep, "setup")
+    assert.equal(prefill.notice, "")
+    assert.equal(prefill.historySeed.variant, "new-seed")
+    assert.match(prefill.historySeed.detail, LATEST_PHASE_PATTERN)
+    assert.match(prefill.historySeed.detail, FRESH_SEED_PATTERN)
 })
 
 // biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
@@ -77,4 +114,5 @@ test("history actions relabel phased session reuse actions", () => {
     const actions = createHistoryActionsHarness().resolveActiveHistoryActions(createPhasedSession())
 
     assert.equal(actions[0].label, "Reuse Latest Phase")
+    assert.equal(actions[1].label, "Reuse Settings")
 })

@@ -67,12 +67,22 @@ function renderSetupShellContent({ draft, onTournamentAction, state, ui }) {
         sessionContinuationPhaseTag: ui.sessionContinuationPhaseTag,
         sessionContinuationTitle: ui.sessionContinuationTitle,
         sessionContinuationTournamentTag: ui.sessionContinuationTournamentTag,
+        sessionPrefillCancelBtn: ui.sessionPrefillCancelBtn,
         sessionSetupSubtitle: ui.sessionSetupSubtitle,
         sessionSetupTitle: ui.sessionSetupTitle,
         startSessionLabel: ui.startSessionLabel,
     })
-    renderSetupNotice(draft.continuation ? "" : draft.setupNotice, ui.sessionSetupNotice)
-    renderPlayerSelection(state.roster, draft.selectedPlayers, ui.playerSelection, onTournamentAction)
+    renderSetupNotice(draft.continuation || draft.historySeed ? "" : draft.setupNotice, ui.sessionSetupNotice)
+    const rosterLocked = Boolean(draft.historySeed?.lockedFields?.roster)
+    ui.selectAllBtn.disabled = rosterLocked
+    ui.deselectAllBtn.disabled = rosterLocked
+    renderPlayerSelection({
+        roster: state.roster,
+        selectedSet: draft.selectedPlayers,
+        container: ui.playerSelection,
+        onChange: onTournamentAction,
+        locked: rosterLocked,
+    })
     renderModeStep({ draft, modeHint: ui.modeHint, modeSelector: ui.modeSelector })
 }
 

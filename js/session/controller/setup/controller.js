@@ -20,7 +20,7 @@ function createTournamentActionHandler(draft, onChange) {
 
 function createGameModeSetter(draft, createDefaultTournamentDraft) {
     return (nextMode) => {
-        if (draft.continuation) {
+        if (draft.continuation || draft.historySeed) {
             return
         }
         if (draft.gameMode === nextMode) {
@@ -62,6 +62,11 @@ function bindSetupControls({
             clearContinuation()
             onChange()
         },
+        onCancelHistorySeed: () => {
+            draft.historySeed = null
+            draft.setupNotice = ""
+            onChange()
+        },
         onContinuationStart,
         onStartSession: () =>
             onSessionStart({
@@ -79,6 +84,7 @@ function bindSetupControls({
         selectAllBtn: ui.selectAllBtn,
         sessionBackBtn: ui.sessionBackBtn,
         sessionNextBtn: ui.sessionNextBtn,
+        sessionPrefillCancelBtn: ui.sessionPrefillCancelBtn,
         sessionStepButtons: ui.sessionStepButtons,
         setCurrentStep: (stepId) => {
             draft.currentStep = stepId

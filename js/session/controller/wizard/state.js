@@ -61,7 +61,9 @@ function buildWizardState(draft, getTournamentBlockingError, getFinalStepId, get
     const continuationRosterChanged = !draft.continuation || hasContinuationRosterChange(draft)
     const rosterComplete = selectedCount >= 2 && continuationRosterChanged
     const modeComplete =
-        Boolean(draft.continuation) || ["free", "tournament", "singles", "doubles"].includes(draft.gameMode)
+        Boolean(draft.continuation) ||
+        Boolean(draft.historySeed) ||
+        ["free", "tournament", "singles", "doubles"].includes(draft.gameMode)
     const freeSetupComplete =
         rosterComplete && draft.free.teamCount >= 2 && draft.free.teamCount <= Math.max(2, selectedCount)
     const structuredSetupComplete = selectedCount >= getStructuredMinPlayers(draft.gameMode, draft.structured)

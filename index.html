@@ -140,9 +140,19 @@
                                         Start a new phase from the latest completed mini tournament without discarding the session.
                                     </p>
                                 </div>
-                                <div class="session-continuation-tags">
-                                    <span id="session-continuation-phase-tag" class="session-continuation-tag">Phase 1</span>
-                                    <span id="session-continuation-tournament-tag" class="session-continuation-tag">Tournament 1</span>
+                                <div class="session-continuation-side">
+                                    <div class="session-continuation-tags">
+                                        <span id="session-continuation-phase-tag" class="session-continuation-tag">Phase 1</span>
+                                        <span id="session-continuation-tournament-tag" class="session-continuation-tag">Tournament 1</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        id="session-prefill-cancel-btn"
+                                        class="btn btn-ghost btn-sm session-prefill-cancel-btn"
+                                        hidden
+                                    >
+                                        Stop Using Saved Setup
+                                    </button>
                                 </div>
                             </div>
                             <div id="session-setup-notice" class="info-banner" hidden></div>
@@ -452,7 +462,6 @@
                             <div class="history-backup-copy">
                                 <p class="history-backup-kicker">Backup &amp; Restore</p>
                                 <h2 id="history-backup-title">Keep your local history portable</h2>
-                                <p class="history-backup-summary-line">Collapsed by default to save space.</p>
                             </div>
                             <span class="history-backup-toggle" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">

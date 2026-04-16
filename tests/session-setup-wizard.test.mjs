@@ -7,6 +7,7 @@ function createDraft(overrides = {}) {
         selectedPlayers: new Set(["Ana", "Bea", "Cora", "Dana"]),
         gameMode: "tournament",
         continuation: null,
+        historySeed: null,
         free: {
             teamCount: 2,
         },
@@ -31,8 +32,10 @@ async function loadWizardModules() {
     }
 
     const draftModule = await import("../js/session/controller/setup/draft.js")
+    const courtModule = await import("../js/session/controller/setup/tournament/courts.js")
     const stateModule = await import("../js/session/controller/wizard/state.js")
     return {
+        clampTournamentCourtCount: courtModule.clampTournamentCourtCount,
         getVisibleStepIds: draftModule.getVisibleStepIds,
         buildWizardState: stateModule.buildWizardState,
     }
@@ -43,6 +46,10 @@ test("getVisibleStepIds removes the mode step for continuation", async () => {
     assert.deepEqual(getVisibleStepIds(createDraft()), ["roster", "mode", "setup"])
     assert.deepEqual(
         getVisibleStepIds(createDraft({ continuation: { lockedFields: { format: true, teamSize: true } } })),
+        ["roster", "setup"],
+    )
+    assert.deepEqual(
+        getVisibleStepIds(createDraft({ historySeed: { lockedFields: { format: true, teamSize: true } } })),
         ["roster", "setup"],
     )
 })
@@ -96,4 +103,60 @@ test("buildWizardState blocks continuation when the roster is unchanged", async 
     assert.equal(wizardState.completed.roster, false)
     assert.equal(wizardState.completed.setup, false)
     assert.equal(wizardState.unlockedIndex, 0)
+})
+
+test("buildWizardState treats seeded history as mode-complete when setup is prefilled", async () => {
+    const { getVisibleStepIds, buildWizardState } = await loadWizardModules()
+    const draft = createDraft({
+        currentStep: "setup",
+        historySeed: {
+            variant: "same-seed",
+            lockedFields: {
+                format: true,
+                teamSize: true,
+                courtCount: true,
+                allowNotStrictDoubles: true,
+                advanced: true,
+            },
+        },
+    })
+
+    const wizardState = buildWizardState(
+        draft,
+        () => "",
+        () => "setup",
+        getVisibleStepIds,
+    )
+
+    assert.deepEqual(wizardState.visibleSteps, ["roster", "setup"])
+    assert.equal(wizardState.completed.roster, true)
+    assert.equal(wizardState.completed.mode, true)
+    assert.equal(wizardState.completed.setup, true)
+})
+
+test("clampTournamentCourtCount disables court controls for seeded history tournament setup", async () => {
+    const { clampTournamentCourtCount } = await loadWizardModules()
+    const draft = createDraft({
+        historySeed: {
+            lockedFields: {
+                courtCount: true,
+            },
+        },
+    })
+    const courtCountValue = { textContent: "" }
+    const courtCountLabel = { textContent: "" }
+    const courtsDecBtn = { disabled: false }
+    const courtsIncBtn = { disabled: false }
+
+    clampTournamentCourtCount({
+        draft,
+        matchMode: "doubles",
+        courtCountValue,
+        courtCountLabel,
+        courtsDecBtn,
+        courtsIncBtn,
+    })
+
+    assert.equal(courtsDecBtn.disabled, true)
+    assert.equal(courtsIncBtn.disabled, true)
 })
