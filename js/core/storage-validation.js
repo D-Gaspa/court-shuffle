@@ -1,4 +1,5 @@
 import { clonePlayerNameArray, expectSessionDateString } from "./storage-validation-player.js"
+import { validateRatingsStateShape } from "./storage-validation-ratings.js"
 import {
     cloneRounds,
     cloneStringArray,
@@ -190,6 +191,7 @@ function validateStateShape(value, path = "state") {
         activeSession: cloneOptionalSessionRecord(source.activeSession ?? null, `${path}.activeSession`),
         history: cloneSessionCollection(source.history ?? [], `${path}.history`),
         archivedHistory: cloneSessionCollection(source.archivedHistory ?? [], `${path}.archivedHistory`),
+        ratings: validateRatingsStateShape(source.ratings ?? null, `${path}.ratings`),
         lastExportedAt: expectNullableString(source.lastExportedAt, `${path}.lastExportedAt`),
     }
 }

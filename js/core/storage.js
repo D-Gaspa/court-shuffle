@@ -6,7 +6,7 @@
 import { validateStateShape } from "./storage-validation.js"
 
 const STORAGE_KEY = "court-shuffle-data"
-const STORAGE_SCHEMA_VERSION = 2
+const STORAGE_SCHEMA_VERSION = 3
 const STORAGE_EXPORT_APP = "court-shuffle"
 
 function createDefaultState() {
@@ -15,6 +15,7 @@ function createDefaultState() {
         activeSession: null,
         history: [],
         archivedHistory: [],
+        ratings: null,
         lastExportedAt: null,
     }
 }

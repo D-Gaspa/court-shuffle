@@ -72,6 +72,16 @@
                     </svg>
                     <span>Stats</span>
                 </button>
+                <button type="button" class="tab" role="tab" data-view="ratings" aria-selected="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                        <path d="M5 19h14" />
+                        <path d="M8 15V9" />
+                        <path d="M12 15V5" />
+                        <path d="M16 15v-2" />
+                        <circle cx="16" cy="11" r="2" />
+                    </svg>
+                    <span>Ratings</span>
+                </button>
             </nav>
 
             <!-- Views Container -->
@@ -505,6 +515,13 @@
                         <!-- Populated by JS -->
                     </div>
                 </section>
+
+                <!-- RATINGS VIEW -->
+                <section id="view-ratings" class="view" role="tabpanel">
+                    <div id="ratings-root">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
             </main>
         </div>
 
@@ -530,6 +547,26 @@
                     <button type="button" id="confirm-cancel" class="btn btn-ghost">Cancel</button>
                     <button type="button" id="confirm-extra" class="btn btn-ghost btn-danger" hidden>Discard</button>
                     <button type="button" id="confirm-ok" class="btn btn-danger">Confirm</button>
+                </div>
+            </div>
+        </dialog>
+
+        <dialog id="season-label-dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="season-label-title">Start Rating Season</h2>
+                <p id="season-label-message" class="modal-message">
+                    Give the season a label and choose the date when rated history should begin counting.
+                </p>
+                <input type="text" id="season-label-input" placeholder="Spring 2027" autocomplete="off" maxlength="80" />
+                <div class="modal-inline-field">
+                    <input type="date" id="season-start-date-input" />
+                    <button type="button" id="season-oldest-date-btn" class="btn btn-ghost btn-sm">Use Oldest Eligible</button>
+                </div>
+                <div id="season-start-date-hint" class="modal-message"></div>
+                <div id="season-label-error" class="field-error" hidden></div>
+                <div class="modal-actions">
+                    <button type="button" id="season-label-cancel" class="btn btn-ghost">Cancel</button>
+                    <button type="button" id="season-label-confirm" class="btn btn-primary">Continue</button>
                 </div>
             </div>
         </dialog>

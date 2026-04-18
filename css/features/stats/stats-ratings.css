@@ -1,0 +1,238 @@
+.stats-hero-ratings {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.stats-ratings-hero-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.stats-ratings-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+}
+
+.stats-ratings-season-btn,
+.stats-ratings-panel-btn {
+    white-space: nowrap;
+}
+
+.stats-panel-ratings-empty {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.stats-ratings-dossier-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 0.9rem;
+}
+
+.stats-ratings-dossier-highlight {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 16px;
+    border: 1px solid #ffffff12;
+    background:
+        radial-gradient(circle at top left, #ffffff10, transparent 45%), linear-gradient(180deg, #ffffff07, #00000018);
+}
+
+.stats-ratings-dossier-label {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stats-ratings-dossier-value {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.35rem;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+}
+
+.stats-ratings-dossier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.stats-ratings-metric-card {
+    min-height: 118px;
+    align-content: start;
+    gap: 0.35rem;
+}
+
+.stats-ratings-metric-card .stats-metric-label {
+    line-height: 1.3;
+}
+
+.stats-ratings-metric-card .stats-metric-value {
+    font-size: clamp(1.15rem, 1rem + 0.8vw, 1.55rem);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+
+.stats-ratings-metric-card .stats-metric-caption {
+    line-height: 1.4;
+}
+
+.stats-ratings-dossier-chips {
+    margin-top: 0.85rem;
+}
+
+.stats-ratings-rank {
+    display: block;
+    margin-top: 0.12rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.stats-ratings-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.9rem;
+    padding: 0.95rem 1rem;
+}
+
+.stats-ratings-row-body {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.stats-ratings-row .stats-ratings-player-name {
+    display: block;
+    font-size: 1.02rem;
+    font-weight: 600;
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.stats-ratings-row-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.stats-ratings-rank {
+    margin-top: 0;
+    line-height: 1.1;
+    flex-shrink: 0;
+}
+
+.stats-ratings-row-topline {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.stats-ratings-rating-value {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.25rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+}
+
+.stats-ratings-row-meta {
+    max-width: none;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.stats-ratings-pill-rating {
+    color: var(--text);
+}
+
+.stats-ratings-pill-delta {
+    color: #f0d08d;
+}
+
+.stats-ratings-pill-matches {
+    color: var(--text-secondary);
+}
+
+.stats-ratings-pill-provisional {
+    color: #f3c38d;
+    font-size: 0.68rem;
+}
+
+.stats-archive-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.stats-archive-row .stats-player-row-pill {
+    color: var(--text);
+    background: #ffffff10;
+}
+
+.stats-archive-delete-btn {
+    min-height: 44px;
+}
+
+@media (width >= 1100px) {
+    .stats-ratings-dossier-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (width <= 640px) {
+    .stats-ratings-hero-controls {
+        align-items: stretch;
+    }
+
+    .stats-ratings-action-row {
+        width: 100%;
+    }
+
+    .stats-ratings-season-btn {
+        width: 100%;
+    }
+
+    .stats-ratings-dossier-summary,
+    .stats-ratings-dossier-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-ratings-row {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .stats-ratings-row-summary,
+    .stats-ratings-row-topline,
+    .stats-ratings-row-meta {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .stats-ratings-row-summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stats-archive-row {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-archive-delete-btn {
+        width: 100%;
+    }
+}

@@ -55,6 +55,10 @@
     gap: var(--space-lg);
 }
 
+.stats-columns > * {
+    min-width: 0;
+}
+
 .stats-panel-relationship.stats-tone-court {
     border-color: color-mix(in srgb, var(--court), var(--border) 60%);
 }

@@ -1,0 +1,101 @@
+.stats-panel-ratings-trend {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.stats-ratings-trend-chart {
+    border-radius: 16px;
+    border: 1px solid #ffffff10;
+    background:
+        radial-gradient(circle at 15% 15%, #ffffff08, transparent 35%), linear-gradient(180deg, #ffffff05, #00000014);
+    padding: 0.75rem;
+}
+
+.stats-ratings-trend-plot {
+    position: relative;
+}
+
+.stats-ratings-trend-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.stats-ratings-trend-gridline {
+    stroke: #ffffff14;
+    stroke-width: 1;
+}
+
+.stats-ratings-trend-axis-label {
+    fill: var(--text-muted);
+    font-size: 11px;
+    text-anchor: end;
+}
+
+.stats-ratings-trend-baseline {
+    stroke: #ffffff24;
+    stroke-width: 1.2;
+}
+
+.stats-ratings-trend-area {
+    fill: color-mix(in srgb, var(--ball), transparent 80%);
+}
+
+.stats-ratings-trend-line {
+    fill: none;
+    stroke: color-mix(in srgb, var(--ball), white 14%);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.stats-ratings-trend-point {
+    fill: color-mix(in srgb, var(--ball), white 20%);
+    stroke: #171612;
+    stroke-width: 1.5;
+    transition:
+        r var(--duration-fast) ease,
+        fill var(--duration-fast) ease,
+        stroke var(--duration-fast) ease;
+}
+
+.stats-ratings-trend-point:hover {
+    fill: color-mix(in srgb, var(--ball), white 36%);
+    stroke: #f4efe4;
+    r: 5;
+}
+
+.stats-ratings-trend-tooltip {
+    position: absolute;
+    z-index: 1;
+    display: grid;
+    gap: 0.12rem;
+    min-width: 132px;
+    pointer-events: none;
+    transform: translate(-50%, -100%);
+    padding: 0.55rem 0.65rem;
+    border-radius: 12px;
+    border: 1px solid #ffffff14;
+    background: linear-gradient(180deg, #211d18, #141210);
+    box-shadow: 0 14px 32px #00000035;
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+}
+
+.stats-ratings-trend-tooltip-title {
+    color: var(--text);
+    font-size: 0.8rem;
+}
+
+.stats-ratings-trend-labels,
+.stats-ratings-trend-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.stats-ratings-trend-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}

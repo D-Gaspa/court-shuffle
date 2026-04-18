@@ -43,6 +43,7 @@ function createSampleState() {
             },
         ],
         archivedHistory: [],
+        ratings: null,
         lastExportedAt: null,
     }
 }
@@ -206,6 +207,7 @@ test("load returns failure metadata for invalid stored data", () => {
         activeSession: null,
         history: [],
         archivedHistory: [],
+        ratings: null,
         lastExportedAt: null,
     })
 })

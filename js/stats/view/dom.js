@@ -190,6 +190,7 @@ function createTrustPill(text, toneClass = "") {
 }
 
 export {
+    createPanelHeader,
     createEmptyState,
     createMatchupTablePanel,
     createPlayerSummaryPanel,
@@ -198,4 +199,5 @@ export {
     createSessionTablePanel,
     createShell,
     createStatsIcon,
+    createTrustPill,
 }

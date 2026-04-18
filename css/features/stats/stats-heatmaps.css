@@ -15,15 +15,21 @@
     gap: var(--space-lg);
 }
 
+.stats-heatmap-grid > * {
+    min-width: 0;
+}
+
 .stats-heatmap-scroller {
     overflow: auto;
+    max-width: 100%;
+    min-width: 0;
     border-radius: 12px;
     border: 1px solid #ffffff10;
     background: #100f0c;
 }
 
 .stats-heatmap-table {
-    width: 100%;
+    width: max-content;
     border-collapse: separate;
     border-spacing: 0;
 }
@@ -115,21 +121,6 @@
 .stats-heatmap-cell.metric-avg-diff.is-no-data {
     color: var(--text-muted);
     background: #14120f;
-}
-
-.stats-heatmap-cell.is-selected-axis {
-    position: relative;
-    box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--ball), transparent 58%),
-        inset 0 0 0 999px color-mix(in srgb, var(--ball), transparent 93%);
-}
-
-.stats-heatmap-cell.is-selected-axis::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, color-mix(in srgb, #fff, transparent 92%), transparent 45%);
-    pointer-events: none;
 }
 
 .stats-heatmap-cell.is-diagonal {

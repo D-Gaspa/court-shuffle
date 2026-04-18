@@ -49,25 +49,22 @@
     gap: var(--space-lg);
 }
 
+.stats-section-grid > * {
+    min-width: 0;
+}
+
 .stats-panel-switcher {
     overflow: visible;
+    min-width: 0;
 }
 
 .stats-panel-switcher .stats-player-chip-rail {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.65rem;
-    overflow-x: auto;
-    overflow-y: visible;
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
     margin-inline: -0.1rem;
-}
-
-@media (width < 768px) {
-    .stats-panel-switcher .stats-player-chip-rail {
-        flex-wrap: wrap;
-        overflow-x: visible;
-    }
 }
 
 .stats-player-chip {

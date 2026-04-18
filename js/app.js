@@ -4,6 +4,8 @@ import { loadState, saveState } from "./core/storage.js"
 import { createHistoryActions } from "./history/actions.js"
 import { createHistoryBackupController } from "./history/backup.js"
 import { renderHistory } from "./history/render.js"
+import { createRatingsAppController } from "./ratings/app-controller.js"
+import { createRatingSeasonController } from "./ratings/controller.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
 import { initSession, launchHistoryRemix, refreshSessionView } from "./session/index.js"
 import { renderStats } from "./stats/render.js"
@@ -16,6 +18,7 @@ const views = {
     roster: document.getElementById("view-roster"),
     session: document.getElementById("view-session"),
     stats: document.getElementById("view-stats"),
+    ratings: document.getElementById("view-ratings"),
     history: document.getElementById("view-history"),
 }
 
@@ -30,6 +33,7 @@ const historyImportInput = document.getElementById("history-import-input")
 const historyBackupSummary = document.getElementById("history-backup-summary")
 const historyBackupStatus = document.getElementById("history-backup-status")
 const statsRoot = document.getElementById("stats-root")
+const ratingsRoot = document.getElementById("ratings-root")
 
 const confirmDialog = document.getElementById("confirm-dialog")
 const confirmTitle = document.getElementById("confirm-title")
@@ -37,6 +41,16 @@ const confirmMessage = document.getElementById("confirm-message")
 const confirmCancelBtn = document.getElementById("confirm-cancel")
 const confirmExtraBtn = document.getElementById("confirm-extra")
 const confirmOkBtn = document.getElementById("confirm-ok")
+const seasonLabelDialog = document.getElementById("season-label-dialog")
+const seasonLabelTitle = document.getElementById("season-label-title")
+const seasonLabelMessage = document.getElementById("season-label-message")
+const seasonLabelInput = document.getElementById("season-label-input")
+const seasonStartDateInput = document.getElementById("season-start-date-input")
+const seasonStartDateHint = document.getElementById("season-start-date-hint")
+const seasonOldestDateBtn = document.getElementById("season-oldest-date-btn")
+const seasonLabelError = document.getElementById("season-label-error")
+const seasonLabelCancelBtn = document.getElementById("season-label-cancel")
+const seasonLabelConfirmBtn = document.getElementById("season-label-confirm")
 
 let confirmCallback = null
 let confirmExtraCallback = null
@@ -59,6 +73,7 @@ const historyBackupController = createHistoryBackupController({
         refreshSessionView()
         refreshHistory()
         refreshStats()
+        refreshRatings()
     },
     elements: {
         exportButton: historyExportBtn,
@@ -76,6 +91,33 @@ const historyActions = createHistoryActions({
     refreshHistory,
     launchHistoryRemix,
 })
+const ratingSeasonController = createRatingSeasonController({
+    state,
+    persist,
+    refreshStats,
+    refreshRatings: () => ratingsAppController.refreshRatings(),
+    showConfirmDialog,
+    elements: {
+        dialog: seasonLabelDialog,
+        title: seasonLabelTitle,
+        message: seasonLabelMessage,
+        input: seasonLabelInput,
+        dateInput: seasonStartDateInput,
+        dateHint: seasonStartDateHint,
+        oldestDateButton: seasonOldestDateBtn,
+        error: seasonLabelError,
+        cancelButton: seasonLabelCancelBtn,
+        confirmButton: seasonLabelConfirmBtn,
+    },
+})
+const ratingsAppController = createRatingsAppController({
+    onStartRatingSeason: ratingSeasonController.handleStartRatingSeason,
+    persist,
+    ratingsRoot,
+    showConfirmDialog,
+    state,
+})
+const { refreshRatings } = ratingsAppController
 
 function sortRoster() {
     state.roster.sort((a, b) => a.localeCompare(b))
@@ -107,6 +149,8 @@ function switchView(viewName) {
         refreshSessionView()
     } else if (viewName === "stats") {
         refreshStats()
+    } else if (viewName === "ratings") {
+        refreshRatings()
     } else if (viewName === "history") {
         refreshHistory()
     }
@@ -196,6 +240,7 @@ function handleSharedAnalyticsQueryChange(patch) {
     analyticsQuery = updateAnalyticsQuery(analyticsQuery, patch)
     refreshHistory()
     refreshStats()
+    refreshRatings()
 }
 
 function handleHistoryQueryChange(patch) {
@@ -208,12 +253,14 @@ function handleHistoryQueryChange(patch) {
     }
     refreshHistory()
     refreshStats()
+    refreshRatings()
 }
 
 function resetSharedAnalyticsQuery() {
     analyticsQuery = createDefaultAnalyticsQuery()
     refreshHistory()
     refreshStats()
+    refreshRatings()
 }
 
 function resetHistoryQuery() {
@@ -221,11 +268,13 @@ function resetHistoryQuery() {
     historyPlayerFilter = "all"
     refreshHistory()
     refreshStats()
+    refreshRatings()
 }
 
 function init() {
     setupTabs()
     setupConfirmDialog()
+    ratingSeasonController.setupDialog()
     appStatus.bind()
     historyBackupController.setupActions()
     initRoster(state, persist, showConfirmDialog)

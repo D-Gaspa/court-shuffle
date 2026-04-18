@@ -27,4 +27,11 @@ function formatCountLabel(value, singular, plural = `${singular}s`) {
     return `${n} ${n === 1 ? singular : plural}`
 }
 
-export { formatPercent, formatRecord, formatSignedNumber, formatCountLabel }
+function formatInteger(value) {
+    if (!Number.isFinite(value)) {
+        return "—"
+    }
+    return Math.round(value).toString()
+}
+
+export { formatCountLabel, formatInteger, formatPercent, formatRecord, formatSignedNumber }

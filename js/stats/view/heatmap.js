@@ -117,7 +117,7 @@ function buildBodyRow({ heatmap, rowIndex, selectedPlayer, kind, metricKey }) {
     const rowPlayer = heatmap.players[rowIndex]
     row.appendChild(buildRowLabel(rowPlayer, selectedPlayer === rowPlayer))
     for (let colIndex = 0; colIndex < heatmap.players.length; colIndex += 1) {
-        row.appendChild(buildValueCell({ heatmap, rowIndex, colIndex, selectedPlayer, kind, metricKey }))
+        row.appendChild(buildValueCell({ heatmap, rowIndex, colIndex, kind, metricKey }))
     }
     return row
 }
@@ -133,7 +133,7 @@ function buildRowLabel(name, selected) {
     return th
 }
 
-function buildValueCell({ heatmap, rowIndex, colIndex, selectedPlayer, kind, metricKey }) {
+function buildValueCell({ heatmap, rowIndex, colIndex, kind, metricKey }) {
     const td = createEl("td", "stats-heatmap-cell")
     const rowPlayer = heatmap.players[rowIndex]
     const colPlayer = heatmap.players[colIndex]
@@ -142,9 +142,6 @@ function buildValueCell({ heatmap, rowIndex, colIndex, selectedPlayer, kind, met
         td.classList.add("is-diagonal")
         td.textContent = "—"
         return td
-    }
-    if (rowPlayer === selectedPlayer || colPlayer === selectedPlayer) {
-        td.classList.add("is-selected-axis")
     }
     const value = heatmap.matrix[rowIndex][colIndex]
     if (metricKey === "winRate") {
