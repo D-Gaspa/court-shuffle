@@ -1,12 +1,10 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: tournament fixtures are intentional in these tests.
 import assert from "node:assert/strict"
 import test from "node:test"
-import { appendContinuationPhase, buildContinuationPhase } from "../js/session/continuation/build.js"
-import { canContinueTournamentSession } from "../js/session/continuation/eligibility.js"
-import { buildContinuationPrefill } from "../js/session/continuation/prefill.js"
-import { buildTournamentSession } from "../js/session/setup/start.js"
-import { syncTournamentSeriesAliases } from "../js/tournament/series/sync.js"
+import { syncTournamentSeriesAliases } from "../js/domains/tournament/series/sync.js"
+import { appendContinuationPhase, buildContinuationPhase } from "../js/features/session/continuation/build.js"
+import { canContinueTournamentSession } from "../js/features/session/continuation/eligibility.js"
+import { buildContinuationPrefill } from "../js/features/session/continuation/prefill.js"
+import { buildTournamentSession } from "../js/features/session/setup/start.js"
 
 function createAdvancedSettings() {
     return {

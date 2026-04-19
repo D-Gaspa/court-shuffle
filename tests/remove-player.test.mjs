@@ -1,8 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildPlayerRemovalPlan } from "../js/roster/remove-player.js"
+import { buildPlayerRemovalPlan } from "../js/features/roster/remove-player.js"
 
 test("active savable sessions offer save and discard removal options", () => {
     const plan = buildPlayerRemovalPlan(

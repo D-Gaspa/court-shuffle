@@ -1,8 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { startSession } from "../js/session/controller/wizard/actions.js"
+import { startSession } from "../js/features/session/setup/state/actions.js"
 
 function createDraft(overrides = {}) {
     return {

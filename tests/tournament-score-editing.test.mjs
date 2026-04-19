@@ -1,13 +1,11 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: compact tournament fixtures keep the tests readable.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { renderActiveSession } from "../js/session/active/active.js"
+import { renderActiveSession } from "../js/features/session/live/active.js"
 import {
     canEditTournamentRoundScores,
     reconcileTournamentRoundsAfterScoreChange,
-} from "../js/session/active/tournament/score-editing.js"
+} from "../js/features/session/live/tournament/score-editing.js"
 
 function createTeam(id, name) {
     return { id, name, players: [name] }

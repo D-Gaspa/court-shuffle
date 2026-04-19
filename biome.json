@@ -58,6 +58,7 @@
                     },
                     "nursery": {
                         "noContinue": "off",
+                        "useExpect": "off",
                         "noTernary": "off",
                         "noHexColors": "off",
                         "noExcessiveLinesPerFile": "warn"

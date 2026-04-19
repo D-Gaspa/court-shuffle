@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildContinuationSummaryModel } from "../js/session/controller/setup/continuation-summary.js"
+import { buildContinuationSummaryModel } from "../js/features/session/setup/logic/continuation-summary.js"
 
 const SAME_ROSTER_PATTERN = /Change the roster before continuing/
 const ADDED_PLAYER_PATTERN = /Added: Eva/
@@ -30,7 +30,6 @@ function createDraftOverrides(overrides = {}) {
     }
 }
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("continuation summary model describes roster and setup changes", () => {
     const model = buildContinuationSummaryModel({
         draft: createDraftOverrides(),
@@ -45,7 +44,6 @@ test("continuation summary model describes roster and setup changes", () => {
     assert.match(model?.items[4], ABANDON_PATTERN)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("continuation summary model handles unchanged roster and settings", () => {
     const model = buildContinuationSummaryModel({
         draft: createDraftOverrides({

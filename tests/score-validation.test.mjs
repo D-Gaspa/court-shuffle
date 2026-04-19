@@ -1,11 +1,10 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-
-import { hasSavedScoreEntry } from "../js/score-editor/sets.js"
-import { buildHistoryEntryForSession } from "../js/session/active/history.js"
-import { buildStatsModel } from "../js/stats/model/index.js"
-import { computeStandings } from "../js/tournament/standings.js"
-import { determineMatchWinner } from "../js/tournament/utils.js"
+import { computeStandings } from "../js/domains/tournament/engine/standings.js"
+import { determineMatchWinner } from "../js/domains/tournament/engine/utils.js"
+import { buildStatsModel } from "../js/features/insights/stats/model/index.js"
+import { buildHistoryEntryForSession } from "../js/features/session/live/history.js"
+import { hasSavedScoreEntry } from "../js/ui/score-editor/sets.js"
 
 const TEAM_ONE_ID = 1
 const TEAM_TWO_ID = 2
@@ -38,7 +37,6 @@ const CLOSE_TIEBREAK_SINGLE_SET = [CLOSE_TIEBREAK_SCORE[0]]
 const TOTAL_SESSION_COUNT = 1
 const TOTAL_PLAYER_COUNT = 2
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("completed arbitrary tournament scores resolve a winner", () => {
     assert.equal(
         determineMatchWinner({
@@ -55,13 +53,11 @@ test("completed arbitrary tournament scores resolve a winner", () => {
     )
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("completed arbitrary scores remain saved", () => {
     assert.equal(hasSavedScoreEntry({ sets: SINGLE_SET_SCORE }), true)
     assert.equal(hasSavedScoreEntry({ sets: CLOSE_TIEBREAK_SINGLE_SET }), true)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("standings count arbitrary tournament scores", () => {
     const standings = computeStandings(
         [
@@ -120,7 +116,6 @@ test("standings count arbitrary tournament scores", () => {
     )
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("stats count arbitrary scored matches", () => {
     const model = buildStatsModel(
         [
@@ -165,7 +160,6 @@ test("stats count arbitrary scored matches", () => {
     assert.equal(model.global.decidedMatchCount, TOTAL_SESSION_COUNT)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("history keeps non-standard tournament scores", () => {
     const historyEntry = buildHistoryEntryForSession({
         id: "session-1",

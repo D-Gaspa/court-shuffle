@@ -1,14 +1,12 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
-
-import { buildTournamentSession } from "../js/session/setup/start.js"
 import {
     persistSessionToCurrentPhase,
     persistTournamentSeriesAliases,
     syncCurrentPhaseToSession,
     syncTournamentSeriesAliases,
-} from "../js/tournament/series/sync.js"
+} from "../js/domains/tournament/series/sync.js"
+import { buildTournamentSession } from "../js/features/session/setup/start.js"
 
 const UPDATED_COURT_COUNT = 3
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildHistoryCardMeta, resolveSessionChampionName } from "../js/history/render-header.js"
+import { buildHistoryCardMeta, resolveSessionChampionName } from "../js/features/history/list/card-header.js"
 
 const TEAM_ONE_ID = 1
 const TEAM_TWO_ID = 2
@@ -117,7 +117,6 @@ function createPhasedSeriesSession() {
     }
 }
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("series sessions derive the champion from saved tournament runs", () => {
     const session = createSeriesSession()
 
@@ -125,7 +124,6 @@ test("series sessions derive the champion from saved tournament runs", () => {
     assert.match(buildHistoryCardMeta(session), CHAMPION_LABEL_PATTERN)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("phased history sessions derive meta and champion across all played phases", () => {
     const session = createPhasedSeriesSession()
 

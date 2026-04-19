@@ -1,9 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: compact persistence fixtures keep the phase tests readable.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { parseStateImport } from "../js/core/storage.js"
+import { parseStateImport } from "../js/platform/storage/index.js"
 
 function createAdvancedSettings() {
     return {

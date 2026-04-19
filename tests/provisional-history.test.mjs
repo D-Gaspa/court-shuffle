@@ -1,18 +1,15 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: compact session fixtures keep the tests readable.
 import assert from "node:assert/strict"
 import test from "node:test"
-
-import { createEmptyRatingsState, startNewRatingSeason } from "../js/ratings/seasons.js"
+import { syncTournamentSeriesAliases } from "../js/domains/tournament/series/sync.js"
+import { createEmptyRatingsState, startNewRatingSeason } from "../js/features/insights/ratings/seasons.js"
+import { appendContinuationPhase } from "../js/features/session/continuation/build.js"
 import {
     buildHistoryEntryForSession,
     canSaveSessionToHistory,
     endSession,
     syncProvisionalHistory,
-} from "../js/session/active/history.js"
-import { appendContinuationPhase } from "../js/session/continuation/build.js"
-import { buildTournamentSession } from "../js/session/setup/start.js"
-import { syncTournamentSeriesAliases } from "../js/tournament/series/sync.js"
+} from "../js/features/session/live/history.js"
+import { buildTournamentSession } from "../js/features/session/setup/start.js"
 
 function createAdvancedSettings() {
     return {

@@ -1,8 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { validateRosterPlayerName } from "../js/roster/player-name.js"
+import { validateRosterPlayerName } from "../js/features/roster/player-name.js"
 
 test("roster player names reject reserved delimiters", () => {
     assert.equal(validateRosterPlayerName("Ana||Bea"), 'Player names cannot contain "||" or ",".')

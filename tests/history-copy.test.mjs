@@ -1,8 +1,8 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { createHistoryActions } from "../js/history/actions.js"
-import { buildHistoryRemixPrefill, HISTORY_REMIX_ACTIONS } from "../js/history/remix.js"
+import { createHistoryActions } from "../js/features/history/list/actions.js"
+import { buildHistoryRemixPrefill, HISTORY_REMIX_ACTIONS } from "../js/features/history/remix/index.js"
 
 const LATEST_PHASE_PATTERN = /latest saved phase/
 const SEED_LOCK_PATTERN = /seed lock/
@@ -61,7 +61,6 @@ function createHistoryActionsHarness() {
     })
 }
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("history remix copy references the latest saved phase for continued sessions", () => {
     const prefill = buildHistoryRemixPrefill(createPhasedSession(), HISTORY_REMIX_ACTIONS.sameSeed, [
         "Ana",
@@ -79,7 +78,6 @@ test("history remix copy references the latest saved phase for continued session
     assert.match(prefill.historySeed.detail, SEED_LOCK_PATTERN)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("reuse players only prefills the roster and stays on the roster step", () => {
     const prefill = buildHistoryRemixPrefill(createPhasedSession(), HISTORY_REMIX_ACTIONS.reusePlayers, [
         "Ana",
@@ -94,7 +92,6 @@ test("reuse players only prefills the roster and stays on the roster step", () =
     assert.equal(prefill.historySeed, null)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("reuse settings stores a fresh-seed seeded-history context", () => {
     const prefill = buildHistoryRemixPrefill(createPhasedSession(), HISTORY_REMIX_ACTIONS.newSeed, [
         "Ana",
@@ -110,7 +107,6 @@ test("reuse settings stores a fresh-seed seeded-history context", () => {
     assert.match(prefill.historySeed.detail, FRESH_SEED_PATTERN)
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("history actions relabel phased session reuse actions", () => {
     const actions = createHistoryActionsHarness().resolveActiveHistoryActions(createPhasedSession())
 

@@ -1,8 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { hideSessionLoading, showSessionLoading } from "../js/session/controller/loading.js"
+import { hideSessionLoading, showSessionLoading } from "../js/features/session/setup/ui/loading.js"
 
 test("showSessionLoading reveals overlay and marks body busy", () => {
     const overlay = { hidden: true }

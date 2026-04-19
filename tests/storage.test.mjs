@@ -1,9 +1,12 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: inline tennis-score fixtures are intentional in tests.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { createStateExport, loadStateFromStorage, parseStateImport, saveStateToStorage } from "../js/core/storage.js"
+import {
+    createStateExport,
+    loadStateFromStorage,
+    parseStateImport,
+    saveStateToStorage,
+} from "../js/platform/storage/index.js"
 
 const STORAGE_KEY = "court-shuffle-data"
 const SAMPLE_SET = [6, 4]

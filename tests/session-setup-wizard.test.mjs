@@ -1,4 +1,3 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
@@ -31,9 +30,9 @@ async function loadWizardModules() {
         getElementById: () => null,
     }
 
-    const draftModule = await import("../js/session/controller/setup/draft.js")
-    const courtModule = await import("../js/session/controller/setup/tournament/courts.js")
-    const stateModule = await import("../js/session/controller/wizard/state.js")
+    const draftModule = await import("../js/features/session/setup/logic/draft.js")
+    const courtModule = await import("../js/features/session/setup/logic/tournament/courts.js")
+    const stateModule = await import("../js/features/session/setup/state/state.js")
     return {
         clampTournamentCourtCount: courtModule.clampTournamentCourtCount,
         getVisibleStepIds: draftModule.getVisibleStepIds,

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildHistoryEntryForSession } from "../js/session/active/history.js"
+import { buildHistoryEntryForSession } from "../js/features/session/live/history.js"
 
 const TEAM_ONE_ID = 1
 const TEAM_TWO_ID = 2
@@ -198,7 +198,6 @@ function createContinuationFixtureSession() {
     }
 }
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("history saves played continuation phases and aliases the last phase at the top level", () => {
     const historyEntry = buildHistoryEntryForSession(createContinuationFixtureSession())
 

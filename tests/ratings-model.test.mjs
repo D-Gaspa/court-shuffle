@@ -1,10 +1,8 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: compact rating fixtures keep the test readable.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildArchivedRatingsModel, buildRatingsModel } from "../js/ratings/model.js"
-import { createEmptyRatingsState, startNewRatingSeason } from "../js/ratings/seasons.js"
+import { buildArchivedRatingsModel, buildRatingsModel } from "../js/features/insights/ratings/model.js"
+import { createEmptyRatingsState, startNewRatingSeason } from "../js/features/insights/ratings/seasons.js"
 
 function createScoredRound(teams, sets = [[6, 4]]) {
     return {

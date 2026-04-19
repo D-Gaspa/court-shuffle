@@ -1,8 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-
-import { createHistoryActions } from "../js/history/actions.js"
-import { buildHistoryNightGroups } from "../js/history/night-groups.js"
+import { buildHistoryNightGroups } from "../js/features/history/groups/model.js"
+import { createHistoryActions } from "../js/features/history/list/actions.js"
 
 function createSession(id, date, previousSessionId = null) {
     return {
@@ -25,7 +24,6 @@ function noop() {
     return null
 }
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("night groups preserve chronological data order while grouping chained sessions", () => {
     const sessions = [
         createSession("session-1", "2026-04-10T00:00:00.000Z"),
@@ -42,7 +40,6 @@ test("night groups preserve chronological data order while grouping chained sess
     )
 })
 
-// biome-ignore lint/nursery/useExpect: node:test uses assert-based checks here.
 test("linked-night sessions expose detach instead of join while group exposes extend", () => {
     const history = [
         createSession("session-0", "2026-04-09T22:00:00.000Z"),

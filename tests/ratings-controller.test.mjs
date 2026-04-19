@@ -1,4 +1,3 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
@@ -7,8 +6,8 @@ import {
     convertDateInputToIso,
     getEarliestHistoryDate,
     resolveInitialSeasonStartDate,
-} from "../js/ratings/controller.js"
-import { createEmptyRatingsState, startNewRatingSeason } from "../js/ratings/seasons.js"
+} from "../js/features/insights/ratings/season-controller.js"
+import { createEmptyRatingsState, startNewRatingSeason } from "../js/features/insights/ratings/seasons.js"
 
 const RETROACTIVE_PATTERN = /retroactive/i
 

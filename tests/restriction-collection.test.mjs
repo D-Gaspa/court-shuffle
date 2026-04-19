@@ -1,9 +1,7 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
-// biome-ignore-all lint/style/noMagicNumbers: compact scheduling fixtures keep these tests readable.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { buildRestrictedTeamsFromSessionPhases } from "../js/tournament/setup/advanced/model/restriction-collection.js"
+import { buildRestrictedTeamsFromSessionPhases } from "../js/domains/tournament/setup/advanced/model/restriction-collection.js"
 
 function createMatch(teamA, teamB) {
     return [teamA, teamB]

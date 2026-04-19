@@ -1,8 +1,11 @@
-// biome-ignore-all lint/nursery/useExpect: node:test uses assert-based checks here.
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { archiveCurrentRatingSeason, createEmptyRatingsState, startNewRatingSeason } from "../js/ratings/seasons.js"
+import {
+    archiveCurrentRatingSeason,
+    createEmptyRatingsState,
+    startNewRatingSeason,
+} from "../js/features/insights/ratings/seasons.js"
 
 test("starting a new rating season archives the previous active season with snapshots", () => {
     const firstState = startNewRatingSeason({
