@@ -176,6 +176,11 @@ function buildBaseHistoryEntry(session) {
         courtCount: session.courtCount || 1,
         rounds: tournamentRounds ?? playedRounds,
     }
+    if (session.night) {
+        historyEntry.night = {
+            previousSessionId: session.night.previousSessionId || null,
+        }
+    }
     const remix = buildHistoryRemixPayload(session)
     if (remix) {
         historyEntry.remix = remix

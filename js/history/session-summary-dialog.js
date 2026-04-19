@@ -17,7 +17,7 @@ function createSessionSummaryDialogController({ appStatus, elements }) {
 
     function renderSummary(summary) {
         currentSummary = summary
-        title.textContent = "Session Summary"
+        title.textContent = summary.type === "night-summary" ? "Night Summary" : "Session Summary"
         subtitle.textContent = `${new Date(summary.date).toLocaleDateString()} · ${summary.matchSummary.played} games · ${summary.leaderboardMode === "singles" ? "Singles" : "Doubles"}`
         report.replaceChildren(buildSessionSummaryReport(summary))
     }

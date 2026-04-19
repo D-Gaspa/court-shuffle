@@ -3,7 +3,14 @@ import { buildWizardState, normalizeCurrentStep } from "../wizard/state.js"
 import { renderContinuationSummary } from "./continuation-summary.js"
 import { getFinalStepId, getVisibleStepIds, reconcileDraftWithRoster } from "./draft.js"
 import { renderSetupStep } from "./panels.js"
-import { renderFreeSetup, renderModeStep, renderSetupNotice, renderSetupShell, syncStepperUi } from "./render.js"
+import {
+    renderFreeSetup,
+    renderModeStep,
+    renderNightLinkSetup,
+    renderSetupNotice,
+    renderSetupShell,
+    syncStepperUi,
+} from "./render.js"
 import { clampTournamentCourtCount, updateCourtHint } from "./tournament/courts.js"
 import { getTournamentBlockingError, updateTournamentDerivedState } from "./tournament/derived.js"
 import {
@@ -94,6 +101,7 @@ function renderSetupStepContent({
     getTournamentMatchMode,
     onTournamentAction,
     renderTournamentSetup,
+    state,
     ui,
 }) {
     renderSetupStep({
@@ -140,6 +148,13 @@ function renderSetupStepContent({
         summaryBodyElement: ui.continuationSummaryBody,
         summaryElement: ui.continuationSummary,
     })
+    renderNightLinkSetup({
+        draft,
+        history: state.history,
+        linkPreviousNightCheckbox: ui.linkPreviousNightCheckbox,
+        nightLinkGroup: ui.nightLinkGroup,
+        nightLinkHint: ui.nightLinkHint,
+    })
 }
 
 function renderWizardContent({
@@ -168,6 +183,7 @@ function renderWizardContent({
         getTournamentMatchMode,
         onTournamentAction,
         renderTournamentSetup,
+        state,
         ui,
     })
     syncStepperUi({

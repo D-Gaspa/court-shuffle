@@ -127,8 +127,10 @@ function drawPlayerHeader({ context, row, index, width, x, y }) {
 
     context.font = "600 20px Outfit, system-ui, sans-serif"
     context.fillStyle = "#d7ccb9"
+    const isExistingRank = Number.isFinite(row.beforeRank)
+    const rankStatus = isExistingRank ? (row.rankDelta === 0 ? "Still" : "Now") : "New"
     context.fillText(
-        `${row.rankDelta === 0 ? "Still" : "Now"} ${formatRank(row.afterRank)}`,
+        `${rankStatus} ${formatRank(row.afterRank)}`,
         x + PLAYER_NAME_OFFSET_X,
         y + (nameLines[1] ? PLAYER_RANK_OFFSET_Y_WRAPPED : PLAYER_RANK_OFFSET_Y_COMPACT),
     )

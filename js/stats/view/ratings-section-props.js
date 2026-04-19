@@ -1,6 +1,7 @@
 function buildRatingsHeroProps({
     hasLivePreview,
     isArchivedView,
+    onArchiveCurrentSeason,
     onBackToActiveSeason,
     onSelectMode,
     onSelectPreview,
@@ -13,6 +14,7 @@ function buildRatingsHeroProps({
     return {
         hasLivePreview,
         isArchivedView,
+        onArchiveCurrentSeason,
         onBackToActiveSeason,
         onStartSeason,
         ratingsModel,
@@ -35,6 +37,7 @@ function buildRatingsBoardProps({
     provisionalHistory,
     ratingsModel,
     ratingsState,
+    selectedArchivedSeasonId,
     selectedMode,
     selectedPlayer,
     selectedPreview,
@@ -51,6 +54,7 @@ function buildRatingsBoardProps({
         provisionalHistory,
         ratingsModel,
         ratingsState,
+        selectedArchivedSeasonId,
         selectedMode,
         selectedPlayer,
         selectedPreview,

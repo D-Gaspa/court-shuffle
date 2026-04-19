@@ -24,9 +24,27 @@ function buildRatingsHeroCopy({ activeSeason, hasLivePreview, isArchivedView, se
     return "Ratings replay from saved tournament history inside the active season only."
 }
 
+function createRatingsHeroStrip({ archivedCount, hasLivePreview, isArchivedView }) {
+    const strip = createEl("div", "stats-hero-strip")
+    strip.appendChild(
+        createEl(
+            "span",
+            "stats-trust-chip",
+            isArchivedView ? "Viewing archived season" : "Ratings ignore shared query filters",
+        ),
+    )
+    strip.appendChild(createEl("span", "stats-trust-chip", "Tournament matches only"))
+    if (hasLivePreview && !isArchivedView) {
+        strip.appendChild(createEl("span", "stats-trust-chip", "Live session preview available"))
+    }
+    strip.appendChild(createEl("span", "stats-trust-chip", `${archivedCount} archived seasons`))
+    return strip
+}
+
 function createRatingsHero({
     hasLivePreview,
     isArchivedView,
+    onArchiveCurrentSeason,
     onBackToActiveSeason,
     onStartSeason,
     ratingsModel,
@@ -63,6 +81,7 @@ function createRatingsHero({
         createRatingsHeroControls({
             hasLivePreview,
             isArchivedView,
+            onArchiveCurrentSeason,
             onBackToActiveSeason,
             onStartSeason,
             selectedMode,
@@ -72,27 +91,14 @@ function createRatingsHero({
             activeSeason,
         }),
     )
-
-    const strip = createEl("div", "stats-hero-strip")
-    strip.appendChild(
-        createEl(
-            "span",
-            "stats-trust-chip",
-            isArchivedView ? "Viewing archived season" : "Ratings ignore shared query filters",
-        ),
-    )
-    strip.appendChild(createEl("span", "stats-trust-chip", "Tournament matches only"))
-    if (hasLivePreview && !isArchivedView) {
-        strip.appendChild(createEl("span", "stats-trust-chip", "Live session preview available"))
-    }
-    strip.appendChild(createEl("span", "stats-trust-chip", `${archivedCount} archived seasons`))
-    panel.appendChild(strip)
+    panel.appendChild(createRatingsHeroStrip({ archivedCount, hasLivePreview, isArchivedView }))
     return panel
 }
 
 function createRatingsHeroControls({
     hasLivePreview,
     isArchivedView,
+    onArchiveCurrentSeason,
     onBackToActiveSeason,
     onStartSeason,
     selectedMode,
@@ -114,6 +120,12 @@ function createRatingsHeroControls({
         backButton.type = "button"
         backButton.addEventListener("click", onBackToActiveSeason)
         actionRow.appendChild(backButton)
+    }
+    if (activeSeason && !isArchivedView) {
+        const archiveButton = createEl("button", "btn btn-ghost stats-ratings-season-btn", "Archive Current Season")
+        archiveButton.type = "button"
+        archiveButton.addEventListener("click", onArchiveCurrentSeason)
+        actionRow.appendChild(archiveButton)
     }
     const button = createEl(
         "button",

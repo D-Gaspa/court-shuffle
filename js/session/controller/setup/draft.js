@@ -15,6 +15,10 @@ function createSessionSetupDraft(createDefaultTournamentDraft) {
         setupNotice: "",
         continuation: null,
         historySeed: null,
+        nightLink: {
+            enabled: false,
+            previousSessionId: null,
+        },
         free: {
             teamCount: 2,
         },
@@ -53,6 +57,10 @@ function applySessionSetupPrefill(draft, prefill, createDefaultTournamentDraft) 
     draft.setupNotice = prefill.notice || ""
     draft.continuation = prefill.continuation || null
     draft.historySeed = prefill.historySeed || null
+    draft.nightLink = {
+        enabled: Boolean(prefill.nightLink?.enabled),
+        previousSessionId: prefill.nightLink?.previousSessionId || null,
+    }
     draft.free = {
         teamCount: prefill.free?.teamCount || 2,
     }

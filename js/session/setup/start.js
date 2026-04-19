@@ -24,7 +24,7 @@ function buildTournamentSessionConfig(config, courtCount, seed) {
     }
 }
 
-function buildTournamentSessionState({ players, courtCount, config, seed, series }) {
+function buildTournamentSessionState({ players, courtCount, config, night, seed, series }) {
     const id = generateSessionId()
     const date = new Date().toISOString()
     const tournamentConfig = buildTournamentSessionConfig(config, courtCount, seed)
@@ -59,6 +59,7 @@ function buildTournamentSessionState({ players, courtCount, config, seed, series
         tournamentSeries: series,
         currentPhaseIndex: 0,
         phases: [initialPhase],
+        night: night || null,
     }
 }
 
@@ -127,7 +128,7 @@ function buildFreeSession({ players, teamCount, gameMode, courtCount, allowNotSt
 /**
  * Build a tournament session object, or null if not enough teams.
  */
-function buildTournamentSession({ players, courtCount, tournamentConfig }) {
+function buildTournamentSession({ night = null, players, courtCount, tournamentConfig }) {
     const config = tournamentConfig
     if (!config) {
         return null
@@ -137,7 +138,7 @@ function buildTournamentSession({ players, courtCount, tournamentConfig }) {
     if (!series || series.tournaments.length === 0) {
         return null
     }
-    const session = buildTournamentSessionState({ players, courtCount, config, seed, series })
+    const session = buildTournamentSessionState({ players, courtCount, config, night, seed, series })
     syncTournamentSeriesAliases(session)
     return session
 }

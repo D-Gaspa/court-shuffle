@@ -1,10 +1,16 @@
-import { calculateDoublesDelta, calculateSinglesDelta } from "../ratings/elo.js"
+import {
+    calculateDoublesDelta,
+    calculateDoublesPlayerExpectedScore,
+    calculateDoublesSideExpectedScores,
+    calculateSinglesDelta,
+} from "../ratings/elo.js"
 import { collectSessionRatingEvents } from "../ratings/history-events.js"
 import { buildRatingsModel } from "../ratings/model.js"
 import { DEFAULT_BASELINE_RATING, getActiveRatingSeason } from "../ratings/seasons.js"
 
 function createRatingReplayPlayer(player, baselineRating) {
     const rating = player?.rating ?? baselineRating
+    const trend = Array.isArray(player?.trend) ? [...player.trend] : [{ matchNumber: 0, rating }]
     return {
         rating,
         ratedMatchCount: player?.ratedMatchCount ?? 0,
@@ -14,7 +20,7 @@ function createRatingReplayPlayer(player, baselineRating) {
         seasonHigh: player?.seasonHigh ?? rating,
         seasonLow: player?.seasonLow ?? rating,
         deltaFromStart: player?.deltaFromStart ?? rating - baselineRating,
-        trend: Array.isArray(player?.trend) ? [...player.trend] : [{ matchNumber: 0, rating }],
+        trend,
     }
 }
 
@@ -54,22 +60,70 @@ function updateReplayPlayer({ baselineRating, delta, didWin, player, provisional
     player.losses += 1
 }
 
-function buildSessionEventKey({ matchIndex, phaseIndex, roundIndex, tournamentIndex }) {
-    return [phaseIndex, tournamentIndex, roundIndex, matchIndex].join(":")
+function buildSessionEventKey({ matchIndex, phaseIndex, roundIndex, sessionId = "", tournamentIndex }) {
+    return [sessionId, phaseIndex, tournamentIndex, roundIndex, matchIndex].join(":")
 }
 
-function createTeamImpact(players, ratingDelta, won) {
+function createTeamImpact(players, ratingDeltas, won) {
     const names = players.filter(Boolean)
-    if (names.length === 0 || !Number.isFinite(ratingDelta)) {
+    const deltas = Array.isArray(ratingDeltas) ? ratingDeltas.filter((delta) => Number.isFinite(delta)) : []
+    if (names.length === 0 || deltas.length === 0) {
         return null
     }
-    const roundedDelta = Math.round(ratingDelta)
+    const roundedDeltas = deltas.map((delta) => Math.round(delta))
+    const [firstDelta] = roundedDeltas
+    const sharedDelta = roundedDeltas.every((delta) => delta === firstDelta)
     return {
         players: names,
-        ratingDelta: roundedDelta,
+        ratingDelta: sharedDelta
+            ? firstDelta
+            : Math.round(roundedDeltas.reduce((sum, delta) => sum + delta, 0) / roundedDeltas.length),
         won,
-        text: `${roundedDelta > 0 ? "+" : ""}${roundedDelta} Elo${names.length > 1 ? " each" : ""}`,
+        text: sharedDelta
+            ? `${firstDelta > 0 ? "+" : ""}${firstDelta} Elo${names.length > 1 ? " each" : ""}`
+            : names
+                  .map((name, index) => `${name} ${roundedDeltas[index] > 0 ? "+" : ""}${roundedDeltas[index]}`)
+                  .join(", "),
     }
+}
+
+function applyDoublesReplaySide({
+    baselineRating,
+    opponentTeamRating,
+    opponentTeamSize,
+    ownExpected,
+    ownPlayers,
+    ownTeamSize,
+    provisionalMatchThreshold,
+    tuning,
+    won,
+}) {
+    const actual = won ? 1 : 0
+    const deltas = []
+    for (const player of ownPlayers) {
+        const expected = calculateDoublesPlayerExpectedScore({
+            ownRating: player.rating,
+            ownSideExpected: ownExpected,
+            opponentTeamRating,
+            ownTeamSize,
+            opponentTeamSize,
+        })
+        const delta = calculateDoublesDelta({
+            actual,
+            expected,
+            player,
+            tuning,
+        })
+        deltas.push(delta)
+        updateReplayPlayer({
+            baselineRating,
+            delta,
+            didWin: won,
+            player,
+            provisionalMatchThreshold,
+        })
+    }
+    return deltas
 }
 
 function applySinglesSessionRatingEvent({ baselineRating, event, ladder, season }) {
@@ -106,39 +160,46 @@ function applySinglesSessionRatingEvent({ baselineRating, event, ladder, season 
 
 function applyDoublesSessionRatingEvent({ baselineRating, event, ladder, season }) {
     const [teamA, teamB] = event.teams
+    const validTeamSize = (team) => team.length === 1 || team.length === 2
+    if (!(validTeamSize(teamA) && validTeamSize(teamB))) {
+        return []
+    }
     const teamOnePlayers = teamA.map((name) => ensureReplayPlayer(ladder, name, baselineRating))
     const teamTwoPlayers = teamB.map((name) => ensureReplayPlayer(ladder, name, baselineRating))
-    const teamOneRating = teamOnePlayers.reduce((total, player) => total + player.rating, 0)
-    const teamTwoRating = teamTwoPlayers.reduce((total, player) => total + player.rating, 0)
-    const deltaA = calculateDoublesDelta({
-        didWin: event.winnerIndex === 0,
-        opponentTeamRating: teamTwoRating,
-        teamPlayers: teamOnePlayers,
-        teamRating: teamOneRating,
-        tuning: season.tuning,
+    const expectedScores = calculateDoublesSideExpectedScores({
+        baselineRating,
+        sideOnePlayerRatings: teamOnePlayers.map((player) => player.rating),
+        sideTwoPlayerRatings: teamTwoPlayers.map((player) => player.rating),
     })
-    const deltaB = -deltaA
-    for (const player of teamOnePlayers) {
-        updateReplayPlayer({
-            baselineRating,
-            delta: deltaA,
-            didWin: event.winnerIndex === 0,
-            player,
-            provisionalMatchThreshold: season.tuning.provisionalMatchThreshold,
-        })
+    if (!expectedScores) {
+        return []
     }
-    for (const player of teamTwoPlayers) {
-        updateReplayPlayer({
-            baselineRating,
-            delta: deltaB,
-            didWin: event.winnerIndex === 1,
-            player,
-            provisionalMatchThreshold: season.tuning.provisionalMatchThreshold,
-        })
-    }
+
+    const teamOneDeltas = applyDoublesReplaySide({
+        baselineRating,
+        ownPlayers: teamOnePlayers,
+        ownExpected: expectedScores.sideOneExpected,
+        ownTeamSize: teamA.length,
+        opponentTeamRating: expectedScores.sideTwoTeamRating,
+        opponentTeamSize: teamB.length,
+        provisionalMatchThreshold: season.tuning.provisionalMatchThreshold,
+        tuning: season.tuning,
+        won: event.winnerIndex === 0,
+    })
+    const teamTwoDeltas = applyDoublesReplaySide({
+        baselineRating,
+        ownPlayers: teamTwoPlayers,
+        ownExpected: expectedScores.sideTwoExpected,
+        ownTeamSize: teamB.length,
+        opponentTeamRating: expectedScores.sideOneTeamRating,
+        opponentTeamSize: teamA.length,
+        provisionalMatchThreshold: season.tuning.provisionalMatchThreshold,
+        tuning: season.tuning,
+        won: event.winnerIndex === 1,
+    })
     return [
-        createTeamImpact(teamA, deltaA, event.winnerIndex === 0),
-        createTeamImpact(teamB, deltaB, event.winnerIndex === 1),
+        createTeamImpact(teamA, teamOneDeltas, event.winnerIndex === 0),
+        createTeamImpact(teamB, teamTwoDeltas, event.winnerIndex === 1),
     ]
 }
 
@@ -152,7 +213,7 @@ function applySessionRatingEvent({ baselineRating, event, ladder, season }) {
     return []
 }
 
-function buildSessionRatingImpactMap({ beforeHistory, historyEntry, ratings }) {
+function buildHistoryEntriesRatingImpactMap({ beforeHistory, historyEntries, ratings }) {
     const season = getActiveRatingSeason(ratings)
     if (!season) {
         return new Map()
@@ -167,18 +228,28 @@ function buildSessionRatingImpactMap({ beforeHistory, historyEntry, ratings }) {
         doubles: cloneReplayLadder(beforeRatingsModel.ladders.doubles, baselineRating),
     }
     const impacts = new Map()
-    for (const event of collectSessionRatingEvents(historyEntry, season)) {
-        impacts.set(
-            buildSessionEventKey(event),
-            applySessionRatingEvent({
-                baselineRating,
-                event,
-                ladder: ladders[event.mode],
-                season,
-            }).filter(Boolean),
-        )
+    for (const historyEntry of historyEntries || []) {
+        for (const event of collectSessionRatingEvents(historyEntry, season)) {
+            impacts.set(
+                buildSessionEventKey(event),
+                applySessionRatingEvent({
+                    baselineRating,
+                    event,
+                    ladder: ladders[event.mode],
+                    season,
+                }).filter(Boolean),
+            )
+        }
     }
     return impacts
 }
 
-export { buildSessionEventKey, buildSessionRatingImpactMap }
+function buildSessionRatingImpactMap({ beforeHistory, historyEntry, ratings }) {
+    return buildHistoryEntriesRatingImpactMap({
+        beforeHistory,
+        historyEntries: historyEntry ? [historyEntry] : [],
+        ratings,
+    })
+}
+
+export { buildHistoryEntriesRatingImpactMap, buildSessionEventKey, buildSessionRatingImpactMap }

@@ -1,5 +1,10 @@
 import { buildRatingsModel, buildSeasonSnapshots } from "./model.js"
-import { createEmptyRatingsState, getActiveRatingSeason, startNewRatingSeason } from "./seasons.js"
+import {
+    archiveCurrentRatingSeason,
+    createEmptyRatingsState,
+    getActiveRatingSeason,
+    startNewRatingSeason,
+} from "./seasons.js"
 
 function formatDateInputValue(date) {
     return date.toISOString().slice(0, 10)
@@ -197,6 +202,23 @@ function createNextRatingsState(state, { label, startedAt }) {
     })
 }
 
+function archiveActiveRatingsState(state, endedAt = new Date().toISOString()) {
+    const activeSeason = getActiveRatingSeason(state.ratings)
+    if (!activeSeason) {
+        return state.ratings || createEmptyRatingsState()
+    }
+    return archiveCurrentRatingSeason({
+        ratings: state.ratings || createEmptyRatingsState(),
+        endedAt,
+        snapshots: buildSeasonSnapshots(
+            buildRatingsModel({
+                history: state.history,
+                ratings: state.ratings,
+            }),
+        ),
+    })
+}
+
 function showSeasonRolloverConfirm({ activeSeason, label, onConfirm, showConfirmDialog, startedAt }) {
     showConfirmDialog(
         "Start New Rating Season",
@@ -241,7 +263,29 @@ function createRatingSeasonController({ elements, persist, refreshRatings, refre
         })
     }
 
+    function handleArchiveCurrentSeason() {
+        const activeSeason = getActiveRatingSeason(state.ratings)
+        if (!activeSeason) {
+            return
+        }
+        showConfirmDialog(
+            "Archive Current Rating Season",
+            `Archive "${activeSeason.label}" and stop ratings until you explicitly start the next season?`,
+            () => {
+                state.ratings = archiveActiveRatingsState(state)
+                persist()
+                refreshStats()
+                refreshRatings()
+            },
+            {
+                okLabel: "Archive Season",
+                okClass: "btn-accent",
+            },
+        )
+    }
+
     return {
+        handleArchiveCurrentSeason,
         handleStartRatingSeason,
         setupDialog: seasonLabelDialog.setupDialog,
     }

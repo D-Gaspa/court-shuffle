@@ -238,9 +238,12 @@ function buildHistoryActionRow(session, actions) {
     return row
 }
 
-function buildHistoryCardBody(session, actions = []) {
+function buildHistoryCardBody(session, actions = [], options = {}) {
     const body = document.createElement("div")
     body.className = "history-card-body"
+    if (options.embedded) {
+        body.classList.add("history-card-body-embedded")
+    }
 
     const phases = getHistoryTournamentPhases(session)
     if (phases.length > 0) {

@@ -75,20 +75,35 @@ function closeRatingSeason(season, endedAt, snapshots = {}) {
     }
 }
 
+function archiveCurrentRatingSeason({ ratings, endedAt = new Date().toISOString(), snapshots }) {
+    const currentRatings = ratings || createEmptyRatingsState()
+    if (!currentRatings.currentSeasonId) {
+        return currentRatings
+    }
+    return {
+        currentSeasonId: null,
+        seasons: currentRatings.seasons.map((season) =>
+            season.id === currentRatings.currentSeasonId ? closeRatingSeason(season, endedAt, snapshots) : season,
+        ),
+    }
+}
+
 function startNewRatingSeason({ ratings, label, startedAt = new Date().toISOString(), snapshots }) {
     const currentRatings = ratings || createEmptyRatingsState()
     const nextSeason = createRatingSeason({ label, startedAt })
-    const seasons = currentRatings.seasons.map((season) =>
-        season.id === currentRatings.currentSeasonId ? closeRatingSeason(season, startedAt, snapshots) : season,
-    )
-    seasons.push(nextSeason)
+    const archivedState = archiveCurrentRatingSeason({
+        ratings: currentRatings,
+        endedAt: startedAt,
+        snapshots,
+    })
     return {
         currentSeasonId: nextSeason.id,
-        seasons,
+        seasons: [...archivedState.seasons, nextSeason],
     }
 }
 
 export {
+    archiveCurrentRatingSeason,
     DEFAULT_BASELINE_RATING,
     DEFAULT_ESTABLISHED_K,
     DEFAULT_PROVISIONAL_K,

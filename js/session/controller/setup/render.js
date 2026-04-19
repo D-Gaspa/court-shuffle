@@ -1,3 +1,4 @@
+import { canSessionsShareNight, compareHistoryEntries } from "../../../history/night-groups.js"
 import { getStepCaption, MODE_HINTS } from "../wizard/state.js"
 
 const DEFAULT_SETUP_TITLE = "New Session"
@@ -182,4 +183,37 @@ function renderSetupNotice(setupNotice, noticeElement) {
     noticeElement.textContent = setupNotice || ""
 }
 
-export { renderFreeSetup, renderModeStep, renderSetupNotice, renderSetupShell, syncStepperUi }
+function getLatestSavedSession(history) {
+    const committed = (history || []).filter((entry) => entry && entry.provisional !== true)
+    if (committed.length === 0) {
+        return null
+    }
+    return [...committed].sort(compareHistoryEntries).at(-1) || null
+}
+
+function renderNightLinkSetup({ draft, history, nightLinkGroup, nightLinkHint, linkPreviousNightCheckbox }) {
+    const latestSavedSession = getLatestSavedSession(history)
+    const canLink =
+        draft.gameMode === "tournament" &&
+        latestSavedSession &&
+        canSessionsShareNight(latestSavedSession, {
+            mode: "tournament",
+            tournamentTeamSize: draft.tournament.teamSize,
+        })
+
+    if (!canLink) {
+        draft.nightLink.enabled = false
+        draft.nightLink.previousSessionId = null
+        nightLinkGroup.hidden = true
+        linkPreviousNightCheckbox.checked = false
+        nightLinkHint.textContent = ""
+        return
+    }
+
+    draft.nightLink.previousSessionId = latestSavedSession.id
+    nightLinkGroup.hidden = false
+    linkPreviousNightCheckbox.checked = Boolean(draft.nightLink.enabled)
+    nightLinkHint.textContent = `Continue the latest saved ${draft.tournament.teamSize === 1 ? "singles" : "doubles"} night from ${new Date(latestSavedSession.date).toLocaleDateString()}.`
+}
+
+export { renderFreeSetup, renderModeStep, renderNightLinkSetup, renderSetupNotice, renderSetupShell, syncStepperUi }

@@ -52,6 +52,7 @@ function noop() {
 function createHistoryActionsHarness() {
     return createHistoryActions({
         launchHistoryRemix: noop,
+        onStatus: noop,
         persist: noop,
         refreshHistory: noop,
         showConfirmDialog: noop,

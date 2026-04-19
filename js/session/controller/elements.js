@@ -32,6 +32,9 @@ const sessionLoadingOverlay = document.getElementById("session-loading-overlay")
 const sessionLoadingMessage = document.getElementById("session-loading-message")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
+const nightLinkGroup = document.getElementById("night-link-group")
+const linkPreviousNightCheckbox = document.getElementById("link-previous-night")
+const nightLinkHint = document.getElementById("night-link-hint")
 const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
 const tournamentDistributionHint = document.getElementById("tournament-distribution-hint")
 const tournamentAdvancedError = document.getElementById("tournament-advanced-error")
@@ -90,8 +93,11 @@ export {
     deselectAllBtn,
     endSessionBtn,
     formatSelector,
+    linkPreviousNightCheckbox,
     modeHint,
     modeSelector,
+    nightLinkGroup,
+    nightLinkHint,
     noRosterWarning,
     notStrictDoublesGroup,
     playerSelection,

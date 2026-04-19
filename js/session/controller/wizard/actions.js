@@ -33,7 +33,6 @@ function moveStep({
     }
     setCurrentStep(wizardState.visibleSteps[nextIndex])
 }
-
 function applyTournamentAction(draft, action) {
     if (!action || typeof action !== "object") {
         return
@@ -75,7 +74,6 @@ function applyTournamentAction(draft, action) {
             break
     }
 }
-
 async function startSession({
     draft,
     buildSelectedSession,
@@ -108,6 +106,10 @@ async function startSession({
             draft.gameMode === "doubles"
                 ? draft.structured.allowNotStrictDoubles
                 : draft.tournament.allowNotStrictDoubles,
+        night:
+            draft.gameMode === "tournament" && draft.nightLink?.enabled && draft.nightLink?.previousSessionId
+                ? { previousSessionId: draft.nightLink.previousSessionId }
+                : null,
         tournamentConfig: draft.tournament.buildConfig,
     })
     if (session) {
@@ -115,6 +117,10 @@ async function startSession({
         clearSetupNotice()
         draft.continuation = null
         draft.historySeed = null
+        draft.nightLink = {
+            enabled: false,
+            previousSessionId: null,
+        }
         if (continuation && onContinuationStart) {
             onContinuationStart({ continuation, players, sessionDraft: session })
             return
@@ -122,7 +128,6 @@ async function startSession({
         onSessionStart(session)
     }
 }
-
 function bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, refreshSessionView }) {
     selectAllBtn.addEventListener("click", () => {
         if (draft.historySeed?.lockedFields?.roster) {
@@ -139,7 +144,6 @@ function bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, re
         refreshSessionView()
     })
 }
-
 function bindModeControls({ modeSelector, setGameMode, refreshSessionView }) {
     for (const button of modeSelector.querySelectorAll(".mode-btn")) {
         button.addEventListener("click", () => {
@@ -148,7 +152,6 @@ function bindModeControls({ modeSelector, setGameMode, refreshSessionView }) {
         })
     }
 }
-
 function bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, courtsIncBtn, refreshSessionView }) {
     teamsDecBtn.addEventListener("click", () => {
         if (draft.free.teamCount <= 2) {
@@ -244,6 +247,7 @@ function bindWizardControls({
     getTournamentBlockingError,
     getVisibleStepIds,
     initTournamentSetup,
+    linkPreviousNightCheckbox,
     modeSelector,
     onCancelContinuation,
     onCancelHistorySeed,
@@ -264,6 +268,10 @@ function bindWizardControls({
     bindRosterControls({ selectAllBtn, deselectAllBtn, draft, getRoster, refreshSessionView })
     bindModeControls({ modeSelector, setGameMode, refreshSessionView })
     bindCountControls({ draft, teamsDecBtn, teamsIncBtn, courtsDecBtn, courtsIncBtn, refreshSessionView })
+    linkPreviousNightCheckbox?.addEventListener("change", () => {
+        draft.nightLink.enabled = Boolean(linkPreviousNightCheckbox.checked)
+        refreshSessionView()
+    })
     bindWizardNavigation({
         buildWizardState,
         draft,

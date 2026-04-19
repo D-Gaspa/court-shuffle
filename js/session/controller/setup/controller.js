@@ -57,6 +57,7 @@ function bindSetupControls({
         getTournamentBlockingError,
         getVisibleStepIds,
         initTournamentSetup,
+        linkPreviousNightCheckbox: ui.linkPreviousNightCheckbox,
         modeSelector: ui.modeSelector,
         onCancelContinuation: () => {
             clearContinuation()

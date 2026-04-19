@@ -107,6 +107,7 @@ const historyBackupController = createHistoryBackupController({
     },
 })
 const historyActions = createHistoryActions({
+    onStatus: (status) => appStatus.set(status),
     state,
     switchView,
     showConfirmDialog,
@@ -145,6 +146,7 @@ const ratingSeasonController = createRatingSeasonController({
     },
 })
 const ratingsAppController = createRatingsAppController({
+    onArchiveCurrentSeason: ratingSeasonController.handleArchiveCurrentSeason,
     onStartRatingSeason: ratingSeasonController.handleStartRatingSeason,
     persist,
     ratingsRoot,
@@ -216,7 +218,9 @@ function refreshHistory() {
         onResetQuery: resetHistoryQuery,
         actions: {
             active: historyActions.resolveActiveHistoryActions,
+            activeGroup: historyActions.resolveActiveNightGroupActions,
             archived: historyActions.resolveArchivedHistoryActions,
+            archivedGroup: historyActions.resolveArchivedNightGroupActions,
         },
     })
     historyBackupController.refreshSummary()

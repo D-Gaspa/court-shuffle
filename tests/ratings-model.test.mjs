@@ -146,8 +146,10 @@ test("ratings replay builds separate singles and doubles ladders from phase-awar
     assert.deepEqual(model.ladders.doubles.leaderboard, ["Ana", "Bea", "Cara", "Dina"])
     assert.equal(model.ladders.singles.players.Ana.rating > 1500, true)
     assert.equal(model.ladders.singles.players.Bea.rating < 1500, true)
-    assert.equal(model.ladders.doubles.players.Ana.rating, model.ladders.doubles.players.Bea.rating)
-    assert.equal(model.ladders.doubles.players.Cara.rating, model.ladders.doubles.players.Dina.rating)
+    assert.equal(model.ladders.doubles.players.Ana.rating, 1520)
+    assert.equal(model.ladders.doubles.players.Bea.rating, 1520)
+    assert.equal(model.ladders.doubles.players.Cara.rating, 1480)
+    assert.equal(model.ladders.doubles.players.Dina.rating, 1480)
     assert.equal(model.ladders.doubles.players.Ana.trend.length, 2)
 })
 

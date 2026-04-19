@@ -12,11 +12,18 @@ let selectedRatingsPlayerByMode = {
 let selectedArchivedSeasonId = null
 let lastRenderArgs = null
 
-function renderRatings({ history, ratings, root, onDeleteArchivedSeason, onStartRatingSeason }) {
+function renderRatings({
+    history,
+    ratings,
+    root,
+    onArchiveCurrentSeason,
+    onDeleteArchivedSeason,
+    onStartRatingSeason,
+}) {
     if (!root) {
         return
     }
-    lastRenderArgs = { history, ratings, root, onDeleteArchivedSeason, onStartRatingSeason }
+    lastRenderArgs = { history, ratings, root, onArchiveCurrentSeason, onDeleteArchivedSeason, onStartRatingSeason }
     root.textContent = ""
     const shell = createRatingsShell()
     const committedHistory = getCommittedHistory(history)
@@ -51,6 +58,8 @@ function renderRatings({ history, ratings, root, onDeleteArchivedSeason, onStart
             selectedMode: selectedRatingsMode,
             selectedPreview: selectedRatingsPreview,
             selectedPlayer,
+            selectedArchivedSeasonId,
+            onArchiveCurrentSeason,
             onBackToActiveSeason: handleBackToActiveSeason,
             onDeleteArchivedSeason: handleDeleteArchivedSeason(onDeleteArchivedSeason),
             onOpenArchivedSeason: handleOpenArchivedSeason,

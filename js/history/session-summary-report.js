@@ -139,16 +139,12 @@ function createSummaryLeaderboardCard(row, index) {
     const tone = resolveRowTone(row)
     const card = createEl("article", `session-summary-player${tone ? ` is-${tone}` : ""}`)
     card.appendChild(createAvatar(row.name, index))
+    const isExistingRank = Number.isFinite(row.beforeRank)
+    const rankStatus = isExistingRank ? (row.rankDelta === 0 ? "Still" : "Now") : "New"
 
     const body = createEl("div", "session-summary-player-body")
     body.appendChild(createEl("strong", "session-summary-player-name", row.name))
-    body.appendChild(
-        createEl(
-            "span",
-            "session-summary-player-rank",
-            `${row.rankDelta === 0 ? "Still" : "Now"} ${formatRank(row.afterRank)}`,
-        ),
-    )
+    body.appendChild(createEl("span", "session-summary-player-rank", `${rankStatus} ${formatRank(row.afterRank)}`))
     body.appendChild(createSummaryScoreLine(row))
     body.appendChild(createSummaryDetails(row))
     body.appendChild(createSummaryMeta(row))

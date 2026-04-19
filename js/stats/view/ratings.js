@@ -42,12 +42,18 @@ function resolveRatingsBoardState({
     }
 }
 
-function appendRatingsContent({ onDeleteArchivedSeason, onOpenArchivedSeason, ratingsModel, ratingsState, wrap }) {
+function appendRatingsContent({
+    onDeleteArchivedSeason,
+    onOpenArchivedSeason,
+    ratingsState,
+    selectedArchivedSeasonId,
+    wrap,
+}) {
     wrap.appendChild(
         createArchivePanel(ratingsState, {
             onDeleteArchivedSeason,
             onOpenArchivedSeason,
-            selectedSeasonId: ratingsModel.season?.id,
+            selectedSeasonId: selectedArchivedSeasonId,
         }),
     )
 }
@@ -58,6 +64,7 @@ function appendRatingsEmptyState({
     onStartSeason,
     ratingsModel,
     ratingsState,
+    selectedArchivedSeasonId,
     selectedMode,
     wrap,
 }) {
@@ -66,8 +73,8 @@ function appendRatingsEmptyState({
         appendRatingsContent({
             onDeleteArchivedSeason,
             onOpenArchivedSeason,
-            ratingsModel,
             ratingsState,
+            selectedArchivedSeasonId,
             wrap,
         })
         return true
@@ -78,8 +85,8 @@ function appendRatingsEmptyState({
         appendRatingsContent({
             onDeleteArchivedSeason,
             onOpenArchivedSeason,
-            ratingsModel,
             ratingsState,
+            selectedArchivedSeasonId,
             wrap,
         })
         return true
@@ -138,9 +145,11 @@ function buildRatingsSection({
     history,
     isArchivedView,
     liveBaselineModel,
+    onArchiveCurrentSeason,
     provisionalHistory,
     ratingsModel,
     ratingsState,
+    selectedArchivedSeasonId,
     selectedMode,
     selectedPreview,
     selectedPlayer,
@@ -159,6 +168,7 @@ function buildRatingsSection({
             buildRatingsHeroProps({
                 hasLivePreview,
                 isArchivedView,
+                onArchiveCurrentSeason,
                 onBackToActiveSeason,
                 onSelectMode,
                 onSelectPreview,
@@ -177,6 +187,7 @@ function buildRatingsSection({
             onStartSeason,
             ratingsModel,
             ratingsState,
+            selectedArchivedSeasonId,
             selectedMode,
             wrap,
         })
@@ -196,6 +207,7 @@ function buildRatingsSection({
             provisionalHistory,
             ratingsModel,
             ratingsState,
+            selectedArchivedSeasonId,
             selectedMode,
             selectedPlayer,
             selectedPreview,

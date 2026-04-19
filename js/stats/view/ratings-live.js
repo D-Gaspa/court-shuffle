@@ -1,5 +1,5 @@
 import { getHistoryTournamentRuns } from "../../history/session-phases.js"
-import { resolveSessionSummary } from "../../history/session-summary.js"
+import { findLatestNightGroup, resolveSessionSummary } from "../../history/session-summary.js"
 
 function collectLiveParticipantSet(provisionalHistory, selectedMode) {
     const participants = new Set()
@@ -19,21 +19,24 @@ function collectLiveParticipantSet(provisionalHistory, selectedMode) {
 
 function buildLatestSessionStoryMap(history, selectedMode, ratings) {
     const matchingMode = selectedMode === "singles" ? "singles" : "doubles"
-    for (let index = (history || []).length - 1; index >= 0; index -= 1) {
+    const latestNightGroup = findLatestNightGroup(history, matchingMode)
+    if (latestNightGroup) {
         const summary = resolveSessionSummary({
-            entry: history[index],
+            entry: latestNightGroup,
             history,
             ratings,
         })
-        if (!summary || summary.leaderboardMode !== matchingMode) {
-            continue
+        if (summary) {
+            return new Map((summary.leaderboard || []).map((row) => [row.name, row]))
         }
-        return new Map((summary.leaderboard || []).map((row) => [row.name, row]))
     }
     return new Map()
 }
 
-function buildRankShiftLabel(rankDelta) {
+function buildRankShiftLabel({ beforeRank, rankDelta }) {
+    if (!Number.isFinite(beforeRank)) {
+        return "New"
+    }
     if (rankDelta === 0) {
         return "="
     }
@@ -72,7 +75,7 @@ function resolveDeltaTone(ratingDelta) {
     return "live-flat"
 }
 
-function buildMovementState({ isActive, rankDelta, ratingDelta, showRatingDelta }) {
+function buildMovementState({ beforeRank = null, isActive, rankDelta, ratingDelta, showRatingDelta }) {
     const tone = resolveRankTone(rankDelta, isActive)
     const toneClasses = resolveLiveToneClasses(tone || "flat")
     return {
@@ -81,7 +84,7 @@ function buildMovementState({ isActive, rankDelta, ratingDelta, showRatingDelta 
         showRatingDelta,
         ratingDelta,
         deltaTone: resolveDeltaTone(ratingDelta),
-        rankLabel: rankDelta !== 0 || isActive ? buildRankShiftLabel(rankDelta) : "",
+        rankLabel: rankDelta !== 0 || isActive ? buildRankShiftLabel({ beforeRank, rankDelta }) : "",
         rankTone: toneClasses.rankTone,
     }
 }
@@ -89,6 +92,7 @@ function buildMovementState({ isActive, rankDelta, ratingDelta, showRatingDelta 
 function getLiveRowState({ comparison, comparisonRank, index, isLiveParticipant, player, storyRow }) {
     if (storyRow) {
         return buildMovementState({
+            beforeRank: storyRow.beforeRank ?? null,
             isActive: storyRow.wasActiveInSession === true,
             rankDelta: storyRow.rankDelta || 0,
             ratingDelta: storyRow.ratingDelta || 0,
@@ -110,6 +114,7 @@ function getLiveRowState({ comparison, comparisonRank, index, isLiveParticipant,
     const ratingDelta = Math.round(player.rating - comparison.rating)
     const rankDelta = comparisonRank ? comparisonRank - (index + 1) : 0
     return buildMovementState({
+        beforeRank: comparisonRank || null,
         isActive: isLiveParticipant || rankDelta !== 0,
         rankDelta,
         ratingDelta,

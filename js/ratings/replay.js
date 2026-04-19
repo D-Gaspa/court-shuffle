@@ -1,4 +1,9 @@
-import { calculateDoublesDelta, calculateSinglesDelta } from "./elo.js"
+import {
+    calculateDoublesDelta,
+    calculateDoublesPlayerExpectedScore,
+    calculateDoublesSideExpectedScores,
+    calculateSinglesDelta,
+} from "./elo.js"
 
 function createPlayerState(baselineRating) {
     return {
@@ -110,40 +115,62 @@ function replaySinglesEvent(ladder, event, season) {
 
 function replayDoublesEvent(ladder, event, season) {
     const [teamA, teamB] = event.teams
-    if (!(teamA.length === 2 && teamB.length === 2)) {
+    const validTeamSize = (team) => team.length === 1 || team.length === 2
+    if (!(validTeamSize(teamA) && validTeamSize(teamB))) {
         return
     }
     const context = buildMatchContext(season, event.winnerIndex)
     const teamOnePlayers = teamA.map((name) => ensurePlayerState(ladder, name, season.baselineRating))
     const teamTwoPlayers = teamB.map((name) => ensurePlayerState(ladder, name, season.baselineRating))
-    const teamOneRating = teamOnePlayers.reduce((total, player) => total + player.rating, 0)
-    const teamTwoRating = teamTwoPlayers.reduce((total, player) => total + player.rating, 0)
-    const deltaA = calculateDoublesDelta({
-        teamRating: teamOneRating,
-        opponentTeamRating: teamTwoRating,
-        didWin: context.winnerIndex === 0,
-        teamPlayers: teamOnePlayers,
-        tuning: season.tuning,
+    const expectedScores = calculateDoublesSideExpectedScores({
+        baselineRating: season.baselineRating,
+        sideOnePlayerRatings: teamOnePlayers.map((player) => player.rating),
+        sideTwoPlayerRatings: teamTwoPlayers.map((player) => player.rating),
     })
-    const deltaB = -deltaA
-    for (const player of teamOnePlayers) {
-        updatePlayerAfterMatch({
-            player,
-            didWin: context.winnerIndex === 0,
-            delta: deltaA,
-            baselineRating: context.baselineRating,
-            provisionalMatchThreshold: context.provisionalMatchThreshold,
-        })
+    if (!expectedScores) {
+        return
     }
-    for (const player of teamTwoPlayers) {
-        updatePlayerAfterMatch({
-            player,
-            didWin: context.winnerIndex === 1,
-            delta: deltaB,
-            baselineRating: context.baselineRating,
-            provisionalMatchThreshold: context.provisionalMatchThreshold,
-        })
+    const updateDoublesSide = ({ opponentTeamRating, opponentTeamSize, ownExpected, ownPlayers, ownTeamSize, won }) => {
+        const actual = won ? 1 : 0
+        for (const player of ownPlayers) {
+            const expected = calculateDoublesPlayerExpectedScore({
+                ownRating: player.rating,
+                ownSideExpected: ownExpected,
+                opponentTeamRating,
+                ownTeamSize,
+                opponentTeamSize,
+            })
+            const delta = calculateDoublesDelta({
+                actual,
+                expected,
+                player,
+                tuning: season.tuning,
+            })
+            updatePlayerAfterMatch({
+                player,
+                didWin: won,
+                delta,
+                baselineRating: context.baselineRating,
+                provisionalMatchThreshold: context.provisionalMatchThreshold,
+            })
+        }
     }
+    updateDoublesSide({
+        ownPlayers: teamOnePlayers,
+        ownExpected: expectedScores.sideOneExpected,
+        opponentTeamRating: expectedScores.sideTwoTeamRating,
+        ownTeamSize: teamA.length,
+        opponentTeamSize: teamB.length,
+        won: context.winnerIndex === 0,
+    })
+    updateDoublesSide({
+        ownPlayers: teamTwoPlayers,
+        ownExpected: expectedScores.sideTwoExpected,
+        opponentTeamRating: expectedScores.sideOneTeamRating,
+        ownTeamSize: teamB.length,
+        opponentTeamSize: teamA.length,
+        won: context.winnerIndex === 1,
+    })
 }
 
 function replayRatingEvents(events, season) {

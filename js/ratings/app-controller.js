@@ -1,11 +1,19 @@
 import { renderRatings } from "./render.js"
 
-function createRatingsAppController({ onStartRatingSeason, persist, ratingsRoot, showConfirmDialog, state }) {
+function createRatingsAppController({
+    onArchiveCurrentSeason,
+    onStartRatingSeason,
+    persist,
+    ratingsRoot,
+    showConfirmDialog,
+    state,
+}) {
     function refreshRatings() {
         renderRatings({
             history: state.history,
             ratings: state.ratings,
             root: ratingsRoot,
+            onArchiveCurrentSeason,
             onDeleteArchivedSeason: handleDeleteArchivedSeason,
             onStartRatingSeason,
         })
