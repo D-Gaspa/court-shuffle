@@ -11,6 +11,13 @@
     gap: var(--space-sm);
 }
 
+.stats-ratings-toggle-stack {
+    display: grid;
+    gap: 0.45rem;
+    justify-items: start;
+    flex: 0 1 auto;
+}
+
 .stats-ratings-action-row {
     display: flex;
     flex-wrap: wrap;
@@ -90,69 +97,9 @@
 }
 
 .stats-ratings-rank {
-    display: block;
-    margin-top: 0.12rem;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-}
-
-.stats-ratings-row {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    gap: 0.9rem;
-    padding: 0.95rem 1rem;
-}
-
-.stats-ratings-row-body {
-    display: grid;
-    gap: 0.4rem;
-    min-width: 0;
-}
-
-.stats-ratings-row .stats-ratings-player-name {
-    display: block;
-    font-size: 1.02rem;
-    font-weight: 600;
-    line-height: 1.15;
-    white-space: normal;
-    overflow-wrap: anywhere;
-}
-
-.stats-ratings-row-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-width: 0;
-}
-
-.stats-ratings-rank {
     margin-top: 0;
     line-height: 1.1;
     flex-shrink: 0;
-}
-
-.stats-ratings-row-topline {
-    display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.45rem;
-}
-
-.stats-ratings-rating-value {
-    font-family: "Syne", system-ui, sans-serif;
-    font-size: 1.25rem;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    color: var(--text);
-}
-
-.stats-ratings-row-meta {
-    max-width: none;
-    justify-content: flex-end;
-    gap: 0.35rem;
 }
 
 .stats-ratings-pill-rating {
@@ -170,6 +117,38 @@
 .stats-ratings-pill-provisional {
     color: #f3c38d;
     font-size: 0.68rem;
+}
+
+.stats-ratings-pill-live {
+    color: #9fe3b1;
+    box-shadow: inset 0 0 0 1px #9fe3b133;
+}
+
+.stats-ratings-pill-live-up {
+    color: #9fe3b1;
+    box-shadow: inset 0 0 0 1px #9fe3b133;
+}
+
+.stats-ratings-pill-live-down {
+    color: #ffb0b0;
+    box-shadow: inset 0 0 0 1px #ff8f8f33;
+}
+
+.stats-ratings-pill-live-flat {
+    color: #f0d08d;
+    box-shadow: inset 0 0 0 1px #f0d08d33;
+}
+
+.stats-ratings-pill-rank-up {
+    color: #9fe3b1;
+}
+
+.stats-ratings-pill-rank-down {
+    color: #ffb0b0;
+}
+
+.stats-ratings-pill-rank-flat {
+    color: #f0d08d;
 }
 
 .stats-archive-row {
@@ -210,22 +189,6 @@
     .stats-ratings-dossier-summary,
     .stats-ratings-dossier-grid {
         grid-template-columns: 1fr;
-    }
-
-    .stats-ratings-row {
-        grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .stats-ratings-row-summary,
-    .stats-ratings-row-topline,
-    .stats-ratings-row-meta {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .stats-ratings-row-summary {
-        flex-direction: column;
-        align-items: flex-start;
     }
 
     .stats-archive-row {

@@ -83,7 +83,7 @@ function createQuickMeta(summary) {
     const meta = createEl("div", "stats-player-row-meta")
     meta.appendChild(createPill(formatPercent(summary.winRate), "win"))
     meta.appendChild(createPill(formatRecord(summary.wins, summary.losses), "record"))
-    meta.appendChild(createPill(`${summary.decidedMatches}M`, "matches"))
+    meta.appendChild(createPill(`${summary.decidedMatches} games`, "matches"))
     return meta
 }
 

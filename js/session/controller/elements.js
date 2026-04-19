@@ -51,6 +51,7 @@ const sessionStepPanels = [...document.querySelectorAll("[data-session-step-pane
 
 const uiState = {
     continueSessionBtn: document.getElementById("continue-session-btn"),
+    undoTournamentBtn: document.getElementById("undo-tournament-btn"),
     roundPrefix: document.getElementById("round-prefix"),
     roundNumber: document.getElementById("round-number"),
     roundTotal: document.getElementById("round-total"),

@@ -1,12 +1,15 @@
 import { createDefaultAnalyticsQuery, resolveAnalyticsContext, updateAnalyticsQuery } from "./analytics/query.js"
 import { createAppStatusController } from "./app-status.js"
+import { createConfirmDialogController } from "./confirm-dialog.js"
 import { loadState, saveState } from "./core/storage.js"
 import { createHistoryActions } from "./history/actions.js"
 import { createHistoryBackupController } from "./history/backup.js"
 import { renderHistory } from "./history/render.js"
+import { createSessionSummaryDialogController } from "./history/session-summary-dialog.js"
 import { createRatingsAppController } from "./ratings/app-controller.js"
 import { createRatingSeasonController } from "./ratings/controller.js"
 import { initRoster, refreshRoster } from "./roster/controller.js"
+import { syncProvisionalHistory } from "./session/active/history.js"
 import { initSession, launchHistoryRemix, refreshSessionView } from "./session/index.js"
 import { renderStats } from "./stats/render.js"
 
@@ -29,6 +32,7 @@ const historyList = document.getElementById("history-list")
 const historyEmpty = document.getElementById("history-empty")
 const historyExportBtn = document.getElementById("history-export-btn")
 const historyImportBtn = document.getElementById("history-import-btn")
+const historyClearBtn = document.getElementById("history-clear-btn")
 const historyImportInput = document.getElementById("history-import-input")
 const historyBackupSummary = document.getElementById("history-backup-summary")
 const historyBackupStatus = document.getElementById("history-backup-status")
@@ -52,15 +56,32 @@ const seasonLabelError = document.getElementById("season-label-error")
 const seasonLabelCancelBtn = document.getElementById("season-label-cancel")
 const seasonLabelConfirmBtn = document.getElementById("season-label-confirm")
 
-let confirmCallback = null
-let confirmExtraCallback = null
 let analyticsQuery = createDefaultAnalyticsQuery()
 let historyPlayerFilter = "all"
+const confirmDialogController = createConfirmDialogController({
+    dialog: confirmDialog,
+    title: confirmTitle,
+    message: confirmMessage,
+    cancelButton: confirmCancelBtn,
+    extraButton: confirmExtraBtn,
+    okButton: confirmOkBtn,
+})
 const appStatus = createAppStatusController({
     banner: appStatusBanner,
     dismissButton: appStatusDismissBtn,
     initialStatus: initialLoadStatus?.ok ? null : initialLoadStatus,
     message: appStatusMessage,
+})
+const sessionSummaryDialogController = createSessionSummaryDialogController({
+    appStatus,
+    elements: {
+        dialog: document.getElementById("session-summary-dialog"),
+        title: document.getElementById("session-summary-title"),
+        subtitle: document.getElementById("session-summary-subtitle"),
+        report: document.getElementById("session-summary-report"),
+        closeButton: document.getElementById("session-summary-close"),
+        exportButton: document.getElementById("session-summary-export"),
+    },
 })
 const historyBackupController = createHistoryBackupController({
     state,
@@ -78,6 +99,7 @@ const historyBackupController = createHistoryBackupController({
     elements: {
         exportButton: historyExportBtn,
         importButton: historyImportBtn,
+        clearButton: historyClearBtn,
         importInput: historyImportInput,
         summary: historyBackupSummary,
         status: historyBackupStatus,
@@ -124,6 +146,7 @@ function sortRoster() {
 }
 
 function persist() {
+    syncProvisionalHistory(state)
     const result = saveState(state)
     if (result.ok) {
         appStatus.clear("save")
@@ -163,46 +186,7 @@ function setupTabs() {
 }
 
 function showConfirmDialog(title, message, onOk, options = {}) {
-    confirmTitle.textContent = title
-    confirmMessage.textContent = message
-    confirmCallback = onOk
-    confirmOkBtn.textContent = options.okLabel ?? "Confirm"
-    confirmOkBtn.className = `btn ${options.okClass ?? "btn-danger"}`
-    if (options.extraLabel && options.onExtra) {
-        confirmExtraBtn.textContent = options.extraLabel
-        confirmExtraCallback = options.onExtra
-        confirmExtraBtn.hidden = false
-    } else {
-        confirmExtraBtn.hidden = true
-        confirmExtraCallback = null
-    }
-    confirmDialog.showModal()
-}
-
-function setupConfirmDialog() {
-    confirmCancelBtn.addEventListener("click", () => {
-        confirmDialog.close()
-        confirmCallback = null
-        confirmExtraCallback = null
-    })
-
-    confirmExtraBtn.addEventListener("click", () => {
-        if (confirmExtraCallback) {
-            confirmExtraCallback()
-        }
-        confirmDialog.close()
-        confirmCallback = null
-        confirmExtraCallback = null
-    })
-
-    confirmOkBtn.addEventListener("click", () => {
-        if (confirmCallback) {
-            confirmCallback()
-        }
-        confirmDialog.close()
-        confirmCallback = null
-        confirmExtraCallback = null
-    })
+    confirmDialogController.show(title, message, onOk, options)
 }
 
 function refreshHistory() {
@@ -273,12 +257,15 @@ function resetHistoryQuery() {
 
 function init() {
     setupTabs()
-    setupConfirmDialog()
+    confirmDialogController.setup()
+    sessionSummaryDialogController.setup()
     ratingSeasonController.setupDialog()
     appStatus.bind()
     historyBackupController.setupActions()
     initRoster(state, persist, showConfirmDialog)
-    initSession(state, persist, showConfirmDialog)
+    initSession(state, persist, showConfirmDialog, {
+        onSessionSaved: sessionSummaryDialogController.show,
+    })
 
     sortRoster()
     historyBackupController.refreshSummary()

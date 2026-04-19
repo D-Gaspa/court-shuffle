@@ -10,6 +10,7 @@ import { canContinueTournamentSession } from "../continuation/eligibility.js"
 import { renderBracket, renderSitOuts } from "./render.js"
 import { renderTournamentActive } from "./tournament/active.js"
 import { reconcileTournamentRoundsAfterScoreChange } from "./tournament/score-editing.js"
+import { canUndoLatestTournament } from "./tournament-undo.js"
 
 function resolveRenderableRoundInfo(session) {
     const rounds = Array.isArray(session?.rounds) ? session.rounds : []
@@ -34,10 +35,8 @@ function resolveRenderableRoundInfo(session) {
 
 function renderUnavailableSessionState(session, ui) {
     ui.roundInfo.textContent = `${session.players.length} players · ${getModeLabel(session)}`
-    if (ui.continueSessionBtn) {
-        ui.continueSessionBtn.hidden = true
-        ui.continueSessionBtn.disabled = true
-    }
+    syncSessionActionButton(ui.continueSessionBtn, false, "Change Roster")
+    syncSessionActionButton(ui.undoTournamentBtn, false)
     if (ui.roundPrefix) {
         ui.roundPrefix.hidden = false
     }
@@ -67,6 +66,34 @@ function renderSessionRoundView({ session, roundInfo, saveState, ui, commitScore
     renderStandardActive(roundInfo, saveState, ui, commitScoreForSession)
 }
 
+function buildRoundInfoText(session, roundInfo) {
+    const modeLabel = getModeLabel(session)
+    const courts = resolveRoundMetaLabel(session, roundInfo)
+    const seriesLabel = hasMultipleTournamentsInSeries(session)
+        ? ` · Tournament ${(session.tournamentSeries.currentTournamentIndex || 0) + 1} of ${session.tournamentSeries.maxTournaments}`
+        : ""
+    return `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
+}
+
+function resolveRoundMetaLabel(session, roundInfo) {
+    if (session.mode === "tournament") {
+        const matchCount = session.rounds[roundInfo.current]?.matches?.length || 0
+        return matchCount > 1 ? ` · ${matchCount} matches this round` : ""
+    }
+    return (session.courtCount || 1) > 1 ? ` · ${session.courtCount} courts` : ""
+}
+
+function syncSessionActionButton(button, isEnabled, text = null) {
+    if (!button) {
+        return
+    }
+    if (text) {
+        button.textContent = text
+    }
+    button.hidden = !isEnabled
+    button.disabled = !isEnabled
+}
+
 function renderActiveSession(state, saveState, ui) {
     const session = state.activeSession
     if (!session) {
@@ -86,26 +113,9 @@ function renderActiveSession(state, saveState, ui) {
         return
     }
 
-    const modeLabel = getModeLabel(session)
-    let courts = ""
-    if (session.mode === "tournament") {
-        const matchCount = session.rounds[roundInfo.current]?.matches?.length || 0
-        if (matchCount > 1) {
-            courts = ` · ${matchCount} matches this round`
-        }
-    } else if ((session.courtCount || 1) > 1) {
-        courts = ` · ${session.courtCount} courts`
-    }
-    const seriesLabel = hasMultipleTournamentsInSeries(session)
-        ? ` · Tournament ${(session.tournamentSeries.currentTournamentIndex || 0) + 1} of ${session.tournamentSeries.maxTournaments}`
-        : ""
-    ui.roundInfo.textContent = `${session.players.length} players · ${modeLabel}${courts}${seriesLabel}`
-    if (ui.continueSessionBtn) {
-        const canContinue = canContinueTournamentSession(session)
-        ui.continueSessionBtn.textContent = "Change Roster"
-        ui.continueSessionBtn.hidden = !canContinue
-        ui.continueSessionBtn.disabled = !canContinue
-    }
+    ui.roundInfo.textContent = buildRoundInfoText(session, roundInfo)
+    syncSessionActionButton(ui.continueSessionBtn, canContinueTournamentSession(session), "Change Roster")
+    syncSessionActionButton(ui.undoTournamentBtn, canUndoLatestTournament(session))
 
     if (ui.tournamentSeriesNav) {
         ui.tournamentSeriesNav.hidden = true

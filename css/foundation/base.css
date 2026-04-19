@@ -1,3 +1,4 @@
+/* biome-ignore lint/nursery/noExcessiveLinesPerFile: shared foundation styles remain centralized for now. */
 :root {
     --clay: #c4613a;
     --clay-light: #d4805e;

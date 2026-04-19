@@ -1,5 +1,12 @@
 import { buildHistoryRemixPayload } from "../../history/remix.js"
+import { buildSessionSummaryPayload } from "../../history/session-summary.js"
 import { hasSavedScoreEntry } from "../../score-editor/sets.js"
+import {
+    getCommittedHistory,
+    markHistoryEntryProvisional,
+    removeHistorySession,
+    upsertHistorySession,
+} from "./provisional-history.js"
 
 function cloneMatchForHistory(match) {
     return {
@@ -231,14 +238,50 @@ function canSaveSessionToHistory(session) {
     return buildHistoryEntryForSession(session) !== null
 }
 
+function syncProvisionalHistory(state) {
+    const session = state.activeSession
+    if (!session) {
+        return null
+    }
+    const historyEntry = buildHistoryEntryForSession(session)
+    if (!historyEntry) {
+        removeHistorySession(state.history, session.id)
+        return null
+    }
+    return upsertHistorySession(state.history, markHistoryEntryProvisional(historyEntry, true))
+}
+
+function finalizeHistoryEntry({ historyEntry, state }) {
+    const beforeHistory = getCommittedHistory(state.history, historyEntry.id)
+    const afterHistory = [...beforeHistory, historyEntry]
+    return {
+        ...historyEntry,
+        provisional: false,
+        sessionSummary: buildSessionSummaryPayload({
+            afterHistory,
+            beforeHistory,
+            historyEntry,
+            ratings: state.ratings,
+        }),
+    }
+}
+
 function endSession(state, saveState, save) {
     const session = state.activeSession
     const historyEntry = save && session ? buildHistoryEntryForSession(session) : null
+    let finalizedEntry = null
     if (historyEntry) {
-        state.history.push(historyEntry)
+        finalizedEntry = finalizeHistoryEntry({
+            historyEntry,
+            state,
+        })
+        upsertHistorySession(state.history, finalizedEntry)
+    } else if (session?.id) {
+        removeHistorySession(state.history, session.id)
     }
     state.activeSession = null
     saveState()
+    return finalizedEntry
 }
 
-export { buildHistoryEntryForSession, canSaveSessionToHistory, endSession }
+export { buildHistoryEntryForSession, canSaveSessionToHistory, endSession, syncProvisionalHistory }

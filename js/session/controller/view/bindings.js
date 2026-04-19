@@ -3,6 +3,7 @@ function bindActiveSessionNavButtons({
     onContinueSessionClick,
     onPrevRoundClick,
     onNextRoundClick,
+    onUndoTournamentClick,
     onPrevTournamentClick,
     onNextTournamentClick,
     onSkipTournamentClick,
@@ -12,6 +13,7 @@ function bindActiveSessionNavButtons({
     uiState.continueSessionBtn?.addEventListener("click", onContinueSessionClick)
     uiState.prevRoundBtn.addEventListener("click", onPrevRoundClick)
     uiState.nextRoundBtn.addEventListener("click", onNextRoundClick)
+    uiState.undoTournamentBtn?.addEventListener("click", onUndoTournamentClick)
     uiState.goTopBtn?.addEventListener("click", () => globalThis.scrollTo({ top: 0, behavior: "smooth" }))
     uiState.prevTournamentBtn?.addEventListener("click", onPrevTournamentClick)
     uiState.nextTournamentBtn?.addEventListener("click", onNextTournamentClick)

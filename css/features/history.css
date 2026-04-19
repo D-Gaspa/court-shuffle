@@ -2,8 +2,7 @@
 .history-section,
 .history-round-content,
 .history-match-list,
-.history-round-meta,
-.history-chip-group {
+.history-round-meta {
     display: flex;
     flex-direction: column;
 }
@@ -51,6 +50,20 @@
 .history-card-date {
     font-weight: 600;
     font-size: 0.95rem;
+}
+
+.history-card-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.45rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--danger), transparent 82%);
+    color: #ffb9b0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .history-card-meta {
@@ -122,29 +135,6 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-muted);
-}
-
-.history-pool-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-full);
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border: 1px solid var(--border);
-}
-
-.history-pool-badge.winners {
-    background: var(--bg-card);
-    color: var(--text-secondary);
-}
-
-.history-pool-badge.losers {
-    background: var(--bg-elevated);
     color: var(--text-muted);
 }
 
@@ -239,37 +229,6 @@
 .history-score.muted {
     color: var(--text-muted);
     font-weight: 500;
-}
-
-.history-chip-group {
-    gap: 6px;
-}
-
-.history-round-meta {
-    gap: 8px;
-}
-
-.history-chip-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--text-muted);
-}
-
-.history-chip-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.history-chip {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    padding: 4px 9px;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
 }
 
 .history-actions {

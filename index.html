@@ -391,6 +391,7 @@
                             </div>
                             <div class="session-actions">
                                 <button type="button" id="continue-session-btn" class="btn btn-accent btn-sm" hidden>Change Roster</button>
+                                <button type="button" id="undo-tournament-btn" class="btn btn-ghost btn-sm" hidden>Undo Last Tournament</button>
                                 <button type="button" id="prev-round-btn" class="btn btn-ghost btn-sm">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                                         <polyline points="15 18 9 12 15 6" />
@@ -487,6 +488,7 @@
                             <div class="history-backup-actions">
                                 <button type="button" id="history-export-btn" class="btn btn-accent">Export Backup</button>
                                 <button type="button" id="history-import-btn" class="btn btn-ghost">Import Backup</button>
+                                <button type="button" id="history-clear-btn" class="btn btn-ghost btn-danger">Clear History</button>
                                 <input type="file" id="history-import-input" accept="application/json,.json" hidden />
                             </div>
                             <p id="history-backup-summary" class="history-backup-summary"></p>
@@ -567,6 +569,18 @@
                 <div class="modal-actions">
                     <button type="button" id="season-label-cancel" class="btn btn-ghost">Cancel</button>
                     <button type="button" id="season-label-confirm" class="btn btn-primary">Continue</button>
+                </div>
+            </div>
+        </dialog>
+
+        <dialog id="session-summary-dialog" class="modal">
+            <div class="modal-content modal-content-lg">
+                <h2 id="session-summary-title">Session Summary</h2>
+                <p id="session-summary-subtitle" class="modal-message"></p>
+                <div id="session-summary-report" class="session-summary-report"></div>
+                <div class="modal-actions">
+                    <button type="button" id="session-summary-close" class="btn btn-ghost">Close</button>
+                    <button type="button" id="session-summary-export" class="btn btn-primary">Export PNG</button>
                 </div>
             </div>
         </dialog>

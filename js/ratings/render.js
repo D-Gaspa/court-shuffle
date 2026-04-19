@@ -1,7 +1,10 @@
+import { getCommittedHistory } from "../session/active/provisional-history.js"
 import { buildRatingsSection } from "../stats/view/ratings.js"
+import { buildLivePreviewAvailability } from "./live-preview.js"
 import { buildArchivedRatingsModel, buildRatingsModel } from "./model.js"
 
 let selectedRatingsMode = "singles"
+let selectedRatingsPreview = "season"
 let selectedRatingsPlayerByMode = {
     singles: null,
     doubles: null,
@@ -16,28 +19,43 @@ function renderRatings({ history, ratings, root, onDeleteArchivedSeason, onStart
     lastRenderArgs = { history, ratings, root, onDeleteArchivedSeason, onStartRatingSeason }
     root.textContent = ""
     const shell = createRatingsShell()
-    const activeRatingsModel = buildRatingsModel({ history, ratings })
+    const committedHistory = getCommittedHistory(history)
+    const provisionalHistory = (history || []).filter((session) => session?.provisional === true)
+    const committedRatingsModel = buildRatingsModel({ history: committedHistory, ratings })
+    const liveRatingsModel = buildRatingsModel({ history, ratings })
+    const livePreviewAvailability = buildLivePreviewAvailability(committedRatingsModel, liveRatingsModel)
+    const hasLivePreview = livePreviewAvailability[selectedRatingsMode]
+    if (!hasLivePreview && selectedRatingsPreview === "live") {
+        selectedRatingsPreview = "season"
+    }
+    const visibleActiveRatingsModel = selectedRatingsPreview === "live" ? liveRatingsModel : committedRatingsModel
     const archivedRatingsModel = selectedArchivedSeasonId
         ? buildArchivedRatingsModel(ratings, selectedArchivedSeasonId)
         : null
     if (selectedArchivedSeasonId && !archivedRatingsModel) {
         selectedArchivedSeasonId = null
     }
-    const ratingsModel = archivedRatingsModel || activeRatingsModel
+    const ratingsModel = archivedRatingsModel || visibleActiveRatingsModel
     const selectedPlayer = resolveSelectedRatingsPlayer(ratingsModel)
     const board = document.createElement("div")
     board.className = "stats-board"
     board.appendChild(
         buildRatingsSection({
+            history: committedHistory,
             ratingsModel,
             ratingsState: ratings,
             isArchivedView: Boolean(archivedRatingsModel),
+            hasLivePreview,
+            liveBaselineModel: committedRatingsModel,
+            provisionalHistory,
             selectedMode: selectedRatingsMode,
+            selectedPreview: selectedRatingsPreview,
             selectedPlayer,
             onBackToActiveSeason: handleBackToActiveSeason,
             onDeleteArchivedSeason: handleDeleteArchivedSeason(onDeleteArchivedSeason),
             onOpenArchivedSeason: handleOpenArchivedSeason,
             onSelectMode: handleRatingsModeChange,
+            onSelectPreview: handleRatingsPreviewChange,
             onSelectPlayer: handleRatingsPlayerSelection,
             onStartSeason: onStartRatingSeason,
         }),
@@ -112,6 +130,14 @@ function handleRatingsPlayerSelection(name) {
         ...selectedRatingsPlayerByMode,
         [selectedRatingsMode]: name,
     }
+    rerenderRatings()
+}
+
+function handleRatingsPreviewChange(preview) {
+    if (selectedRatingsPreview === preview) {
+        return
+    }
+    selectedRatingsPreview = preview
     rerenderRatings()
 }
 

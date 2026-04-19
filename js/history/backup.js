@@ -7,6 +7,16 @@ function buildBackupSummaryMessage(state) {
     )}.`
 }
 
+function buildClearHistoryMessage(state) {
+    const savedSessions = state.history.length
+    const archivedSessions = state.archivedHistory.length
+    const activeSessionNote = state.activeSession
+        ? "Your current in-progress session will stay in place."
+        : "This only affects saved and archived history in this browser."
+
+    return `Clear ${formatSessionCount(savedSessions, "saved")} and ${formatSessionCount(archivedSessions, "archived")}? ${activeSessionNote} This cannot be undone unless you export or import a backup.`
+}
+
 function formatBackupTimestamp(isoString) {
     if (!isoString) {
         return "not yet exported"
@@ -31,9 +41,12 @@ function setStatus(statusElement, message, tone = "success") {
     statusElement.classList.toggle("is-error", tone === "error")
 }
 
-function refreshSummary({ state, statusElement, summaryElement }) {
+function refreshSummary({ clearButton, state, statusElement, summaryElement }) {
     const totalSavedSessions = state.history.length + state.archivedHistory.length
     summaryElement.textContent = buildBackupSummaryMessage(state)
+    if (clearButton) {
+        clearButton.disabled = totalSavedSessions === 0
+    }
 
     if (!statusElement.textContent) {
         setStatus(
@@ -46,6 +59,10 @@ function refreshSummary({ state, statusElement, summaryElement }) {
     }
 }
 
+function formatSessionCount(count, label) {
+    return `${count} ${label} ${count === 1 ? "session" : "sessions"}`
+}
+
 function assignImportedState(state, sortRoster, nextState, exportedAt = null) {
     state.roster = [...nextState.roster]
     state.activeSession = nextState.activeSession
@@ -53,6 +70,11 @@ function assignImportedState(state, sortRoster, nextState, exportedAt = null) {
     state.archivedHistory = [...nextState.archivedHistory]
     state.lastExportedAt = exportedAt
     sortRoster()
+}
+
+function clearHistoryCollections(state) {
+    state.history = []
+    state.archivedHistory = []
 }
 
 function downloadBackup({ persist, state, statusElement, summaryElement }) {
@@ -105,6 +127,20 @@ async function importBackup({ file, persist, refreshAll, sortRoster, state, stat
     switchView("history")
 }
 
+function clearHistory({ persist, refreshAll, state, statusElement, switchView }) {
+    clearHistoryCollections(state)
+    const persistResult = persist()
+    refreshAll()
+    setStatus(
+        statusElement,
+        persistResult.ok
+            ? "Saved and archived history cleared. Import a backup to restore a different timeline."
+            : "History was cleared in this tab, but browser storage could not be updated. Keep this tab open until the storage issue is fixed.",
+        persistResult.ok ? "success" : "error",
+    )
+    switchView(state.activeSession ? "session" : "history")
+}
+
 function getImportMessage(state) {
     const hasExistingData =
         state.roster.length > 0 ||
@@ -134,7 +170,7 @@ function bindImportAction({ importInput, showConfirmDialog, ...controller }) {
 }
 
 function setupActions({ elements, showConfirmDialog, ...controller }) {
-    const { exportButton, importButton, importInput } = elements
+    const { clearButton, exportButton, importButton, importInput } = elements
 
     exportButton.addEventListener("click", () => {
         downloadBackup(controller)
@@ -142,6 +178,18 @@ function setupActions({ elements, showConfirmDialog, ...controller }) {
 
     importButton.addEventListener("click", () => {
         importInput.click()
+    })
+
+    clearButton.addEventListener("click", () => {
+        showConfirmDialog("Clear History", buildClearHistoryMessage(controller.state), () => clearHistory(controller), {
+            okLabel: "Clear History",
+            okClass: "btn-danger",
+            extraLabel: "Export First",
+            extraClass: "btn-ghost",
+            onExtra: () => {
+                downloadBackup(controller)
+            },
+        })
     })
 
     bindImportAction({
@@ -161,6 +209,7 @@ function createHistoryBackupController({
     switchView,
 }) {
     const controller = {
+        clearButton: elements.clearButton,
         persist,
         refreshAll,
         sortRoster,
@@ -180,4 +229,4 @@ function createHistoryBackupController({
     }
 }
 
-export { buildBackupSummaryMessage, createHistoryBackupController }
+export { buildBackupSummaryMessage, buildClearHistoryMessage, clearHistoryCollections, createHistoryBackupController }

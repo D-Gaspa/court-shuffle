@@ -100,6 +100,13 @@ function buildHistoryCardHeader(session, dateStr) {
     const dateSpan = document.createElement("span")
     dateSpan.className = "history-card-date"
     dateSpan.textContent = dateStr
+    if (session?.provisional) {
+        const badge = document.createElement("span")
+        badge.className = "history-card-badge"
+        badge.textContent = "Live"
+        dateSpan.appendChild(document.createTextNode(" "))
+        dateSpan.appendChild(badge)
+    }
 
     const meta = document.createElement("span")
     meta.className = "history-card-meta"

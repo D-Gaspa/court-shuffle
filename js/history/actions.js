@@ -32,6 +32,9 @@ function createRemixActions(session, { launchHistoryRemix, switchView }) {
 
 function createHistoryActions({ launchHistoryRemix, persist, refreshHistory, showConfirmDialog, state, switchView }) {
     function resolveActiveHistoryActions(session) {
+        if (session?.provisional) {
+            return []
+        }
         const archiveMessage = isMultiPhaseHistorySession(session)
             ? "Move this saved session and all of its continuation phases into the archive?"
             : "Move this session into the archive?"

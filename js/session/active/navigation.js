@@ -16,19 +16,22 @@ import {
     onPrevTournamentClick as onPrevTournamentClickHandler,
     onSkipTournamentClick as onSkipTournamentClickHandler,
 } from "./tournament-series-navigation.js"
+import { canUndoLatestTournament, undoLatestTournament } from "./tournament-undo.js"
 
 let _globalState = null
 let _saveState = null
 let _askConfirm = null
 let _renderFn = null
 let _refreshFn = null
+let _onSessionSaved = null
 
-function initNavigation({ state, saveFn, confirmFn, renderFn, refreshFn }) {
+function initNavigation({ state, saveFn, confirmFn, renderFn, refreshFn, onSessionSaved }) {
     _globalState = state
     _saveState = saveFn
     _askConfirm = confirmFn
     _renderFn = renderFn
     _refreshFn = refreshFn
+    _onSessionSaved = onSessionSaved
 }
 
 function onPrevRoundClick() {
@@ -148,6 +151,28 @@ function onSkipTournamentClick() {
     })
 }
 
+function onUndoTournamentClick() {
+    const session = _globalState.activeSession
+    if (!canUndoLatestTournament(session)) {
+        return
+    }
+    _askConfirm(
+        "Undo Last Tournament",
+        "Roll back the latest completed mini tournament and discard any continuation phases that depend on it?",
+        () => {
+            if (!undoLatestTournament(session)) {
+                return
+            }
+            _saveState()
+            _renderFn()
+        },
+        {
+            okLabel: "Undo Tournament",
+            okClass: "btn-danger",
+        },
+    )
+}
+
 function advanceTournamentNavigation(session) {
     if (session.currentRound < session.rounds.length - 1) {
         session.currentRound += 1
@@ -216,8 +241,9 @@ function onEndSessionClick() {
         "End Session",
         "Save this session to history, or discard it?",
         () => {
-            endSession(_globalState, _saveState, true)
+            const savedSession = endSession(_globalState, _saveState, true)
             _refreshFn()
+            _onSessionSaved?.(savedSession)
         },
         opts,
     )
@@ -227,6 +253,7 @@ export {
     initNavigation,
     onPrevRoundClick,
     onNextRoundClick,
+    onUndoTournamentClick,
     onPrevTournamentClick,
     onNextTournamentClick,
     onSkipTournamentClick,

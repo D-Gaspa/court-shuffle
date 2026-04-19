@@ -1,11 +1,9 @@
-import { getAvatarClass, getInitials } from "../../roster/render.js"
-import { createPanelHeader, createTrustPill } from "./dom.js"
-import { formatCountLabel, formatInteger, formatRecord, formatSignedNumber } from "./format.js"
+import { createPanelHeader } from "./dom.js"
 import { createArchivePanel } from "./ratings-archive.js"
+import { createRatingsBoard } from "./ratings-board.js"
 import { createRatingsHero } from "./ratings-hero.js"
+import { buildLatestSessionStoryMap, collectLiveParticipantSet } from "./ratings-live.js"
 import { createTrendPanel } from "./ratings-trend.js"
-
-const PERCENT_SCALE = 100
 
 function createEl(tag, className, text) {
     const el = document.createElement(tag)
@@ -18,55 +16,244 @@ function createEl(tag, className, text) {
     return el
 }
 
-function buildRatingsSection({
+function resolveRatingsBoardState({
+    hasLivePreview,
+    history,
     isArchivedView,
+    liveBaselineModel,
+    provisionalHistory,
+    selectedMode,
+    selectedPreview,
+}) {
+    const comparisonLadder =
+        hasLivePreview && selectedPreview === "live" && !isArchivedView ? liveBaselineModel.ladders[selectedMode] : null
+    return {
+        comparisonLadder,
+        latestStoryMap:
+            !(comparisonLadder || isArchivedView) && selectedPreview === "season"
+                ? buildLatestSessionStoryMap(history, selectedMode)
+                : new Map(),
+        liveParticipantSet:
+            comparisonLadder && selectedPreview === "live"
+                ? collectLiveParticipantSet(provisionalHistory, selectedMode)
+                : new Set(),
+    }
+}
+
+function appendRatingsContent({ onDeleteArchivedSeason, onOpenArchivedSeason, ratingsModel, ratingsState, wrap }) {
+    wrap.appendChild(
+        createArchivePanel(ratingsState, {
+            onDeleteArchivedSeason,
+            onOpenArchivedSeason,
+            selectedSeasonId: ratingsModel.season?.id,
+        }),
+    )
+}
+
+function appendRatingsHero(wrap, heroProps) {
+    wrap.appendChild(createRatingsHero(heroProps))
+}
+
+function appendRatingsEmptyState({
+    onDeleteArchivedSeason,
+    onOpenArchivedSeason,
+    onStartSeason,
     ratingsModel,
     ratingsState,
     selectedMode,
+    wrap,
+}) {
+    if (!ratingsModel.season) {
+        wrap.appendChild(createSeasonEmptyPanel(onStartSeason))
+        appendRatingsContent({
+            onDeleteArchivedSeason,
+            onOpenArchivedSeason,
+            ratingsModel,
+            ratingsState,
+            wrap,
+        })
+        return true
+    }
+
+    if (ratingsModel.ladders[selectedMode].leaderboard.length === 0) {
+        wrap.appendChild(createEmptyLadderPanel(ratingsModel.season, selectedMode))
+        appendRatingsContent({
+            onDeleteArchivedSeason,
+            onOpenArchivedSeason,
+            ratingsModel,
+            ratingsState,
+            wrap,
+        })
+        return true
+    }
+
+    return false
+}
+
+function appendRatingsBoard({
+    hasLivePreview,
+    history,
+    isArchivedView,
+    liveBaselineModel,
+    onSelectPlayer,
+    provisionalHistory,
+    ratingsModel,
+    selectedMode,
+    selectedPlayer,
+    selectedPreview,
+    wrap,
+}) {
+    const ladder = ratingsModel.ladders[selectedMode]
+    const { comparisonLadder, latestStoryMap, liveParticipantSet } = resolveRatingsBoardState({
+        hasLivePreview,
+        history,
+        isArchivedView,
+        liveBaselineModel,
+        provisionalHistory,
+        selectedMode,
+        selectedPreview,
+    })
+    wrap.appendChild(
+        createRatingsBoard({
+            comparisonLadder,
+            ladder,
+            liveParticipantSet,
+            latestStoryMap,
+            selectedPlayer,
+            onSelectPlayer,
+        }),
+    )
+    wrap.appendChild(
+        createTrendPanel({ isArchivedView, ladder, selectedPlayer, season: ratingsModel.season, selectedMode }),
+    )
+}
+
+function buildRatingsHeroProps({
+    hasLivePreview,
+    isArchivedView,
+    onBackToActiveSeason,
+    onSelectMode,
+    onSelectPreview,
+    onStartSeason,
+    ratingsModel,
+    ratingsState,
+    selectedMode,
+    selectedPreview,
+}) {
+    return {
+        hasLivePreview,
+        isArchivedView,
+        onBackToActiveSeason,
+        onStartSeason,
+        ratingsModel,
+        ratingsState,
+        selectedMode,
+        selectedPreview,
+        onSelectMode,
+        onSelectPreview,
+    }
+}
+
+function buildRatingsBoardProps({
+    hasLivePreview,
+    history,
+    isArchivedView,
+    liveBaselineModel,
+    onSelectPlayer,
+    provisionalHistory,
+    ratingsModel,
+    selectedMode,
+    selectedPlayer,
+    selectedPreview,
+    wrap,
+}) {
+    return {
+        hasLivePreview,
+        history,
+        isArchivedView,
+        liveBaselineModel,
+        onSelectPlayer,
+        provisionalHistory,
+        ratingsModel,
+        selectedMode,
+        selectedPlayer,
+        selectedPreview,
+        wrap,
+    }
+}
+
+function buildRatingsSection({
+    hasLivePreview,
+    history,
+    isArchivedView,
+    liveBaselineModel,
+    provisionalHistory,
+    ratingsModel,
+    ratingsState,
+    selectedMode,
+    selectedPreview,
     selectedPlayer,
     onBackToActiveSeason,
     onDeleteArchivedSeason,
     onOpenArchivedSeason,
     onSelectMode,
+    onSelectPreview,
     onSelectPlayer,
     onStartSeason,
 }) {
-    const wrap = createEl("div", "stats-section-grid")
-    wrap.appendChild(
-        createRatingsHero({
+    const wrap = document.createElement("div")
+    wrap.className = "stats-section-grid"
+    appendRatingsHero(
+        wrap,
+        buildRatingsHeroProps({
+            hasLivePreview,
             isArchivedView,
             onBackToActiveSeason,
+            onSelectMode,
+            onSelectPreview,
             onStartSeason,
             ratingsModel,
             ratingsState,
             selectedMode,
-            onSelectMode,
+            selectedPreview,
         }),
     )
-    if (!ratingsModel.season) {
-        wrap.appendChild(createSeasonEmptyPanel(onStartSeason))
-        wrap.appendChild(createArchivePanel(ratingsState, { onDeleteArchivedSeason, onOpenArchivedSeason }))
-        return wrap
-    }
-
-    const ladder = ratingsModel.ladders[selectedMode]
-    if (ladder.leaderboard.length === 0) {
-        wrap.appendChild(createEmptyLadderPanel(ratingsModel.season, selectedMode))
-        wrap.appendChild(createArchivePanel(ratingsState, { onDeleteArchivedSeason, onOpenArchivedSeason }))
-        return wrap
-    }
-
-    wrap.appendChild(createRatingsColumns({ ladder, selectedPlayer, onSelectPlayer }))
-    wrap.appendChild(
-        createTrendPanel({ isArchivedView, ladder, selectedPlayer, season: ratingsModel.season, selectedMode }),
-    )
-    wrap.appendChild(
-        createArchivePanel(ratingsState, {
+    if (
+        appendRatingsEmptyState({
             onDeleteArchivedSeason,
             onOpenArchivedSeason,
-            selectedSeasonId: ratingsModel.season.id,
+            onStartSeason,
+            ratingsModel,
+            ratingsState,
+            selectedMode,
+            wrap,
+        })
+    ) {
+        return wrap
+    }
+
+    appendRatingsBoard(
+        buildRatingsBoardProps({
+            hasLivePreview,
+            history,
+            isArchivedView,
+            liveBaselineModel,
+            onSelectPlayer,
+            provisionalHistory,
+            ratingsModel,
+            selectedMode,
+            selectedPlayer,
+            selectedPreview,
+            wrap,
         }),
     )
+    appendRatingsContent({
+        onDeleteArchivedSeason,
+        onOpenArchivedSeason,
+        ratingsModel,
+        ratingsState,
+        wrap,
+    })
     return wrap
 }
 
@@ -107,123 +294,6 @@ function createEmptyLadderPanel(season, selectedMode) {
         ),
     )
     return panel
-}
-
-function createRatingsColumns({ ladder, selectedPlayer, onSelectPlayer }) {
-    const columns = createEl("div", "stats-columns")
-    columns.appendChild(createLeaderboardPanel(ladder, selectedPlayer, onSelectPlayer))
-    columns.appendChild(createPlayerRatingPanel(ladder, selectedPlayer))
-    return columns
-}
-
-function createLeaderboardPanel(ladder, selectedPlayer, onSelectPlayer) {
-    const section = createEl("section", "stats-panel stats-panel-rail")
-    section.appendChild(createPanelHeader("Leaderboard", "Select a player to inspect this season in more detail."))
-    const list = createEl("div", "roster-list stats-player-list")
-    for (let index = 0; index < ladder.leaderboard.length; index += 1) {
-        const playerName = ladder.leaderboard[index]
-        list.appendChild(
-            createLeaderboardRow({
-                index,
-                playerName,
-                player: ladder.players[playerName],
-                selected: playerName === selectedPlayer,
-                onSelectPlayer,
-            }),
-        )
-    }
-    section.appendChild(list)
-    return section
-}
-
-function createLeaderboardRow({ index, onSelectPlayer, player, playerName, selected }) {
-    const button = createEl("button", `roster-item stats-player-row stats-ratings-row${selected ? " is-selected" : ""}`)
-    button.type = "button"
-    button.appendChild(createAvatar(playerName, index))
-    button.appendChild(createLeaderboardBody(playerName, index, player))
-    button.addEventListener("click", () => onSelectPlayer(playerName))
-    return button
-}
-
-function createAvatar(playerName, index) {
-    const avatar = createEl("div", `player-avatar ${getAvatarClass(index)}`)
-    avatar.textContent = getInitials(playerName).toUpperCase()
-    return avatar
-}
-
-function createLeaderboardBody(playerName, index, player) {
-    const body = createEl("div", "stats-ratings-row-body")
-    body.appendChild(createEl("span", "player-name stats-ratings-player-name", playerName))
-    const summary = createEl("div", "stats-ratings-row-summary")
-    summary.appendChild(createEl("span", "stats-ratings-rank", `Rank #${index + 1}`))
-    const top = createEl("div", "stats-ratings-row-topline")
-    top.appendChild(createEl("strong", "stats-ratings-rating-value", formatInteger(player.rating)))
-    top.appendChild(createRatingPill(formatSignedNumber(player.deltaFromStart, 0), "delta"))
-    summary.appendChild(top)
-    body.appendChild(summary)
-
-    const meta = createEl("div", "stats-player-row-meta stats-ratings-row-meta")
-    meta.appendChild(createRatingPill(formatCountLabel(player.ratedMatchCount, "rated match"), "matches"))
-    if (player.provisional) {
-        meta.appendChild(createRatingPill("Provisional", "provisional"))
-    }
-    body.appendChild(meta)
-    return body
-}
-
-function createRatingPill(text, tone) {
-    return createEl("span", `stats-player-row-pill stats-ratings-pill-${tone}`, text)
-}
-
-function createPlayerRatingPanel(ladder, selectedPlayer) {
-    const player = ladder.players[selectedPlayer]
-    const section = createEl("section", "stats-panel stats-panel-summary")
-    section.appendChild(createPanelHeader(selectedPlayer, "Season rating dossier"))
-    section.appendChild(createDossierSummary(player))
-    const grid = createEl("div", "stats-summary-grid stats-ratings-dossier-grid")
-    grid.appendChild(createMetricCard("Rating", formatInteger(player.rating), "Current ladder"))
-    grid.appendChild(createMetricCard("Season Delta", formatSignedNumber(player.deltaFromStart, 0), "From baseline"))
-    grid.appendChild(createMetricCard("Record", formatRecord(player.wins, player.losses), "Rated only"))
-    grid.appendChild(createMetricCard("Rated Matches", String(player.ratedMatchCount), "This season"))
-    grid.appendChild(createMetricCard("Season High", formatInteger(player.seasonHigh), "Peak rating"))
-    grid.appendChild(createMetricCard("Season Low", formatInteger(player.seasonLow), "Floor rating"))
-    grid.appendChild(
-        createMetricCard(
-            "Win Share",
-            player.ratedMatchCount > 0 ? `${Math.round((player.wins / player.ratedMatchCount) * PERCENT_SCALE)}%` : "—",
-            "Rated only",
-        ),
-    )
-    section.appendChild(grid)
-    const chips = createEl("div", "stats-relationship-meta stats-ratings-dossier-chips")
-    chips.appendChild(createTrustPill(`${formatCountLabel(player.ratedMatchCount, "rated match")}`))
-    chips.appendChild(createTrustPill(`Trend points: ${player.trend.length}`))
-    chips.appendChild(createTrustPill(player.provisional ? "Moves faster while provisional" : "Standard K-factor"))
-    section.appendChild(chips)
-    return section
-}
-
-function createDossierSummary(player) {
-    const summary = createEl("div", "stats-ratings-dossier-summary")
-    summary.appendChild(createDossierHighlight("Current", formatInteger(player.rating)))
-    summary.appendChild(createDossierHighlight("Delta", formatSignedNumber(player.deltaFromStart, 0)))
-    summary.appendChild(createDossierHighlight("Record", formatRecord(player.wins, player.losses)))
-    return summary
-}
-
-function createDossierHighlight(label, value) {
-    const item = createEl("div", "stats-ratings-dossier-highlight")
-    item.appendChild(createEl("span", "stats-ratings-dossier-label", label))
-    item.appendChild(createEl("strong", "stats-ratings-dossier-value", value))
-    return item
-}
-
-function createMetricCard(label, value, caption) {
-    const card = createEl("div", "stats-metric-card stats-ratings-metric-card")
-    card.appendChild(createEl("span", "stats-metric-label", label))
-    card.appendChild(createEl("strong", "stats-metric-value", value))
-    card.appendChild(createEl("span", "stats-metric-caption", caption))
-    return card
 }
 
 export { buildRatingsSection }

@@ -24,6 +24,7 @@ import {
     onPrevRoundClick,
     onPrevTournamentClick,
     onSkipTournamentClick,
+    onUndoTournamentClick,
 } from "./active/navigation.js"
 import { appendContinuationPhase, buildContinuationPhase } from "./continuation/build.js"
 import { buildContinuationPrefill } from "./continuation/prefill.js"
@@ -49,6 +50,7 @@ import { buildSelectedSession } from "./setup/build.js"
 let globalState = null
 let saveState = null
 let askConfirm = null
+let handleSessionSaved = null
 
 const setupController = createSessionSetupController({
     buildTournamentConfig,
@@ -200,6 +202,7 @@ function bindActiveSessionControls(state, persistFn, confirmFn) {
         onContinueSessionClick: launchContinuationSetup,
         onPrevRoundClick,
         onNextRoundClick,
+        onUndoTournamentClick,
         onPrevTournamentClick,
         onNextTournamentClick,
         onSkipTournamentClick,
@@ -213,13 +216,15 @@ function bindActiveSessionControls(state, persistFn, confirmFn) {
         confirmFn,
         renderFn: renderCurrentActiveSession,
         refreshFn: refreshSessionView,
+        onSessionSaved: handleSessionSaved,
     })
 }
 
-function initSession(state, persistFn, confirmFn) {
+function initSession(state, persistFn, confirmFn, options = {}) {
     globalState = state
     saveState = persistFn
     askConfirm = confirmFn
+    handleSessionSaved = options.onSessionSaved || null
     if (globalState.activeSession?.mode === "tournament") {
         syncCurrentPhaseToSession(globalState.activeSession)
     }
