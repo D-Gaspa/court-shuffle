@@ -35,6 +35,7 @@ import {
     tournamentSeriesNavToggleBtn,
     uiState,
 } from "./controller/elements.js"
+import { hideSessionLoading, showSessionLoading, waitForNextPaint } from "./controller/loading.js"
 import { createSessionSetupController } from "./controller/setup/controller.js"
 import { sessionSetupUi } from "./controller/setup/ui.js"
 import { bindActiveSessionNavButtons, bindTournamentSeriesToggle } from "./controller/view/bindings.js"
@@ -51,6 +52,13 @@ let globalState = null
 let saveState = null
 let askConfirm = null
 let handleSessionSaved = null
+
+function getSessionLoadingCopy(gameMode) {
+    if (gameMode === "tournament") {
+        return "Checking uniqueness rules, generating matchups, and preparing the session."
+    }
+    return "Balancing teams and preparing the session."
+}
 
 const setupController = createSessionSetupController({
     buildTournamentConfig,
@@ -111,8 +119,22 @@ function launchContinuationSetup() {
 }
 
 function bindSetupControls() {
+    const buildSelectedSessionWithLoading = async (options) => {
+        showSessionLoading({
+            overlay: sessionSetupUi.sessionLoadingOverlay,
+            message: sessionSetupUi.sessionLoadingMessage,
+            text: getSessionLoadingCopy(options.gameMode),
+        })
+        await waitForNextPaint()
+        try {
+            return buildSelectedSession(options)
+        } finally {
+            hideSessionLoading(sessionSetupUi.sessionLoadingOverlay)
+        }
+    }
+
     setupController.bindControls({
-        buildSelectedSession,
+        buildSelectedSession: buildSelectedSessionWithLoading,
         getRoster: () => globalState.roster,
         onChange: refreshSessionView,
         onContinuationStart: ({ players }) => {
@@ -140,7 +162,7 @@ function bindSetupControls() {
             startSession({
                 clearSetupNotice,
                 draft,
-                buildSelectedSession,
+                buildSelectedSession: buildSelectedSessionWithLoading,
                 buildWizardState,
                 getFinalStepId,
                 getPlayers: () => setupController.getPlayersInRosterOrder(globalState),

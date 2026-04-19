@@ -5,6 +5,7 @@ import { loadState, saveState } from "./core/storage.js"
 import { createHistoryActions } from "./history/actions.js"
 import { createHistoryBackupController } from "./history/backup.js"
 import { renderHistory } from "./history/render.js"
+import { resolveSessionSummary } from "./history/session-summary.js"
 import { createSessionSummaryDialogController } from "./history/session-summary-dialog.js"
 import { createRatingsAppController } from "./ratings/app-controller.js"
 import { createRatingSeasonController } from "./ratings/controller.js"
@@ -109,6 +110,17 @@ const historyActions = createHistoryActions({
     state,
     switchView,
     showConfirmDialog,
+    showSessionSummary(entry) {
+        const summary = resolveSessionSummary({
+            entry,
+            history: state.history,
+            archivedHistory: state.archivedHistory,
+            ratings: state.ratings,
+        })
+        if (summary) {
+            sessionSummaryDialogController.show(summary)
+        }
+    },
     persist,
     refreshHistory,
     launchHistoryRemix,

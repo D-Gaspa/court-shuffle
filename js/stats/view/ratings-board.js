@@ -4,6 +4,8 @@ import { formatCountLabel, formatInteger, formatSignedNumber } from "./format.js
 import { createPlayerRatingPanel } from "./ratings-dossier.js"
 import { getLiveRowState } from "./ratings-live.js"
 
+const PERCENT_SCALE = 100
+
 function createEl(tag, className, text) {
     const el = document.createElement(tag)
     if (className) {
@@ -13,6 +15,15 @@ function createEl(tag, className, text) {
         el.textContent = text
     }
     return el
+}
+
+function formatGamesPill(player) {
+    const games = formatCountLabel(player.ratedMatchCount, "game")
+    if (player.ratedMatchCount <= 0) {
+        return games
+    }
+    const winRate = Math.round((player.wins / player.ratedMatchCount) * PERCENT_SCALE)
+    return `${games} (${winRate}%)`
 }
 
 function createLeaderboardBody({ index, liveState, player, playerName }) {
@@ -29,7 +40,7 @@ function createLeaderboardBody({ index, liveState, player, playerName }) {
     body.appendChild(summary)
 
     const meta = createEl("div", "stats-player-row-meta stats-ratings-row-meta")
-    meta.appendChild(createRatingPill(formatCountLabel(player.ratedMatchCount, "game"), "matches"))
+    meta.appendChild(createRatingPill(formatGamesPill(player), "matches"))
     if (liveState.rankLabel) {
         meta.appendChild(createRatingPill(liveState.rankLabel, liveState.rankTone))
     }

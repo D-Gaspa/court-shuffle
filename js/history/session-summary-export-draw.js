@@ -4,14 +4,6 @@ const SUMMARY_PILL_RADIUS = 17
 const SUMMARY_PILL_TEXT_OFFSET_X = 14
 const SUMMARY_PILL_TEXT_OFFSET_Y = 23
 const SUMMARY_PILL_HORIZONTAL_PADDING = 28
-const SUMMARY_BADGE_HEIGHT = 108
-const SUMMARY_BADGE_RADIUS = 18
-const SUMMARY_BADGE_LABEL_OFFSET_X = 18
-const SUMMARY_BADGE_LABEL_OFFSET_Y = 28
-const SUMMARY_BADGE_VALUE_OFFSET_Y = 60
-const SUMMARY_BADGE_SIDE_PADDING = 36
-const SUMMARY_BADGE_LINE_HEIGHT = 30
-
 function wrapCanvasText(context, text, maxWidth) {
     const words = String(text || "").split(SUMMARY_WORD_SPLIT_PATTERN)
     const lines = []
@@ -71,27 +63,4 @@ function drawSummaryPill({ context, text, x, y, toneColor, strokeStyle }) {
     return width
 }
 
-function drawSummaryBadge({ context, label, value, x, y, width }) {
-    drawRoundedRect({
-        context,
-        rect: { x, y, width, height: SUMMARY_BADGE_HEIGHT },
-        radius: SUMMARY_BADGE_RADIUS,
-        fillStyle: "#ffffff10",
-        strokeStyle: "#ffffff14",
-    })
-    context.font = "700 18px Outfit, system-ui, sans-serif"
-    context.fillStyle = "#d7ccb9"
-    context.fillText(label.toUpperCase(), x + SUMMARY_BADGE_LABEL_OFFSET_X, y + SUMMARY_BADGE_LABEL_OFFSET_Y)
-    context.font = "700 28px Outfit, system-ui, sans-serif"
-    fillWrappedText({
-        context,
-        text: value,
-        x: x + SUMMARY_BADGE_LABEL_OFFSET_X,
-        y: y + SUMMARY_BADGE_VALUE_OFFSET_Y,
-        maxWidth: width - SUMMARY_BADGE_SIDE_PADDING,
-        lineHeight: SUMMARY_BADGE_LINE_HEIGHT,
-        color: "#fff6ec",
-    })
-}
-
-export { drawRoundedRect, drawSummaryBadge, drawSummaryPill, wrapCanvasText }
+export { drawRoundedRect, drawSummaryPill, fillWrappedText, wrapCanvasText }

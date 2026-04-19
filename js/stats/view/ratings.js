@@ -3,6 +3,7 @@ import { createArchivePanel } from "./ratings-archive.js"
 import { createRatingsBoard } from "./ratings-board.js"
 import { createRatingsHero } from "./ratings-hero.js"
 import { buildLatestSessionStoryMap, collectLiveParticipantSet } from "./ratings-live.js"
+import { buildRatingsBoardProps, buildRatingsHeroProps } from "./ratings-section-props.js"
 import { createTrendPanel } from "./ratings-trend.js"
 
 function createEl(tag, className, text) {
@@ -22,6 +23,7 @@ function resolveRatingsBoardState({
     isArchivedView,
     liveBaselineModel,
     provisionalHistory,
+    ratingsState,
     selectedMode,
     selectedPreview,
 }) {
@@ -31,7 +33,7 @@ function resolveRatingsBoardState({
         comparisonLadder,
         latestStoryMap:
             !(comparisonLadder || isArchivedView) && selectedPreview === "season"
-                ? buildLatestSessionStoryMap(history, selectedMode)
+                ? buildLatestSessionStoryMap(history, selectedMode, ratingsState)
                 : new Map(),
         liveParticipantSet:
             comparisonLadder && selectedPreview === "live"
@@ -48,10 +50,6 @@ function appendRatingsContent({ onDeleteArchivedSeason, onOpenArchivedSeason, ra
             selectedSeasonId: ratingsModel.season?.id,
         }),
     )
-}
-
-function appendRatingsHero(wrap, heroProps) {
-    wrap.appendChild(createRatingsHero(heroProps))
 }
 
 function appendRatingsEmptyState({
@@ -98,6 +96,7 @@ function appendRatingsBoard({
     onSelectPlayer,
     provisionalHistory,
     ratingsModel,
+    ratingsState,
     selectedMode,
     selectedPlayer,
     selectedPreview,
@@ -110,6 +109,7 @@ function appendRatingsBoard({
         isArchivedView,
         liveBaselineModel,
         provisionalHistory,
+        ratingsState,
         selectedMode,
         selectedPreview,
     })
@@ -128,58 +128,9 @@ function appendRatingsBoard({
     )
 }
 
-function buildRatingsHeroProps({
-    hasLivePreview,
-    isArchivedView,
-    onBackToActiveSeason,
-    onSelectMode,
-    onSelectPreview,
-    onStartSeason,
-    ratingsModel,
-    ratingsState,
-    selectedMode,
-    selectedPreview,
-}) {
-    return {
-        hasLivePreview,
-        isArchivedView,
-        onBackToActiveSeason,
-        onStartSeason,
-        ratingsModel,
-        ratingsState,
-        selectedMode,
-        selectedPreview,
-        onSelectMode,
-        onSelectPreview,
-    }
-}
-
-function buildRatingsBoardProps({
-    hasLivePreview,
-    history,
-    isArchivedView,
-    liveBaselineModel,
-    onSelectPlayer,
-    provisionalHistory,
-    ratingsModel,
-    selectedMode,
-    selectedPlayer,
-    selectedPreview,
-    wrap,
-}) {
-    return {
-        hasLivePreview,
-        history,
-        isArchivedView,
-        liveBaselineModel,
-        onSelectPlayer,
-        provisionalHistory,
-        ratingsModel,
-        selectedMode,
-        selectedPlayer,
-        selectedPreview,
-        wrap,
-    }
+function appendRatingsPanels(props) {
+    appendRatingsBoard(props)
+    appendRatingsContent(props)
 }
 
 function buildRatingsSection({
@@ -203,20 +154,21 @@ function buildRatingsSection({
 }) {
     const wrap = document.createElement("div")
     wrap.className = "stats-section-grid"
-    appendRatingsHero(
-        wrap,
-        buildRatingsHeroProps({
-            hasLivePreview,
-            isArchivedView,
-            onBackToActiveSeason,
-            onSelectMode,
-            onSelectPreview,
-            onStartSeason,
-            ratingsModel,
-            ratingsState,
-            selectedMode,
-            selectedPreview,
-        }),
+    wrap.appendChild(
+        createRatingsHero(
+            buildRatingsHeroProps({
+                hasLivePreview,
+                isArchivedView,
+                onBackToActiveSeason,
+                onSelectMode,
+                onSelectPreview,
+                onStartSeason,
+                ratingsModel,
+                ratingsState,
+                selectedMode,
+                selectedPreview,
+            }),
+        ),
     )
     if (
         appendRatingsEmptyState({
@@ -232,28 +184,24 @@ function buildRatingsSection({
         return wrap
     }
 
-    appendRatingsBoard(
+    appendRatingsPanels(
         buildRatingsBoardProps({
             hasLivePreview,
             history,
             isArchivedView,
             liveBaselineModel,
+            onDeleteArchivedSeason,
+            onOpenArchivedSeason,
             onSelectPlayer,
             provisionalHistory,
             ratingsModel,
+            ratingsState,
             selectedMode,
             selectedPlayer,
             selectedPreview,
             wrap,
         }),
     )
-    appendRatingsContent({
-        onDeleteArchivedSeason,
-        onOpenArchivedSeason,
-        ratingsModel,
-        ratingsState,
-        wrap,
-    })
     return wrap
 }
 

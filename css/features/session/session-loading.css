@@ -1,0 +1,61 @@
+.is-session-loading {
+    overflow: hidden;
+}
+
+.session-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: grid;
+    place-items: center;
+    padding: var(--space-md);
+    background: rgba(10, 8, 6, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.session-loading-panel {
+    width: min(420px, calc(100vw - 2rem));
+    display: grid;
+    justify-items: center;
+    gap: var(--space-md);
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    padding-block: calc(var(--space-xl) + var(--space-sm));
+    box-shadow:
+        var(--shadow-lg),
+        0 0 0 1px #ffffff08;
+}
+
+.session-loading-panel h2 {
+    margin-bottom: 0;
+}
+
+.session-loading-panel .modal-message {
+    max-width: 30ch;
+}
+
+.loading-spinner {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 4px solid #ffffff14;
+    border-top-color: var(--ball);
+    border-right-color: var(--court-light);
+    box-shadow:
+        0 0 0 1px #ffffff08,
+        0 0 28px var(--ball-glow);
+    animation: loadingSpin 0.9s linear infinite;
+}
+
+@keyframes loadingSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

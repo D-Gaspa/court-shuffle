@@ -1,0 +1,127 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: "Outfit", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    transition: all var(--duration-fast) var(--ease-out);
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary {
+    background: var(--clay);
+    color: #fff;
+    box-shadow:
+        var(--shadow-sm),
+        0 0 20px var(--clay-glow);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--clay-light);
+}
+
+.btn-accent {
+    background: linear-gradient(135deg, var(--court), var(--court-light));
+    color: #fff;
+    box-shadow: var(--shadow-sm), var(--shadow-glow-court);
+}
+
+.btn-accent:hover:not(:disabled) {
+    box-shadow:
+        var(--shadow-md),
+        0 0 40px var(--court-glow);
+    filter: brightness(1.1);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 8px 14px;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    background: var(--bg-elevated);
+    color: var(--text);
+}
+
+.btn-danger {
+    color: var(--danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: var(--danger-bg);
+}
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.btn-icon:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+.btn-icon:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.btn-lg {
+    padding: 14px 24px;
+    font-size: 1rem;
+    border-radius: var(--radius-lg);
+}
+
+.btn-full {
+    width: 100%;
+}

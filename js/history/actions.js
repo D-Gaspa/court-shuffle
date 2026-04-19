@@ -30,7 +30,15 @@ function createRemixActions(session, { launchHistoryRemix, switchView }) {
     return actions
 }
 
-function createHistoryActions({ launchHistoryRemix, persist, refreshHistory, showConfirmDialog, state, switchView }) {
+function createHistoryActions({
+    launchHistoryRemix,
+    persist,
+    refreshHistory,
+    showConfirmDialog,
+    showSessionSummary,
+    state,
+    switchView,
+}) {
     function resolveActiveHistoryActions(session) {
         if (session?.provisional) {
             return []
@@ -40,6 +48,11 @@ function createHistoryActions({ launchHistoryRemix, persist, refreshHistory, sho
             : "Move this session into the archive?"
         return [
             ...createRemixActions(session, { launchHistoryRemix, switchView }),
+            {
+                label: "Session Summary",
+                className: "btn btn-ghost btn-sm",
+                onClick: (entry) => showSessionSummary?.(entry),
+            },
             {
                 label: "Archive Session",
                 className: "btn btn-ghost btn-sm btn-danger",
@@ -58,6 +71,11 @@ function createHistoryActions({ launchHistoryRemix, persist, refreshHistory, sho
     function resolveArchivedHistoryActions(session) {
         return [
             ...createRemixActions(session, { launchHistoryRemix, switchView }),
+            {
+                label: "Session Summary",
+                className: "btn btn-ghost btn-sm",
+                onClick: (entry) => showSessionSummary?.(entry),
+            },
             {
                 label: "Restore",
                 className: "btn btn-ghost btn-sm",

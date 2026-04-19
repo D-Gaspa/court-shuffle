@@ -585,6 +585,16 @@
             </div>
         </dialog>
 
+        <div id="session-loading-overlay" class="session-loading-overlay" role="status" aria-live="polite" hidden>
+            <div class="session-loading-panel" aria-labelledby="session-loading-title">
+                <div class="loading-spinner" aria-hidden="true"></div>
+                <h2 id="session-loading-title">Building your shuffle</h2>
+                <p id="session-loading-message" class="modal-message">
+                    Checking uniqueness rules, generating matchups, and preparing the session.
+                </p>
+            </div>
+        </div>
+
         <dialog id="tournament-advanced-dialog" class="modal modal-advanced">
             <div class="modal-content modal-content-lg advanced-modal session-advanced-step">
                 <header class="advanced-modal-header">

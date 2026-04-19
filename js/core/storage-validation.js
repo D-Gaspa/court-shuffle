@@ -1,5 +1,6 @@
 import { clonePlayerNameArray, expectSessionDateString } from "./storage-validation-player.js"
 import { validateRatingsStateShape } from "./storage-validation-ratings.js"
+import { cloneSessionSummary } from "./storage-validation-session-summary.js"
 import {
     cloneRounds,
     cloneStringArray,
@@ -26,77 +27,6 @@ function validateSessionMode(source, path) {
         throw createValidationError(`${path}.mode`, "must be a supported session mode.")
     }
     return mode
-}
-
-function expectNullableInteger(value, path) {
-    if (value === null || value === undefined) {
-        return null
-    }
-    return expectInteger(value, path)
-}
-
-function expectFiniteNumber(value, path) {
-    if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) {
-        throw createValidationError(path, "must be a finite number.")
-    }
-    return value
-}
-
-function cloneSessionSummary(value, path) {
-    const source = expectPlainObject(value, path)
-    const matchSummary = expectPlainObject(source.matchSummary ?? {}, `${path}.matchSummary`)
-    if (!Array.isArray(source.miniTournamentWinners ?? [])) {
-        throw createValidationError(`${path}.miniTournamentWinners`, "must be an array.")
-    }
-    if (!Array.isArray(source.notableResults ?? [])) {
-        throw createValidationError(`${path}.notableResults`, "must be an array.")
-    }
-    if (!Array.isArray(source.leaderboard ?? [])) {
-        throw createValidationError(`${path}.leaderboard`, "must be an array.")
-    }
-
-    return {
-        createdAt: expectSessionDateString(source.createdAt, `${path}.createdAt`),
-        leaderboardMode: expectString(source.leaderboardMode, `${path}.leaderboardMode`),
-        sessionId: expectString(source.sessionId, `${path}.sessionId`),
-        title: expectString(source.title, `${path}.title`),
-        date: expectSessionDateString(source.date, `${path}.date`),
-        players: clonePlayerNameArray(source.players ?? [], `${path}.players`),
-        matchSummary: {
-            played: expectInteger(matchSummary.played ?? 0, `${path}.matchSummary.played`),
-            decided: expectInteger(matchSummary.decided ?? 0, `${path}.matchSummary.decided`),
-        },
-        miniTournamentWinners: (source.miniTournamentWinners ?? []).map((item, index) => {
-            const row = expectPlainObject(item, `${path}.miniTournamentWinners[${index}]`)
-            return {
-                label: expectString(row.label, `${path}.miniTournamentWinners[${index}].label`),
-                winner: expectString(row.winner, `${path}.miniTournamentWinners[${index}].winner`),
-            }
-        }),
-        notableResults: (source.notableResults ?? []).map((item, index) => {
-            const row = expectPlainObject(item, `${path}.notableResults[${index}]`)
-            return {
-                label: expectString(row.label, `${path}.notableResults[${index}].label`),
-                value: expectString(row.value, `${path}.notableResults[${index}].value`),
-            }
-        }),
-        leaderboard: (source.leaderboard ?? []).map((item, index) => {
-            const row = expectPlainObject(item, `${path}.leaderboard[${index}]`)
-            return {
-                name: expectString(row.name, `${path}.leaderboard[${index}].name`),
-                beforeRank: expectNullableInteger(row.beforeRank, `${path}.leaderboard[${index}].beforeRank`),
-                afterRank: expectNullableInteger(row.afterRank, `${path}.leaderboard[${index}].afterRank`),
-                rankDelta: expectFiniteNumber(row.rankDelta ?? 0, `${path}.leaderboard[${index}].rankDelta`),
-                beforeRating: expectNullableInteger(row.beforeRating, `${path}.leaderboard[${index}].beforeRating`),
-                afterRating: expectNullableInteger(row.afterRating, `${path}.leaderboard[${index}].afterRating`),
-                ratingDelta: expectFiniteNumber(row.ratingDelta ?? 0, `${path}.leaderboard[${index}].ratingDelta`),
-                wins: expectInteger(row.wins ?? 0, `${path}.leaderboard[${index}].wins`),
-                losses: expectInteger(row.losses ?? 0, `${path}.leaderboard[${index}].losses`),
-                winRate: expectString(row.winRate ?? "—", `${path}.leaderboard[${index}].winRate`),
-                games: expectInteger(row.games ?? 0, `${path}.leaderboard[${index}].games`),
-            }
-        }),
-    }
 }
 
 function createBaseSessionRecord(source, path, mode) {

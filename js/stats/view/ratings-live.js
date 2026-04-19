@@ -1,4 +1,5 @@
 import { getHistoryTournamentRuns } from "../../history/session-phases.js"
+import { resolveSessionSummary } from "../../history/session-summary.js"
 
 function collectLiveParticipantSet(provisionalHistory, selectedMode) {
     const participants = new Set()
@@ -16,10 +17,14 @@ function collectLiveParticipantSet(provisionalHistory, selectedMode) {
     return participants
 }
 
-function buildLatestSessionStoryMap(history, selectedMode) {
+function buildLatestSessionStoryMap(history, selectedMode, ratings) {
     const matchingMode = selectedMode === "singles" ? "singles" : "doubles"
     for (let index = (history || []).length - 1; index >= 0; index -= 1) {
-        const summary = history[index]?.sessionSummary
+        const summary = resolveSessionSummary({
+            entry: history[index],
+            history,
+            ratings,
+        })
         if (!summary || summary.leaderboardMode !== matchingMode) {
             continue
         }

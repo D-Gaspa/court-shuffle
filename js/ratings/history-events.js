@@ -180,4 +180,4 @@ function collectRatingEvents(history, season) {
     return events
 }
 
-export { collectRatingEvents, compareRatingEvents }
+export { collectRatingEvents, collectSessionRatingEvents, compareRatingEvents }

@@ -1,0 +1,279 @@
+.session-summary-report {
+    padding: 0.35rem 0 0.75rem;
+}
+
+body.has-modal-open {
+    overflow: hidden;
+}
+
+#session-summary-dialog.modal {
+    width: min(1180px, calc(100vw - 2rem));
+}
+
+#session-summary-dialog .modal-content {
+    width: 100%;
+    display: grid;
+    gap: 1rem;
+}
+
+.session-summary-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1.1rem;
+    border-radius: 20px;
+    color: #fff6ec;
+    background:
+        radial-gradient(circle at top right, #ffbf7b26, transparent 28%),
+        radial-gradient(circle at top left, #65d7ff22, transparent 30%),
+        linear-gradient(160deg, #241913, #151a24 64%, #131418);
+    border: 1px solid #ffffff14;
+}
+
+.session-summary-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);
+    gap: 1rem;
+    align-items: start;
+    padding: 1rem;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at top right, #ffbf7b1a, transparent 30%), linear-gradient(160deg, #ffffff10, #00000012);
+    border: 1px solid #ffffff12;
+}
+
+.session-summary-hero-title {
+    margin: 0;
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: clamp(1.6rem, 1.15rem + 1vw, 2.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+}
+
+.session-summary-hero-intro {
+    display: grid;
+    gap: 0.7rem;
+    align-content: center;
+}
+
+.session-summary-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-content: start;
+}
+
+.session-summary-header,
+.session-summary-strip,
+.session-summary-leaderboard,
+.session-summary-grid,
+.session-summary-tournaments,
+.session-summary-match-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.session-summary-header {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.session-summary-strip {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.session-summary-header-item {
+    display: grid;
+    gap: 0.2rem;
+    align-content: start;
+    min-height: 4.35rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 16px;
+    background: #ffffff0c;
+    border: 1px solid #ffffff10;
+}
+
+.session-summary-player {
+    padding: 0.8rem 0.9rem;
+    border-radius: 16px;
+    background: #ffffff0c;
+    border: 1px solid #ffffff10;
+}
+
+.session-summary-label {
+    color: #d7ccb9;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.session-summary-value {
+    font-size: 1rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.session-summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.session-summary-player {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.session-summary-player::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+        inset 0 1px 0 #ffffff10,
+        inset 0 -12px 24px #00000014;
+    pointer-events: none;
+}
+
+.session-summary-player.is-up {
+    border-color: #7fe2a944;
+    box-shadow:
+        0 18px 34px -26px #7fe2a955,
+        inset 0 0 0 1px #7fe2a922,
+        inset 0 18px 26px -24px #7fe2a955;
+}
+
+.session-summary-player.is-down {
+    border-color: #ff8f8f40;
+    box-shadow:
+        0 18px 34px -26px #ff8f8f3b,
+        inset 0 0 0 1px #ff8f8f22,
+        inset 0 18px 26px -24px #ff8f8f38;
+}
+
+.session-summary-player.is-flat {
+    border-color: #f0d08d40;
+    box-shadow:
+        0 18px 34px -26px #f0d08d45,
+        inset 0 0 0 1px #f0d08d22,
+        inset 0 18px 26px -24px #f0d08d4a;
+}
+
+.session-summary-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.88rem;
+    flex-shrink: 0;
+}
+
+.session-summary-player-body,
+.session-summary-player-details {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.session-summary-player-name {
+    font-size: 1.05rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.session-summary-player-rank {
+    color: #ecd7bb;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.session-summary-player-topline,
+.session-summary-player-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.session-summary-player-rating {
+    font-family: "Syne", system-ui, sans-serif;
+    font-size: 1.55rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.session-summary-player-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.session-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid #ffffff14;
+    background: #00000018;
+    color: #e5dbc8;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.session-summary-pill.is-up {
+    color: #9fe3b1;
+    box-shadow: inset 0 0 0 1px #9fe3b133;
+}
+
+.session-summary-pill.is-down {
+    color: #ffb0b0;
+    box-shadow: inset 0 0 0 1px #ff8f8f33;
+}
+
+.session-summary-pill.is-flat {
+    color: #f0d08d;
+    box-shadow: inset 0 0 0 1px #f0d08d33;
+}
+
+#session-summary-dialog .modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 0;
+    padding-top: 0.85rem;
+    justify-content: flex-end;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+#session-summary-dialog .modal-actions .btn {
+    min-height: 46px;
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+#session-summary-close.btn {
+    padding-inline: 1rem;
+    color: #fff6ec;
+    background: #ffffff0a;
+    border: 1px solid #ffffff1a;
+    box-shadow:
+        0 12px 24px -18px #00000099,
+        inset 0 1px 0 #ffffff12;
+}
+
+#session-summary-close.btn:hover:not(:disabled) {
+    background: #ffffff12;
+    border-color: #ffffff26;
+    color: #ffffff;
+}
+
+#session-summary-export.btn {
+    box-shadow:
+        0 18px 28px -20px color-mix(in srgb, var(--clay) 70%, transparent),
+        0 0 18px color-mix(in srgb, var(--clay) 24%, transparent);
+}

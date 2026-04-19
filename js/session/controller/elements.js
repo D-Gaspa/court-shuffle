@@ -28,6 +28,8 @@ const teamCountValue = document.getElementById("team-count-value")
 const teamSizeHint = document.getElementById("team-size-hint")
 const startSessionBtn = document.getElementById("start-session-btn")
 const startSessionLabel = document.getElementById("start-session-label")
+const sessionLoadingOverlay = document.getElementById("session-loading-overlay")
+const sessionLoadingMessage = document.getElementById("session-loading-message")
 const notStrictDoublesGroup = document.getElementById("not-strict-doubles")
 const allow2v1Checkbox = document.getElementById("allow-2v1")
 const tournamentDistributionGroup = document.getElementById("tournament-distribution-group")
@@ -98,6 +100,8 @@ export {
     sessionActive,
     sessionConfig,
     sessionNextBtn,
+    sessionLoadingOverlay,
+    sessionLoadingMessage,
     sessionSetupNotice,
     sessionContinuationBanner,
     sessionContinuationDetail,

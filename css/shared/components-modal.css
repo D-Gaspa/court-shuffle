@@ -1,0 +1,119 @@
+.modal {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: min(440px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: visible;
+}
+
+.modal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.modal[open] {
+    animation: modalIn 0.2s var(--ease-out);
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    box-shadow:
+        var(--shadow-lg),
+        0 0 0 1px #ffffff08;
+}
+
+.modal-content-lg {
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+}
+
+.modal-content-lg .player-selection-grid {
+    margin-top: var(--space-md);
+}
+
+.modal-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.modal-content h2 {
+    font-size: 1.15rem;
+    margin-bottom: var(--space-sm);
+    color: var(--text);
+}
+
+.modal-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.modal-message {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.modal-content input {
+    margin-top: var(--space-md);
+}
+
+.modal-content input[type="date"] {
+    color-scheme: dark;
+    min-height: 48px;
+    color: var(--text);
+}
+
+.modal-content input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.92) sepia(0.22) saturate(0.7) brightness(1.08);
+    opacity: 0.9;
+    cursor: pointer;
+}
+
+.modal-inline-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-top: var(--space-md);
+}
+
+.modal-inline-field .btn {
+    min-height: 48px;
+}
+
+#season-start-date-hint {
+    margin-top: 0.55rem;
+    color: var(--text);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

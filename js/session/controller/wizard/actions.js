@@ -76,7 +76,7 @@ function applyTournamentAction(draft, action) {
     }
 }
 
-function startSession({
+async function startSession({
     draft,
     buildSelectedSession,
     buildWizardState,
@@ -99,7 +99,7 @@ function startSession({
         return
     }
 
-    const session = buildSelectedSession({
+    const session = await buildSelectedSession({
         players,
         gameMode: draft.gameMode,
         teamCount: draft.free.teamCount,
