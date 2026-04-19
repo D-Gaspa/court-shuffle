@@ -1,4 +1,5 @@
 @import url("./foundation/base.css");
+@import url("./foundation/responsive.css");
 @import url("./ui/components.css");
 @import url("./ui/buttons.css");
 @import url("./ui/forms.css");

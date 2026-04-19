@@ -1,0 +1,47 @@
+@media (width <= 640px) {
+    .tabs {
+        justify-content: center;
+        padding-inline: var(--space-sm);
+        scroll-padding-inline: var(--space-sm);
+    }
+
+    .tab {
+        gap: 5px;
+        padding: 9px 14px;
+        font-size: 0.82rem;
+    }
+
+    .tab svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (width >= 768px) {
+    .views {
+        max-width: 720px;
+        padding: 0 var(--space-xl) var(--space-lg);
+    }
+
+    .session-topbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .player-selection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .views {
+        padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (width >= 1024px) {
+    .views {
+        max-width: 800px;
+    }
+}

@@ -12,9 +12,9 @@ import {
     setTournamentAdvancedHistorySource,
     validateTournamentAdvancedState,
 } from "../../domains/tournament/setup/index.js"
-import { buildHistoryRemixPrefill } from "../history/remix/index.js"
 import { appendContinuationPhase, buildContinuationPhase } from "./continuation/build.js"
 import { buildContinuationPrefill } from "./continuation/prefill.js"
+import { launchSessionHistoryRemix } from "./history-remix.js"
 import { renderActiveSession } from "./live/active.js"
 import { resetGoTopButtonVisibility, syncGoTopButtonVisibility } from "./live/go-top.js"
 import { canSaveSessionToHistory, endSession } from "./live/history.js"
@@ -29,6 +29,7 @@ import {
     onUndoTournamentClick,
 } from "./live/navigation.js"
 import { buildSelectedSession } from "./setup/build.js"
+import { createSessionBuilderWithLoading } from "./setup/build-with-loading.js"
 import { createSessionSetupController } from "./setup/logic/controller.js"
 import { sessionSetupUi } from "./setup/logic/ui.js"
 import { startSession } from "./setup/state/actions.js"
@@ -49,13 +50,6 @@ let saveState = null
 let askConfirm = null
 let handleSessionSaved = null
 
-function getSessionLoadingCopy(gameMode) {
-    if (gameMode === "tournament") {
-        return "Checking uniqueness rules, generating matchups, and preparing the session."
-    }
-    return "Balancing teams and preparing the session."
-}
-
 const setupController = createSessionSetupController({
     buildTournamentConfig,
     buildTournamentPreview,
@@ -70,6 +64,24 @@ const setupController = createSessionSetupController({
     validateTournamentAdvancedState,
 })
 
+function getPlayersInRosterOrder() {
+    return setupController.getPlayersInRosterOrder(globalState)
+}
+
+function showSetupBaseView() {
+    showSetupBaseSessionView({
+        sessionSetup,
+        sessionActive,
+        uiState,
+        resetGoTopButtonVisibility,
+        tournamentSeriesNavToggleBtn,
+    })
+}
+
+function renderCurrentActiveSession() {
+    renderActiveSession(globalState, saveState, uiState)
+}
+
 function refreshSessionView() {
     if (globalState.activeSession && !setupController.draft.continuation) {
         renderActiveSessionView({
@@ -83,23 +95,13 @@ function refreshSessionView() {
         })
         return
     }
+
     setupController.renderSetupWizard({
         state: globalState,
-        getPlayers: () => setupController.getPlayersInRosterOrder(globalState),
+        getPlayers: getPlayersInRosterOrder,
         onChange: refreshSessionView,
-        showSetupBaseSessionView: () =>
-            showSetupBaseSessionView({
-                sessionSetup,
-                sessionActive,
-                uiState,
-                resetGoTopButtonVisibility,
-                tournamentSeriesNavToggleBtn,
-            }),
+        showSetupBaseSessionView: showSetupBaseView,
     })
-}
-
-function renderCurrentActiveSession() {
-    renderActiveSession(globalState, saveState, uiState)
 }
 
 function launchContinuationSetup() {
@@ -114,39 +116,42 @@ function launchContinuationSetup() {
     refreshSessionView()
 }
 
-function bindSetupControls() {
-    const buildSelectedSessionWithLoading = async (options) => {
-        showSessionLoading({
-            overlay: sessionSetupUi.sessionLoadingOverlay,
-            message: sessionSetupUi.sessionLoadingMessage,
-            text: getSessionLoadingCopy(options.gameMode),
-        })
-        await waitForNextPaint()
-        try {
-            return buildSelectedSession(options)
-        } finally {
-            hideSessionLoading(sessionSetupUi.sessionLoadingOverlay)
-        }
+function appendContinuationFromSetup(players) {
+    const phase = buildContinuationPhase({
+        session: globalState.activeSession,
+        players,
+        courtCount: setupController.draft.tournament.courtCount,
+        allowNotStrictDoubles: setupController.draft.tournament.allowNotStrictDoubles,
+    })
+    if (!phase) {
+        return
     }
+    appendContinuationPhase(globalState.activeSession, phase)
+    saveState()
+    refreshSessionView()
+}
+
+function handleBuiltSessionStart(session) {
+    globalState.activeSession = session
+    saveState()
+    refreshSessionView()
+}
+
+function bindSetupControls() {
+    const buildSelectedSessionWithLoading = createSessionBuilderWithLoading({
+        buildSelectedSession,
+        hideSessionLoading,
+        overlay: sessionSetupUi.sessionLoadingOverlay,
+        message: sessionSetupUi.sessionLoadingMessage,
+        showSessionLoading,
+        waitForNextPaint,
+    })
 
     setupController.bindControls({
         buildSelectedSession: buildSelectedSessionWithLoading,
         getRoster: () => globalState.roster,
         onChange: refreshSessionView,
-        onContinuationStart: ({ players }) => {
-            const phase = buildContinuationPhase({
-                session: globalState.activeSession,
-                players,
-                courtCount: setupController.draft.tournament.courtCount,
-                allowNotStrictDoubles: setupController.draft.tournament.allowNotStrictDoubles,
-            })
-            if (!phase) {
-                return
-            }
-            appendContinuationPhase(globalState.activeSession, phase)
-            saveState()
-            refreshSessionView()
-        },
+        onContinuationStart: ({ players }) => appendContinuationFromSetup(players),
         onSessionStart: ({
             clearSetupNotice,
             draft,
@@ -161,56 +166,26 @@ function bindSetupControls() {
                 buildSelectedSession: buildSelectedSessionWithLoading,
                 buildWizardState,
                 getFinalStepId,
-                getPlayers: () => setupController.getPlayersInRosterOrder(globalState),
+                getPlayers: getPlayersInRosterOrder,
                 getTournamentBlockingError,
                 getVisibleStepIds,
-                onSessionStart: (session) => {
-                    globalState.activeSession = session
-                    saveState()
-                    refreshSessionView()
-                },
+                onSessionStart: handleBuiltSessionStart,
             }),
     })
 }
 
-function completeHistoryRemix(prefill, switchView) {
-    setupController.applyExternalSetupPrefill(prefill)
-    saveState()
-    switchView("session")
-}
-
 function launchHistoryRemix(session, action, switchView) {
-    const prefill = buildHistoryRemixPrefill(session, action, globalState.roster)
-    const replace = (shouldSave) => {
-        if (globalState.activeSession) {
-            endSession(globalState, saveState, shouldSave)
-        }
-        completeHistoryRemix(prefill, switchView)
-    }
-
-    if (!globalState.activeSession) {
-        completeHistoryRemix(prefill, switchView)
-        return
-    }
-
-    if (canSaveSessionToHistory(globalState.activeSession)) {
-        askConfirm(
-            "Replace Active Session",
-            "Save the current session to history before loading this remix?",
-            () => replace(true),
-            {
-                okLabel: "Save & Replace",
-                okClass: "btn-primary",
-                extraLabel: "Discard & Replace",
-                onExtra: () => replace(false),
-            },
-        )
-        return
-    }
-
-    askConfirm("Replace Active Session", "Discard the current session and load this remix?", () => replace(false), {
-        okLabel: "Discard & Replace",
-        okClass: "btn-danger",
+    launchSessionHistoryRemix({
+        action,
+        askConfirm,
+        canSaveSessionToHistory,
+        endSession,
+        roster: globalState.roster,
+        saveState,
+        session,
+        setupController,
+        state: globalState,
+        switchView,
     })
 }
 
