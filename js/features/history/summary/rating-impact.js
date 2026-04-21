@@ -66,7 +66,12 @@ function buildSessionEventKey({ matchIndex, phaseIndex, roundIndex, sessionId = 
 
 function createTeamImpact(players, ratingDeltas, won) {
     const names = players.filter(Boolean)
-    const deltas = Array.isArray(ratingDeltas) ? ratingDeltas.filter((delta) => Number.isFinite(delta)) : []
+    let deltas = []
+    if (Array.isArray(ratingDeltas)) {
+        deltas = ratingDeltas.filter((delta) => Number.isFinite(delta))
+    } else if (Number.isFinite(ratingDeltas)) {
+        deltas = [ratingDeltas]
+    }
     if (names.length === 0 || deltas.length === 0) {
         return null
     }

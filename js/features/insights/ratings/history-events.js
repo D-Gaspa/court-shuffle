@@ -1,5 +1,6 @@
 import { determineMatchWinner } from "../../../domains/tournament/engine/utils.js"
 import { normalizeSets } from "../../../ui/score-editor/sets.js"
+import { buildNightGroupLookup } from "../../history/groups/model.js"
 import { getHistoryTournamentPhases } from "../../history/summary/session-phases.js"
 
 function getCompleteSets(scoreEntry) {
@@ -56,10 +57,21 @@ function getMatchMode(tournamentTeamSize) {
     return null
 }
 
-function createRatingEvent({ session, phaseIndex, tournamentIndex, roundIndex, matchIndex, teams, winnerIndex, mode }) {
+function createRatingEvent({
+    session,
+    phaseIndex,
+    tournamentIndex,
+    roundIndex,
+    matchIndex,
+    teams,
+    winnerIndex,
+    mode,
+    nightGroupId,
+}) {
     return {
         sessionId: session.id,
         sessionDate: session.date,
+        nightGroupId,
         phaseIndex,
         tournamentIndex,
         roundIndex,
@@ -103,7 +115,16 @@ function isSessionWithinSeason(session, season) {
     return !(Number.isFinite(seasonEnd) && sessionDate > seasonEnd)
 }
 
-function collectRoundRatingEvents({ events, mode, phaseIndex, round, roundIndex, session, tournamentIndex }) {
+function collectRoundRatingEvents({
+    events,
+    mode,
+    nightGroupId,
+    phaseIndex,
+    round,
+    roundIndex,
+    session,
+    tournamentIndex,
+}) {
     for (let matchIndex = 0; matchIndex < (round?.matches || []).length; matchIndex += 1) {
         const outcome = getRatedMatchOutcome(round, matchIndex)
         if (!outcome) {
@@ -123,12 +144,13 @@ function collectRoundRatingEvents({ events, mode, phaseIndex, round, roundIndex,
                 teams,
                 winnerIndex: outcome.winnerIndex,
                 mode,
+                nightGroupId,
             }),
         )
     }
 }
 
-function collectTournamentRatingEvents({ events, phaseIndex, session, tournament, tournamentIndex }) {
+function collectTournamentRatingEvents({ events, nightGroupId, phaseIndex, session, tournament, tournamentIndex }) {
     const mode = getMatchMode(tournament?.tournamentTeamSize)
     if (!mode) {
         return
@@ -137,6 +159,7 @@ function collectTournamentRatingEvents({ events, phaseIndex, session, tournament
         collectRoundRatingEvents({
             events,
             mode,
+            nightGroupId,
             phaseIndex,
             round: tournament.rounds[roundIndex],
             roundIndex,
@@ -146,11 +169,12 @@ function collectTournamentRatingEvents({ events, phaseIndex, session, tournament
     }
 }
 
-function collectPhaseRatingEvents({ events, phase, phaseIndex, session }) {
+function collectPhaseRatingEvents({ events, nightGroupId, phase, phaseIndex, session }) {
     const tournaments = getPhaseTournamentRuns(phase)
     for (let tournamentIndex = 0; tournamentIndex < tournaments.length; tournamentIndex += 1) {
         collectTournamentRatingEvents({
             events,
+            nightGroupId,
             phaseIndex,
             session,
             tournament: tournaments[tournamentIndex],
@@ -159,22 +183,23 @@ function collectPhaseRatingEvents({ events, phase, phaseIndex, session }) {
     }
 }
 
-function collectSessionRatingEvents(session, season) {
+function collectSessionRatingEvents(session, season, nightGroupId = null) {
     if (session?.mode !== "tournament" || !isSessionWithinSeason(session, season)) {
         return []
     }
     const events = []
     const phases = getHistoryTournamentPhases(session)
     for (let phaseIndex = 0; phaseIndex < phases.length; phaseIndex += 1) {
-        collectPhaseRatingEvents({ events, phase: phases[phaseIndex], phaseIndex, session })
+        collectPhaseRatingEvents({ events, nightGroupId, phase: phases[phaseIndex], phaseIndex, session })
     }
     return events
 }
 
 function collectRatingEvents(history, season) {
     const events = []
+    const nightGroupLookup = buildNightGroupLookup((history || []).filter(Boolean))
     for (const session of history || []) {
-        events.push(...collectSessionRatingEvents(session, season))
+        events.push(...collectSessionRatingEvents(session, season, nightGroupLookup.get(session.id)?.id || null))
     }
     events.sort(compareRatingEvents)
     return events

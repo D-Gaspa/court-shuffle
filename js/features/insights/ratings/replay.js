@@ -15,7 +15,7 @@ function createPlayerState(baselineRating) {
         seasonHigh: baselineRating,
         seasonLow: baselineRating,
         deltaFromStart: 0,
-        trend: [{ matchNumber: 0, rating: baselineRating }],
+        trend: [{ matchNumber: 0, rating: baselineRating, type: "baseline" }],
     }
 }
 
@@ -33,7 +33,7 @@ function ensurePlayerState(ladder, playerName, baselineRating) {
     return ladder.players[playerName]
 }
 
-function updatePlayerAfterMatch({ player, didWin, delta, baselineRating, provisionalMatchThreshold }) {
+function updatePlayerAfterMatch({ player, didWin, delta, baselineRating, provisionalMatchThreshold, event }) {
     player.rating += delta
     player.ratedMatchCount += 1
     player.provisional = player.ratedMatchCount < provisionalMatchThreshold
@@ -43,6 +43,10 @@ function updatePlayerAfterMatch({ player, didWin, delta, baselineRating, provisi
     player.trend.push({
         matchNumber: player.ratedMatchCount,
         rating: player.rating,
+        sessionDate: event.sessionDate,
+        sessionId: event.sessionId,
+        nightGroupId: event.nightGroupId,
+        type: "match",
     })
     if (didWin) {
         player.wins += 1
@@ -103,6 +107,7 @@ function replaySinglesEvent(ladder, event, season) {
         delta: deltaA,
         baselineRating: context.baselineRating,
         provisionalMatchThreshold: context.provisionalMatchThreshold,
+        event,
     })
     updatePlayerAfterMatch({
         player: playerB,
@@ -110,6 +115,7 @@ function replaySinglesEvent(ladder, event, season) {
         delta: deltaB,
         baselineRating: context.baselineRating,
         provisionalMatchThreshold: context.provisionalMatchThreshold,
+        event,
     })
 }
 
@@ -152,6 +158,7 @@ function replayDoublesEvent(ladder, event, season) {
                 delta,
                 baselineRating: context.baselineRating,
                 provisionalMatchThreshold: context.provisionalMatchThreshold,
+                event,
             })
         }
     }

@@ -190,6 +190,7 @@ function createTrustPill(text, toneClass = "") {
 }
 
 export {
+    createEl,
     createPanelHeader,
     createEmptyState,
     createMatchupTablePanel,

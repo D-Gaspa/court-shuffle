@@ -37,6 +37,18 @@
 .session-summary-round {
     display: grid;
     gap: 0.55rem;
+    align-content: start;
+    min-width: 0;
+    padding: 0.8rem;
+    border-radius: 16px;
+    background: #00000018;
+    border: 1px solid #ffffff0f;
+}
+
+.session-summary-tournament-rounds {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem;
 }
 
 .session-summary-match-grid {
@@ -47,10 +59,10 @@
 .session-summary-match {
     display: grid;
     gap: 0.65rem;
-    padding: 0.8rem;
+    padding: 0.7rem;
     border-radius: 16px;
-    background: #00000018;
-    border: 1px solid #ffffff0f;
+    background: #00000014;
+    border: 1px solid #ffffff0d;
 }
 
 .session-summary-match-header {
@@ -109,10 +121,32 @@
 }
 
 @media (max-width: 640px) {
+    #session-summary-dialog {
+        width: min(1180px, calc(100vw - 1rem));
+    }
+
+    #session-summary-dialog .session-summary-shell {
+        gap: 0.7rem;
+        padding: 0.8rem;
+    }
+
     .session-summary-hero,
-    .session-summary-player,
     .session-summary-player-details {
         grid-template-columns: 1fr;
+    }
+
+    .session-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
+    .session-summary-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .session-summary-player-rating {
+        font-size: 1.35rem;
     }
 
     .session-summary-match-team {
@@ -125,13 +159,19 @@
         justify-content: flex-start;
     }
 
-    #session-summary-dialog .modal-actions {
-        margin-inline: calc(var(--space-xl) * -1);
-        margin-bottom: calc(var(--space-xl) * -1);
-        padding: 0.9rem var(--space-xl) var(--space-xl);
+    #session-summary-dialog .session-summary-actions {
+        margin-inline: 0;
+        margin-bottom: 0;
+        padding: 0.8rem 0 0;
     }
 
-    #session-summary-dialog .modal-actions .btn {
+    #session-summary-dialog .session-summary-actions .btn {
         flex: 1 1 0;
+    }
+}
+
+@media (max-width: 440px) {
+    .session-summary-grid {
+        grid-template-columns: 1fr;
     }
 }

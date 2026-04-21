@@ -156,6 +156,8 @@ test("ratings replay builds separate singles and doubles ladders from phase-awar
     assert.equal(model.ladders.doubles.players.Cara.rating, LOSER_RATING)
     assert.equal(model.ladders.doubles.players.Dina.rating, LOSER_RATING)
     assert.equal(model.ladders.doubles.players.Ana.trend.length, 2)
+    assert.equal(model.ladders.doubles.players.Ana.trend[1].sessionId, "session-1")
+    assert.equal(model.ladders.doubles.players.Ana.trend[1].type, "match")
 })
 
 test("ratings replay ignores history from before the active season start", () => {

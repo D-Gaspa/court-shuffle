@@ -34,6 +34,7 @@ function buildRatingsBoardProps({
     onDeleteArchivedSeason,
     onOpenArchivedSeason,
     onSelectPlayer,
+    onSelectTrendGrouping,
     provisionalHistory,
     ratingsModel,
     ratingsState,
@@ -41,6 +42,7 @@ function buildRatingsBoardProps({
     selectedMode,
     selectedPlayer,
     selectedPreview,
+    selectedTrendGrouping,
     wrap,
 }) {
     return {
@@ -51,6 +53,7 @@ function buildRatingsBoardProps({
         onDeleteArchivedSeason,
         onOpenArchivedSeason,
         onSelectPlayer,
+        onSelectTrendGrouping,
         provisionalHistory,
         ratingsModel,
         ratingsState,
@@ -58,6 +61,7 @@ function buildRatingsBoardProps({
         selectedMode,
         selectedPlayer,
         selectedPreview,
+        selectedTrendGrouping,
         wrap,
     }
 }

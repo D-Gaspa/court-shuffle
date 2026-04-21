@@ -138,20 +138,26 @@ function createSummaryMeta(row) {
 function createSummaryLeaderboardCard(row, index) {
     const tone = resolveRowTone(row)
     const card = createEl("article", `session-summary-player${tone ? ` is-${tone}` : ""}`)
-    card.appendChild(createAvatar(row.name, index))
     const isExistingRank = Number.isFinite(row.beforeRank)
     let rankStatus = "New"
     if (isExistingRank) {
         rankStatus = row.rankDelta === 0 ? "Still" : "Now"
     }
 
+    const header = createEl("div", "session-summary-player-header")
+    header.appendChild(createAvatar(row.name, index))
+
+    const identity = createEl("div", "session-summary-player-identity")
+    identity.appendChild(createEl("strong", "session-summary-player-name", row.name))
+    identity.appendChild(createEl("span", "session-summary-player-rank", `${rankStatus} ${formatRank(row.afterRank)}`))
+    header.appendChild(identity)
+
     const body = createEl("div", "session-summary-player-body")
-    body.appendChild(createEl("strong", "session-summary-player-name", row.name))
-    body.appendChild(createEl("span", "session-summary-player-rank", `${rankStatus} ${formatRank(row.afterRank)}`))
     body.appendChild(createSummaryScoreLine(row))
     body.appendChild(createSummaryDetails(row))
     body.appendChild(createSummaryMeta(row))
 
+    card.appendChild(header)
     card.appendChild(body)
     return card
 }
@@ -227,9 +233,11 @@ function createTournamentRecap(tournament) {
         header.appendChild(createMetaPill(tournament.winner, "up"))
     }
     section.appendChild(header)
+    const rounds = createEl("div", "session-summary-tournament-rounds")
     for (const round of tournament.rounds || []) {
-        section.appendChild(createRoundRecap(round))
+        rounds.appendChild(createRoundRecap(round))
     }
+    section.appendChild(rounds)
     return section
 }
 

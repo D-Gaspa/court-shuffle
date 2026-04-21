@@ -3,6 +3,12 @@
     gap: var(--space-sm);
 }
 
+.stats-ratings-trend-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
 .stats-ratings-trend-chart {
     border-radius: 16px;
     border: 1px solid #ffffff10;
@@ -30,6 +36,10 @@
     fill: var(--text-muted);
     font-size: 11px;
     text-anchor: end;
+}
+
+.stats-ratings-trend-axis-label-x {
+    text-anchor: middle;
 }
 
 .stats-ratings-trend-baseline {

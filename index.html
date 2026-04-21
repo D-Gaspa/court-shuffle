@@ -584,12 +584,14 @@
             </div>
         </dialog>
 
-        <dialog id="session-summary-dialog" class="modal">
-            <div class="modal-content modal-content-lg">
-                <h2 id="session-summary-title">Session Summary</h2>
-                <p id="session-summary-subtitle" class="modal-message"></p>
+        <dialog id="session-summary-dialog" class="session-summary-dialog">
+            <div class="session-summary-shell">
+                <div class="session-summary-dialog-copy">
+                    <h2 id="session-summary-title">Session Summary</h2>
+                    <p id="session-summary-subtitle" class="modal-message"></p>
+                </div>
                 <div id="session-summary-report" class="session-summary-report"></div>
-                <div class="modal-actions">
+                <div class="session-summary-actions">
                     <button type="button" id="session-summary-close" class="btn btn-ghost">Close</button>
                     <button type="button" id="session-summary-export" class="btn btn-primary">Export PNG</button>
                 </div>

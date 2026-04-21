@@ -9,6 +9,10 @@ let selectedRatingsPlayerByMode = {
     singles: null,
     doubles: null,
 }
+let selectedTrendGroupingByMode = {
+    singles: "match",
+    doubles: "match",
+}
 let selectedArchivedSeasonId = null
 let lastRenderArgs = null
 
@@ -66,7 +70,9 @@ function renderRatings({
             onSelectMode: handleRatingsModeChange,
             onSelectPreview: handleRatingsPreviewChange,
             onSelectPlayer: handleRatingsPlayerSelection,
+            onSelectTrendGrouping: handleTrendGroupingChange,
             onStartSeason: onStartRatingSeason,
+            selectedTrendGrouping: selectedTrendGroupingByMode[selectedRatingsMode] || "match",
         }),
     )
     shell.appendChild(board)
@@ -138,6 +144,17 @@ function handleRatingsPlayerSelection(name) {
     selectedRatingsPlayerByMode = {
         ...selectedRatingsPlayerByMode,
         [selectedRatingsMode]: name,
+    }
+    rerenderRatings()
+}
+
+function handleTrendGroupingChange(grouping) {
+    if (selectedTrendGroupingByMode[selectedRatingsMode] === grouping) {
+        return
+    }
+    selectedTrendGroupingByMode = {
+        ...selectedTrendGroupingByMode,
+        [selectedRatingsMode]: grouping,
     }
     rerenderRatings()
 }

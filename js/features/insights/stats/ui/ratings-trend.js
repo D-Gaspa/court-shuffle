@@ -1,5 +1,11 @@
 import { createPanelHeader, createTrustPill } from "./dom.js"
 import { formatInteger } from "./format.js"
+import { createTrendGroupingToggle } from "./ratings-trend-controls.js"
+import {
+    buildDisplayPoints,
+    resolveHorizontalAxisAnchor,
+    resolveHorizontalAxisLabelIndexes,
+} from "./ratings-trend-points.js"
 
 const CHART_HEIGHT = 220
 const CHART_WIDTH = 360
@@ -18,6 +24,8 @@ const AXIS_TICK_COUNT = 4
 const TOOLTIP_HORIZONTAL_PADDING = 12
 const TOOLTIP_VERTICAL_OFFSET = 14
 const TOOLTIP_MAX_WIDTH = 140
+const X_AXIS_LABEL_OFFSET = 18
+const xAxisLabelY = CHART_BOUNDS.bottom + X_AXIS_LABEL_OFFSET
 
 function createEl(tag, className, text) {
     const el = document.createElement(tag)
@@ -30,7 +38,15 @@ function createEl(tag, className, text) {
     return el
 }
 
-function createTrendPanel({ isArchivedView, ladder, selectedPlayer, season, selectedMode }) {
+function createTrendPanel({
+    isArchivedView,
+    ladder,
+    onSelectTrendGrouping,
+    selectedPlayer,
+    season,
+    selectedMode,
+    selectedTrendGrouping,
+}) {
     const player = ladder.players[selectedPlayer]
     const section = createEl("section", "stats-panel stats-panel-ratings-trend")
     section.appendChild(
@@ -49,7 +65,8 @@ function createTrendPanel({ isArchivedView, ladder, selectedPlayer, season, sele
         )
         return section
     }
-    section.appendChild(createTrendChart(player.trend))
+    section.appendChild(createTrendGroupingToggle(selectedTrendGrouping, onSelectTrendGrouping))
+    section.appendChild(createTrendChart(player.trend, selectedTrendGrouping))
     const footer = createEl("div", "stats-ratings-trend-meta")
     footer.appendChild(createTrustPill(`Start ${formatInteger(player.trend[0]?.rating)}`))
     footer.appendChild(createTrustPill(`Current ${formatInteger(player.rating)}`))
@@ -59,7 +76,8 @@ function createTrendPanel({ isArchivedView, ladder, selectedPlayer, season, sele
     return section
 }
 
-function createTrendChart(points) {
+function createTrendChart(rawPoints, grouping = "match") {
+    const points = buildDisplayPoints(rawPoints, grouping)
     const chart = createEl("div", "stats-ratings-trend-chart")
     const plot = createEl("div", "stats-ratings-trend-plot")
     const tooltip = createEl("div", "stats-ratings-trend-tooltip")
@@ -140,7 +158,25 @@ function appendTrendAxis(svg, geometry) {
     baseline.setAttribute("y1", String(CHART_BOUNDS.bottom))
     baseline.setAttribute("y2", String(CHART_BOUNDS.bottom))
     axisGroup.appendChild(baseline)
+    appendTrendHorizontalAxisLabels(axisGroup, geometry.linePoints)
     svg.appendChild(axisGroup)
+}
+
+function appendTrendHorizontalAxisLabels(axisGroup, points) {
+    const labelIndexes = resolveHorizontalAxisLabelIndexes(points)
+    for (const index of labelIndexes) {
+        const point = points[index]
+        if (!point?.xLabel) {
+            continue
+        }
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text")
+        label.setAttribute("class", "stats-ratings-trend-axis-label stats-ratings-trend-axis-label-x")
+        label.setAttribute("x", String(point.x))
+        label.setAttribute("y", String(xAxisLabelY))
+        label.setAttribute("text-anchor", resolveHorizontalAxisAnchor(index, points))
+        label.textContent = point.xLabel
+        axisGroup.appendChild(label)
+    }
 }
 
 function appendTrendData(svg, geometry, tooltip, plot) {
@@ -198,9 +234,17 @@ function projectRatingToY(rating, minValue, range) {
 function showTrendTooltip({ plot, point, tooltip }) {
     tooltip.hidden = false
     tooltip.textContent = ""
-    tooltip.appendChild(createEl("strong", "stats-ratings-trend-tooltip-title", `Match ${point.index + 1}`))
+    tooltip.appendChild(createEl("strong", "stats-ratings-trend-tooltip-title", point.tooltipTitle))
     tooltip.appendChild(createEl("span", "", `Rating ${formatInteger(point.rating)}`))
     tooltip.appendChild(createEl("span", "", describePointDelta(point)))
+    if (Number.isFinite(point.sessionMatchCount)) {
+        tooltip.appendChild(
+            createEl("span", "", `${point.sessionMatchCount} rated match${point.sessionMatchCount === 1 ? "" : "es"}`),
+        )
+    }
+    if (point.tooltipDate) {
+        tooltip.appendChild(createEl("span", "", point.tooltipDate))
+    }
 
     const plotRect = plot.getBoundingClientRect()
     const horizontalPadding = TOOLTIP_HORIZONTAL_PADDING

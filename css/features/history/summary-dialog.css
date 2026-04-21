@@ -1,0 +1,104 @@
+body.has-modal-open {
+    overflow: hidden;
+}
+
+#session-summary-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: min(1180px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: visible;
+}
+
+#session-summary-dialog::backdrop {
+    background: rgb(0 0 0 / 60%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+#session-summary-dialog[open] {
+    animation: modalIn 0.2s var(--ease-out);
+}
+
+#session-summary-dialog .session-summary-shell {
+    width: 100%;
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    box-shadow:
+        var(--shadow-lg),
+        0 0 0 1px #ffffff08;
+    background:
+        radial-gradient(circle at top right, #ffbf7b12, transparent 28%),
+        linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--bg-card), #20150f 20%),
+            color-mix(in srgb, var(--bg-card), #070809 10%)
+        );
+}
+
+.session-summary-dialog-copy {
+    display: grid;
+    gap: 0.2rem;
+    padding-inline: 0.2rem;
+}
+
+#session-summary-title {
+    margin: 0;
+    color: #fff6ec;
+}
+
+#session-summary-subtitle {
+    color: #d7ccb9;
+}
+
+#session-summary-dialog .session-summary-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    padding: 0.65rem 0 0;
+    background: transparent;
+}
+
+#session-summary-dialog .session-summary-actions .btn {
+    min-height: 46px;
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+#session-summary-close.btn {
+    padding-inline: 1rem;
+    color: #fff6ec;
+    background: #ffffff1c;
+    border: 1px solid #ffffff2e;
+    box-shadow:
+        0 12px 24px -18px #00000099,
+        inset 0 1px 0 #ffffff12;
+}
+
+#session-summary-close.btn:hover:not(:disabled) {
+    background: #ffffff12;
+    border-color: #ffffff26;
+    color: #ffffff;
+}
+
+#session-summary-export.btn {
+    box-shadow:
+        0 18px 28px -20px color-mix(in srgb, var(--clay) 70%, transparent),
+        0 0 18px color-mix(in srgb, var(--clay) 24%, transparent);
+}

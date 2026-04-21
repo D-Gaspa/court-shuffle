@@ -159,11 +159,12 @@ function buildNestedSessionHeader(session, index, actions) {
     info.appendChild(meta)
     header.appendChild(info)
 
-    const controls = document.createElement("div")
-    controls.className = "history-night-session-controls"
-    appendNestedSessionHeaderActions(controls, actions, session)
-    controls.appendChild(buildChevronSvg())
-    header.appendChild(controls)
+    const chevron = document.createElement("div")
+    chevron.className = "history-night-session-chevron"
+    chevron.appendChild(buildChevronSvg())
+    header.appendChild(chevron)
+
+    appendNestedSessionHeaderActions(header, actions, session)
 
     return header
 }

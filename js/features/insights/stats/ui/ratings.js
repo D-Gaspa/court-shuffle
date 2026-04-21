@@ -1,21 +1,10 @@
-import { createPanelHeader } from "./dom.js"
+import { createEl, createPanelHeader } from "./dom.js"
 import { createArchivePanel } from "./ratings-archive.js"
 import { createRatingsBoard } from "./ratings-board.js"
 import { createRatingsHero } from "./ratings-hero.js"
 import { buildLatestSessionStoryMap, collectLiveParticipantSet } from "./ratings-live.js"
 import { buildRatingsBoardProps, buildRatingsHeroProps } from "./ratings-section-props.js"
 import { createTrendPanel } from "./ratings-trend.js"
-
-function createEl(tag, className, text) {
-    const el = document.createElement(tag)
-    if (className) {
-        el.className = className
-    }
-    if (text !== undefined) {
-        el.textContent = text
-    }
-    return el
-}
 
 function resolveRatingsBoardState({
     hasLivePreview,
@@ -100,6 +89,7 @@ function appendRatingsBoard({
     history,
     isArchivedView,
     liveBaselineModel,
+    onSelectTrendGrouping,
     onSelectPlayer,
     provisionalHistory,
     ratingsModel,
@@ -107,6 +97,7 @@ function appendRatingsBoard({
     selectedMode,
     selectedPlayer,
     selectedPreview,
+    selectedTrendGrouping,
     wrap,
 }) {
     const ladder = ratingsModel.ladders[selectedMode]
@@ -131,13 +122,54 @@ function appendRatingsBoard({
         }),
     )
     wrap.appendChild(
-        createTrendPanel({ isArchivedView, ladder, selectedPlayer, season: ratingsModel.season, selectedMode }),
+        createTrendPanel({
+            isArchivedView,
+            ladder,
+            onSelectTrendGrouping,
+            selectedPlayer,
+            season: ratingsModel.season,
+            selectedMode,
+            selectedTrendGrouping,
+        }),
     )
 }
 
 function appendRatingsPanels(props) {
     appendRatingsBoard(props)
     appendRatingsContent(props)
+}
+
+function appendRatingsHero({
+    hasLivePreview,
+    isArchivedView,
+    onArchiveCurrentSeason,
+    onBackToActiveSeason,
+    onSelectMode,
+    onSelectPreview,
+    onStartSeason,
+    ratingsModel,
+    ratingsState,
+    selectedMode,
+    selectedPreview,
+    wrap,
+}) {
+    wrap.appendChild(
+        createRatingsHero(
+            buildRatingsHeroProps({
+                hasLivePreview,
+                isArchivedView,
+                onArchiveCurrentSeason,
+                onBackToActiveSeason,
+                onSelectMode,
+                onSelectPreview,
+                onStartSeason,
+                ratingsModel,
+                ratingsState,
+                selectedMode,
+                selectedPreview,
+            }),
+        ),
+    )
 }
 
 function buildRatingsSection({
@@ -159,27 +191,26 @@ function buildRatingsSection({
     onSelectMode,
     onSelectPreview,
     onSelectPlayer,
+    onSelectTrendGrouping,
     onStartSeason,
+    selectedTrendGrouping,
 }) {
     const wrap = document.createElement("div")
     wrap.className = "stats-section-grid"
-    wrap.appendChild(
-        createRatingsHero(
-            buildRatingsHeroProps({
-                hasLivePreview,
-                isArchivedView,
-                onArchiveCurrentSeason,
-                onBackToActiveSeason,
-                onSelectMode,
-                onSelectPreview,
-                onStartSeason,
-                ratingsModel,
-                ratingsState,
-                selectedMode,
-                selectedPreview,
-            }),
-        ),
-    )
+    appendRatingsHero({
+        hasLivePreview,
+        isArchivedView,
+        onArchiveCurrentSeason,
+        onBackToActiveSeason,
+        onSelectMode,
+        onSelectPreview,
+        onStartSeason,
+        ratingsModel,
+        ratingsState,
+        selectedMode,
+        selectedPreview,
+        wrap,
+    })
     if (
         appendRatingsEmptyState({
             onDeleteArchivedSeason,
@@ -204,6 +235,7 @@ function buildRatingsSection({
             onDeleteArchivedSeason,
             onOpenArchivedSeason,
             onSelectPlayer,
+            onSelectTrendGrouping,
             provisionalHistory,
             ratingsModel,
             ratingsState,
@@ -211,6 +243,7 @@ function buildRatingsSection({
             selectedMode,
             selectedPlayer,
             selectedPreview,
+            selectedTrendGrouping,
             wrap,
         }),
     )
