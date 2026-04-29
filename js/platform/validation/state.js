@@ -138,7 +138,7 @@ function applyOptionalTournamentFields(source, path, next) {
         next.phases = phaseData.phases
     }
 
-    if (source.night !== undefined) {
+    if (source.night !== undefined && source.night !== null) {
         const night = expectPlainObject(source.night, `${path}.night`)
         next.night = {
             previousSessionId: expectNullableString(night.previousSessionId ?? null, `${path}.night.previousSessionId`),
