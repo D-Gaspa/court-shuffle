@@ -11,6 +11,7 @@ import { STRAIGHT_SET_SCORE, TIEBREAK_SET_SCORE } from "../../support/constants.
 
 const STORAGE_KEY = "court-shuffle-data"
 const INVALID_TOURNAMENT_INDEX = 3
+const QUOTA_EXCEEDED_PATTERN = /quota exceeded/
 
 function createSampleState() {
     return {
@@ -235,6 +236,7 @@ test("save failure returns metadata and preserves existing storage", () => {
 
     assert.equal(result.ok, false)
     assert.equal(result.code, "save_failed")
+    assert.match(result.message, QUOTA_EXCEEDED_PATTERN)
     assert.equal(failingStorage.getItem(STORAGE_KEY), previousRaw)
 })
 

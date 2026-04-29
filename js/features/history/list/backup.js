@@ -78,19 +78,29 @@ function clearHistoryCollections(state) {
 }
 
 function downloadBackup({ persist, state, statusElement, summaryElement }) {
-    const backup = createStateExport(state)
-    const payload = JSON.stringify(backup, null, 2)
-    const blob = new Blob([payload], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    const dateStamp = backup.exportedAt.slice(0, 10)
+    let backup
+    let url = null
+    try {
+        backup = createStateExport(state)
+        const payload = JSON.stringify(backup, null, 2)
+        const blob = new Blob([payload], { type: "application/json" })
+        url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        const dateStamp = backup.exportedAt.slice(0, 10)
 
-    link.href = url
-    link.download = `court-shuffle-backup-${dateStamp}.json`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+        link.href = url
+        link.download = `court-shuffle-backup-${dateStamp}.json`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+    } catch (error) {
+        setStatus(statusElement, error.message || "Backup export failed.", "error")
+        return
+    } finally {
+        if (url) {
+            URL.revokeObjectURL(url)
+        }
+    }
 
     state.lastExportedAt = backup.exportedAt
     const persistResult = persist()

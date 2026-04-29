@@ -40,6 +40,16 @@ function wrapValidationError(prefix, error) {
     return new Error(`${prefix}${suffix}`)
 }
 
+function formatStorageError(error) {
+    if (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "QuotaExceededError") {
+        return "Browser storage quota was exceeded."
+    }
+    if (error instanceof Error && error.message) {
+        return error.message
+    }
+    return "The browser rejected the storage update."
+}
+
 function loadStateFromStorage(storage = globalThis.localStorage) {
     try {
         const resolvedStorage = getStorageOrThrow(storage)
@@ -100,7 +110,9 @@ function saveStateToStorage(state, storage = globalThis.localStorage) {
         return createStatus({
             ok: false,
             code: "save_failed",
-            message: "Browser storage could not be updated. Changes in this tab may be lost.",
+            message: `Browser storage could not be updated. Changes in this tab may be lost. ${formatStorageError(
+                error,
+            )}`,
             error,
             source: "save",
         })
