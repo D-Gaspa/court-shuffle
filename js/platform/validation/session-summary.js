@@ -1,11 +1,28 @@
 import { clonePlayerNameArray, expectSessionDateString } from "./player.js"
 import { createValidationError, expectBoolean, expectInteger, expectPlainObject, expectString } from "./shared.js"
 
+const SUMMARY_POOLS = new Set(["", "winners", "losers"])
+
 function expectNullableInteger(value, path) {
     if (value === null || value === undefined) {
         return null
     }
     return expectInteger(value, path)
+}
+
+function expectSummaryText(value, path) {
+    if (typeof value !== "string") {
+        throw createValidationError(path, "must be a string.")
+    }
+    return value
+}
+
+function cloneSummaryPool(value, path) {
+    const pool = expectSummaryText(value ?? "", path)
+    if (!SUMMARY_POOLS.has(pool)) {
+        throw createValidationError(path, "must be empty or a supported tournament pool.")
+    }
+    return pool
 }
 
 function expectFiniteNumber(value, path) {
@@ -24,14 +41,14 @@ function cloneTeamRatingImpact(value, path) {
         players: clonePlayerNameArray(row.players ?? [], `${path}.players`),
         ratingDelta: expectFiniteNumber(row.ratingDelta ?? 0, `${path}.ratingDelta`),
         won: expectBoolean(row.won ?? false, `${path}.won`),
-        text: expectString(row.text ?? "", `${path}.text`),
+        text: expectSummaryText(row.text ?? "", `${path}.text`),
     }
 }
 
 function cloneSummaryTeam(value, path) {
     const row = expectPlainObject(value, path)
     return {
-        label: expectString(row.label ?? "", `${path}.label`),
+        label: expectSummaryText(row.label ?? "", `${path}.label`),
         players: clonePlayerNameArray(row.players ?? [], `${path}.players`),
         won: expectBoolean(row.won ?? false, `${path}.won`),
         ratingImpact: cloneTeamRatingImpact(row.ratingImpact, `${path}.ratingImpact`),
@@ -41,10 +58,10 @@ function cloneSummaryTeam(value, path) {
 function cloneSummaryMatch(value, path) {
     const row = expectPlainObject(value, path)
     return {
-        courtLabel: expectString(row.courtLabel ?? "", `${path}.courtLabel`),
-        pool: expectString(row.pool ?? "", `${path}.pool`),
-        score: expectString(row.score ?? "", `${path}.score`),
-        winnerLabel: expectString(row.winnerLabel ?? "", `${path}.winnerLabel`),
+        courtLabel: expectSummaryText(row.courtLabel ?? "", `${path}.courtLabel`),
+        pool: cloneSummaryPool(row.pool ?? "", `${path}.pool`),
+        score: expectSummaryText(row.score ?? "", `${path}.score`),
+        winnerLabel: expectSummaryText(row.winnerLabel ?? "", `${path}.winnerLabel`),
         teams: (row.teams ?? []).map((team, index) => cloneSummaryTeam(team, `${path}.teams[${index}]`)),
     }
 }
@@ -61,7 +78,7 @@ function cloneSummaryTournament(value, path) {
     const row = expectPlainObject(value, path)
     return {
         label: expectString(row.label ?? "", `${path}.label`),
-        winner: expectString(row.winner ?? "", `${path}.winner`),
+        winner: expectSummaryText(row.winner ?? "", `${path}.winner`),
         rounds: (row.rounds ?? []).map((round, index) => cloneSummaryRound(round, `${path}.rounds[${index}]`)),
     }
 }
