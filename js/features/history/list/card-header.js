@@ -22,22 +22,6 @@ function formatDate(isoString) {
     }
 }
 
-function buildChevronSvg() {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-    svg.setAttribute("class", "history-card-toggle")
-    svg.setAttribute("viewBox", "0 0 24 24")
-    svg.setAttribute("fill", "none")
-    svg.setAttribute("stroke", "currentColor")
-    svg.setAttribute("stroke-width", "2")
-    svg.setAttribute("stroke-linecap", "round")
-    svg.setAttribute("width", "20")
-    svg.setAttribute("height", "20")
-    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline")
-    polyline.setAttribute("points", "6 9 12 15 18 9")
-    svg.appendChild(polyline)
-    return svg
-}
-
 function resolveSessionChampionName(session) {
     if (
         session.mode === "tournament" &&
@@ -94,34 +78,4 @@ function buildHistoryCardMeta(session) {
     return metaText
 }
 
-function buildHistoryCardHeader(session, dateStr) {
-    const headerEl = document.createElement("div")
-    headerEl.className = "history-card-header"
-
-    const info = document.createElement("div")
-    info.className = "history-card-info"
-
-    const dateSpan = document.createElement("span")
-    dateSpan.className = "history-card-date"
-    dateSpan.textContent = dateStr
-    if (session?.provisional) {
-        const badge = document.createElement("span")
-        badge.className = "history-card-badge"
-        badge.textContent = "Live"
-        dateSpan.appendChild(document.createTextNode(" "))
-        dateSpan.appendChild(badge)
-    }
-
-    const meta = document.createElement("span")
-    meta.className = "history-card-meta"
-    meta.textContent = buildHistoryCardMeta(session)
-
-    info.appendChild(dateSpan)
-    info.appendChild(meta)
-    headerEl.appendChild(info)
-    headerEl.appendChild(buildChevronSvg())
-
-    return headerEl
-}
-
-export { buildHistoryCardHeader, buildHistoryCardMeta, formatDate, resolveSessionChampionName }
+export { buildHistoryCardMeta, formatDate, resolveSessionChampionName }

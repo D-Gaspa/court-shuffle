@@ -223,6 +223,8 @@
     font-size: 0.76rem;
     color: var(--advanced-muted);
     letter-spacing: 0.02em;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .advanced-validation-summary[data-state="ready"] {

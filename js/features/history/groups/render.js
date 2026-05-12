@@ -1,12 +1,6 @@
 import { getModeLabel } from "../../../ui/common/utils.js"
-import { buildHistoryCardHeader, formatDate } from "../list/card-header.js"
-import { buildHistoryCardBody } from "../list/card-rounds.js"
-import {
-    getHistorySessionPlayers,
-    getHistoryTournamentPhases,
-    getHistoryTournamentRuns,
-    isMultiPhaseHistorySession,
-} from "../summary/session-phases.js"
+import { buildHistoryActionButton, buildHistoryActionRow } from "../list/action-buttons.js"
+import { buildHistoryCardMeta, formatDate } from "../list/card-header.js"
 import { buildHistoryNightGroups } from "./model.js"
 
 function buildChevronSvg() {
@@ -23,23 +17,6 @@ function buildChevronSvg() {
     polyline.setAttribute("points", "6 9 12 15 18 9")
     svg.appendChild(polyline)
     return svg
-}
-
-function buildSingleSessionCard(session, actions) {
-    const card = document.createElement("div")
-    card.className = "history-card"
-    const dateStr = formatDate(session.date)
-    const headerEl = buildHistoryCardHeader(session, dateStr)
-    const sessionActions = typeof actions === "function" ? actions(session) : actions
-    const body = buildHistoryCardBody(session, sessionActions)
-
-    headerEl.addEventListener("click", () => {
-        card.classList.toggle("expanded")
-    })
-
-    card.appendChild(headerEl)
-    card.appendChild(body)
-    return card
 }
 
 function buildNightDateLabel(group) {
@@ -59,35 +36,23 @@ function buildNightGroupMeta(group) {
 
 function buildNightGroupHeader(group) {
     const headerEl = document.createElement("div")
-    headerEl.className = "history-card-header history-night-group-header"
+    headerEl.className = "history-night-group-header"
 
     const info = document.createElement("div")
-    info.className = "history-card-info"
+    info.className = "history-night-group-info"
 
     const dateSpan = document.createElement("span")
-    dateSpan.className = "history-card-date"
+    dateSpan.className = "history-night-group-date"
     dateSpan.textContent = buildNightDateLabel(group)
 
     const meta = document.createElement("span")
-    meta.className = "history-card-meta"
+    meta.className = "history-night-group-meta"
     meta.textContent = buildNightGroupMeta(group)
 
     info.appendChild(dateSpan)
     info.appendChild(meta)
     headerEl.appendChild(info)
     return headerEl
-}
-
-function buildNestedSessionMeta(session) {
-    const playerCount = getHistorySessionPlayers(session).length
-    const runs = getHistoryTournamentRuns(session)
-    const tournamentCount = runs.length
-    const roundCount = runs.reduce((sum, run) => sum + (run?.rounds?.length || 0), 0)
-    let summary = `${playerCount} players · ${tournamentCount} tournament${tournamentCount === 1 ? "" : "s"} · ${roundCount} round${roundCount === 1 ? "" : "s"}`
-    if (isMultiPhaseHistorySession(session)) {
-        summary += ` · ${getHistoryTournamentPhases(session).length} phases`
-    }
-    return summary
 }
 
 function selectHeaderActions(actions) {
@@ -108,24 +73,21 @@ function selectHeaderActions(actions) {
     return selected
 }
 
-function appendNestedSessionHeaderActions(container, actions, session) {
+function appendSessionQuickActions(container, actions, session) {
     const quickActions = selectHeaderActions(actions)
     if (quickActions.length === 0) {
         return
     }
 
     const row = document.createElement("div")
-    row.className = "history-night-session-quick-actions"
+    row.className = "history-card-quick-actions"
     for (const action of quickActions) {
-        const button = document.createElement("button")
-        button.type = "button"
-        button.className = `${action.className} history-night-session-action`
-        button.textContent = action.label
-        button.addEventListener("click", (event) => {
-            event.stopPropagation()
-            action.onClick(session)
-        })
-        row.appendChild(button)
+        row.appendChild(
+            buildHistoryActionButton(action, session, {
+                extraClass: "history-card-quick-action",
+                stopPropagation: true,
+            }),
+        )
     }
     container.appendChild(row)
 }
@@ -137,62 +99,68 @@ function buildNestedSessionTitle(index) {
     if (index === 1) {
         return "Previous Session"
     }
-    return `Earlier Session ${index}`
+    return `Earlier Session ${index + 1}`
 }
 
-function buildNestedSessionHeader(session, index, actions) {
-    const header = document.createElement("div")
-    header.className = "history-card-header history-night-session-header"
+function appendProvisionalBadge(container, session) {
+    if (!session?.provisional) {
+        return
+    }
+    const badge = document.createElement("span")
+    badge.className = "history-card-badge"
+    badge.textContent = "Live"
+    container.appendChild(document.createTextNode(" "))
+    container.appendChild(badge)
+}
 
-    const info = document.createElement("div")
-    info.className = "history-card-info history-night-session-info"
+function buildSessionOpenButton(session, label, onOpen) {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "history-card-open"
 
     const title = document.createElement("span")
-    title.className = "history-card-date history-night-session-title"
-    title.textContent = `${buildNestedSessionTitle(index)} · ${formatDate(session.date)}`
+    title.className = "history-card-date"
+    title.textContent = label ? `${label} · ${formatDate(session.date)}` : formatDate(session.date)
+    appendProvisionalBadge(title, session)
 
     const meta = document.createElement("span")
-    meta.className = "history-card-meta history-night-session-meta"
-    meta.textContent = buildNestedSessionMeta(session)
+    meta.className = "history-card-meta"
+    meta.textContent = buildHistoryCardMeta(session)
 
+    const info = document.createElement("span")
+    info.className = "history-card-info"
     info.appendChild(title)
     info.appendChild(meta)
-    header.appendChild(info)
+
+    button.appendChild(info)
 
     const chevron = document.createElement("div")
-    chevron.className = "history-night-session-chevron"
+    chevron.className = "history-card-open-icon"
     chevron.appendChild(buildChevronSvg())
-    header.appendChild(chevron)
+    button.appendChild(chevron)
 
-    appendNestedSessionHeaderActions(header, actions, session)
+    button.addEventListener("click", () => onOpen?.())
 
-    return header
+    return button
 }
 
-function buildNightSessionBlock(session, index, actions) {
-    const block = document.createElement("section")
-    block.className = "history-night-session history-card"
+function buildSessionCard({ actions, label = "", onOpenSessionDetails, session }) {
+    const card = document.createElement("article")
+    card.className = "history-card history-session-card"
 
     const resolvedActions = typeof actions === "function" ? actions(session) : actions
-    const bodyActions = filterNestedBodyActions(resolvedActions)
-    const header = buildNestedSessionHeader(session, index, resolvedActions)
-    const body = buildHistoryCardBody(session, bodyActions, { embedded: true })
+    const open = () => onOpenSessionDetails?.(session, filterModalActions(resolvedActions))
 
-    header.addEventListener("click", (event) => {
-        event.stopPropagation()
-        block.classList.toggle("expanded")
-    })
-
-    block.appendChild(header)
-    block.appendChild(body)
-    return block
+    card.appendChild(buildSessionOpenButton(session, label, open))
+    appendSessionQuickActions(card, resolvedActions, session)
+    return card
 }
 
-function filterNestedBodyActions(actions) {
+function filterModalActions(actions) {
     if (!Array.isArray(actions)) {
         return actions
     }
-    return actions.filter((action) => action.label !== "Session Summary" && action.label !== "Detach From Night")
+    return actions.filter((action) => action.label !== "Session Summary")
 }
 
 function buildNightContextStrip(group) {
@@ -202,51 +170,55 @@ function buildNightContextStrip(group) {
     return strip
 }
 
-function buildNightGroupBody(group, actions, groupActions) {
+function buildNightGroupBody({ actions, group, groupActions, onOpenSessionDetails }) {
     const body = document.createElement("div")
-    body.className = "history-card-body history-night-body"
+    body.className = "history-night-body"
     body.appendChild(buildNightContextStrip(group))
 
     const sessionsWrap = document.createElement("div")
     sessionsWrap.className = "history-night-session-list"
     const visibleSessions = [...group.sessions].reverse()
     for (let index = 0; index < visibleSessions.length; index += 1) {
-        sessionsWrap.appendChild(buildNightSessionBlock(visibleSessions[index], index, actions))
+        sessionsWrap.appendChild(
+            buildSessionCard({
+                actions,
+                label: buildNestedSessionTitle(index),
+                onOpenSessionDetails,
+                session: visibleSessions[index],
+            }),
+        )
     }
     body.appendChild(sessionsWrap)
 
     const resolvedGroupActions = typeof groupActions === "function" ? groupActions(group) : groupActions
-    if (Array.isArray(resolvedGroupActions) && resolvedGroupActions.length > 0) {
-        const actionRow = document.createElement("div")
-        actionRow.className = "history-actions history-night-actions"
-        for (const action of resolvedGroupActions) {
-            const button = document.createElement("button")
-            button.type = "button"
-            button.className = action.className
-            button.textContent = action.label
-            button.addEventListener("click", (event) => {
-                event.stopPropagation()
-                action.onClick(group)
-            })
-            actionRow.appendChild(button)
-        }
+    const actionRow = buildHistoryActionRow(group, resolvedGroupActions, {
+        rowClassName: "history-actions history-night-actions",
+        stopPropagation: true,
+    })
+    if (actionRow) {
         body.appendChild(actionRow)
     }
 
     return body
 }
 
-function renderGroupedHistoryCards({ actions, groupActions, list, sessions }) {
+function renderGroupedHistoryCards({ actions, groupActions, list, onOpenSessionDetails, sessions }) {
     const groups = buildHistoryNightGroups(sessions)
     for (const group of [...groups].reverse()) {
         if (group.sessions.length === 1) {
-            list.appendChild(buildSingleSessionCard(group.sessions[0], actions))
+            list.appendChild(
+                buildSessionCard({
+                    actions,
+                    onOpenSessionDetails,
+                    session: group.sessions[0],
+                }),
+            )
             continue
         }
-        const card = document.createElement("div")
-        card.className = "history-card history-card-group"
+        const card = document.createElement("section")
+        card.className = "history-night-group"
         const headerEl = buildNightGroupHeader(group)
-        const body = buildNightGroupBody(group, actions, groupActions)
+        const body = buildNightGroupBody({ actions, group, groupActions, onOpenSessionDetails })
 
         card.appendChild(headerEl)
         card.appendChild(body)

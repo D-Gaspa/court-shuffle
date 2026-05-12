@@ -11,6 +11,7 @@ function createHistoryRefresh({
     historyActions,
     historyBackupController,
     historyElements,
+    openSessionDetails,
     renderHistory,
     resetHistoryQuery,
     state,
@@ -34,6 +35,7 @@ function createHistoryRefresh({
                 archived: historyActions.resolveArchivedHistoryActions,
                 archivedGroup: historyActions.resolveArchivedNightGroupActions,
             },
+            openSessionDetails,
         })
         historyBackupController.refreshSummary()
     }
@@ -106,6 +108,7 @@ function createAppRefreshController({
     historyActions,
     historyBackupController,
     historyElements,
+    openSessionDetails,
     renderHistory,
     renderStats,
     refreshRatings,
@@ -130,6 +133,7 @@ function createAppRefreshController({
         historyActions,
         historyBackupController,
         historyElements,
+        openSessionDetails,
         renderHistory,
         resetHistoryQuery: analyticsController.resetHistoryQuery,
         state,

@@ -1,0 +1,135 @@
+.history-session-dialog {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: min(920px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow: visible;
+}
+
+.history-session-dialog::backdrop {
+    background: rgb(0 0 0 / 62%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.history-session-dialog[open] {
+    animation: modalIn 0.18s var(--ease-out);
+}
+
+.history-session-dialog-shell {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    max-height: calc(100dvh - 2rem);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--court-glow), transparent 25%), transparent 34%),
+        linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated), var(--bg-card) 28%), var(--bg-card));
+    box-shadow:
+        var(--shadow-lg),
+        0 0 0 1px #ffffff08;
+}
+
+.history-session-dialog-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-md);
+    align-items: start;
+    padding: var(--space-lg) var(--space-lg) var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.history-session-dialog-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.history-session-dialog-kicker {
+    color: var(--court-light);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+#history-session-dialog-title {
+    color: var(--text);
+    font-size: 1.25rem;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.history-session-dialog-meta {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.history-session-dialog-body {
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.history-session-dialog-body .history-card-body {
+    display: block;
+    padding: var(--space-lg);
+}
+
+.history-session-dialog-actions {
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-card), transparent 8%);
+    padding: var(--space-md) var(--space-lg);
+}
+
+.history-session-dialog-actions[hidden] {
+    display: none;
+}
+
+.history-session-dialog-actions .history-actions {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+@media (max-width: 640px) {
+    .history-session-dialog {
+        width: calc(100vw - 1rem);
+        max-height: 80dvh;
+    }
+
+    .history-session-dialog-shell {
+        max-height: 80dvh;
+        border-radius: var(--radius-lg);
+    }
+
+    .history-session-dialog-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-sm);
+        padding: var(--space-md);
+    }
+
+    #history-session-dialog-close {
+        justify-self: stretch;
+    }
+
+    .history-session-dialog-body .history-card-body {
+        padding: var(--space-md);
+    }
+
+    .history-session-dialog-actions {
+        padding: var(--space-md);
+    }
+
+    .history-session-dialog-actions .btn {
+        flex: 1 1 9rem;
+    }
+}

@@ -12,6 +12,8 @@
     color: var(--clay-light);
     font-size: 0.875rem;
     line-height: 1.45;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .app-status-banner[data-tone="info"] {
@@ -21,6 +23,7 @@
 }
 
 .app-status-dismiss {
+    flex: 0 0 auto;
     border: none;
     background: transparent;
     color: inherit;
@@ -28,6 +31,18 @@
     font-weight: 700;
     cursor: pointer;
     padding: 0;
+}
+
+#app-status-message {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+    .app-status-banner {
+        align-items: flex-start;
+        width: min(1180px, calc(100vw - 1rem));
+    }
 }
 
 .app-status-dismiss:hover {

@@ -27,29 +27,48 @@
     overflow: hidden;
 }
 
-.history-card-header {
+.history-card-open {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-sm);
+    width: 100%;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
     cursor: pointer;
-    transition: background var(--duration-fast);
+    transition:
+        background var(--duration-fast),
+        transform var(--duration-fast) var(--ease-out);
 }
 
-.history-card-header:hover {
+.history-card-open:hover {
     background: var(--bg-elevated);
+}
+
+.history-card-open:active {
+    transform: scale(0.99);
+}
+
+.history-card-open:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--court-light), transparent 40%);
+    outline-offset: -3px;
 }
 
 .history-card-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .history-card-date {
     font-weight: 600;
     font-size: 0.95rem;
+    overflow-wrap: anywhere;
 }
 
 .history-card-badge {
@@ -69,24 +88,36 @@
 .history-card-meta {
     font-size: 0.8rem;
     color: var(--text-muted);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .history-card-toggle {
     color: var(--text-muted);
-    transition: transform var(--duration-normal) var(--ease-out);
+    transform: rotate(-90deg);
 }
 
-.history-card.expanded .history-card-toggle {
-    transform: rotate(180deg);
+.history-card-open-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .history-card-body {
-    display: none;
     padding: var(--space-md);
 }
 
-.history-card.expanded .history-card-body {
-    display: block;
+.history-card-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: 0 var(--space-md) var(--space-md);
+}
+
+.history-card-quick-action {
+    min-width: 0;
+    white-space: normal;
 }
 
 .history-round {
@@ -174,8 +205,9 @@
 
 .history-match-team-players {
     font-size: 0.84rem;
-    color: var(--text-secondary);
+    color: var(--text);
     line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .history-match-team-winner .history-match-team-label {
@@ -183,7 +215,7 @@
 }
 
 .history-match-team-winner .history-match-team-players {
-    color: var(--text-primary);
+    color: var(--text);
     font-weight: 600;
 }
 
@@ -242,12 +274,16 @@
 }
 
 @media (max-width: 640px) {
-    .history-card-header {
+    .history-card-open {
         align-items: flex-start;
     }
 
     .history-card-meta {
         line-height: 1.35;
+    }
+
+    .history-card-quick-action {
+        flex: 1 1 9rem;
     }
 
     .history-match-team {

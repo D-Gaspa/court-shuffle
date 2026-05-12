@@ -1,6 +1,7 @@
 import { determineMatchWinner } from "../../../domains/tournament/engine/utils.js"
 import { formatSets } from "../../../ui/score-editor/sets.js"
 import { getHistoryTournamentPhases, getScoredTournamentRunsFromSeries } from "../summary/session-phases.js"
+import { buildHistoryActionRow } from "./action-buttons.js"
 
 function createDiv(className, text) {
     const el = document.createElement("div")
@@ -216,34 +217,9 @@ function appendPhaseLabel(body, phase, index, total) {
     }
 }
 
-function appendActionButton(row, action, session) {
-    const button = document.createElement("button")
-    button.type = "button"
-    button.className = action.className
-    button.textContent = action.label
-    button.addEventListener("click", () => action.onClick(session))
-    row.appendChild(button)
-}
-
-function buildHistoryActionRow(session, actions) {
-    if (!Array.isArray(actions) || actions.length === 0) {
-        return null
-    }
-
-    const row = document.createElement("div")
-    row.className = "history-actions"
-    for (const action of actions) {
-        appendActionButton(row, action, session)
-    }
-    return row
-}
-
 function buildHistoryCardBody(session, actions = [], options = {}) {
     const body = document.createElement("div")
     body.className = "history-card-body"
-    if (options.embedded) {
-        body.classList.add("history-card-body-embedded")
-    }
 
     const phases = getHistoryTournamentPhases(session)
     if (phases.length > 0) {
@@ -261,7 +237,7 @@ function buildHistoryCardBody(session, actions = [], options = {}) {
         }
     }
 
-    const actionRow = buildHistoryActionRow(session, actions)
+    const actionRow = options.includeActions === false ? null : buildHistoryActionRow(session, actions)
     if (actionRow) {
         body.appendChild(actionRow)
     }

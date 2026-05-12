@@ -36,6 +36,8 @@
     color: var(--danger);
     padding: 4px 0;
     animation: shakeIn 0.3s var(--ease-spring);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 @keyframes shakeIn {
@@ -65,6 +67,8 @@
     color: var(--clay-light);
     font-size: 0.875rem;
     margin-bottom: var(--space-lg);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .warning-banner svg {
@@ -84,6 +88,8 @@
     color: var(--court-light);
     font-size: 0.875rem;
     margin-top: var(--space-lg);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .info-banner svg {

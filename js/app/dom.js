@@ -8,6 +8,49 @@ function getViews(documentRef = document) {
     }
 }
 
+function getHistoryDom(documentRef) {
+    return {
+        list: documentRef.getElementById("history-list"),
+        empty: documentRef.getElementById("history-empty"),
+        exportButton: documentRef.getElementById("history-export-btn"),
+        importButton: documentRef.getElementById("history-import-btn"),
+        clearButton: documentRef.getElementById("history-clear-btn"),
+        importInput: documentRef.getElementById("history-import-input"),
+        backupSummary: documentRef.getElementById("history-backup-summary"),
+        backupStatus: documentRef.getElementById("history-backup-status"),
+    }
+}
+
+function getRatingDom(documentRef) {
+    return {
+        root: documentRef.getElementById("ratings-root"),
+        seasonDialog: {
+            dialog: documentRef.getElementById("season-label-dialog"),
+            title: documentRef.getElementById("season-label-title"),
+            message: documentRef.getElementById("season-label-message"),
+            input: documentRef.getElementById("season-label-input"),
+            dateInput: documentRef.getElementById("season-start-date-input"),
+            dateHint: documentRef.getElementById("season-start-date-hint"),
+            oldestDateButton: documentRef.getElementById("season-oldest-date-btn"),
+            error: documentRef.getElementById("season-label-error"),
+            cancelButton: documentRef.getElementById("season-label-cancel"),
+            confirmButton: documentRef.getElementById("season-label-confirm"),
+        },
+    }
+}
+
+function getHistorySessionDialogDom(documentRef) {
+    return {
+        dialog: documentRef.getElementById("history-session-dialog"),
+        kicker: documentRef.getElementById("history-session-dialog-kicker"),
+        title: documentRef.getElementById("history-session-dialog-title"),
+        meta: documentRef.getElementById("history-session-dialog-meta"),
+        body: documentRef.getElementById("history-session-dialog-body"),
+        actions: documentRef.getElementById("history-session-dialog-actions"),
+        closeButton: documentRef.getElementById("history-session-dialog-close"),
+    }
+}
+
 function getAppDom(documentRef = document) {
     return {
         tabs: documentRef.querySelectorAll(".tab"),
@@ -17,34 +60,11 @@ function getAppDom(documentRef = document) {
             dismissButton: documentRef.getElementById("app-status-dismiss"),
             message: documentRef.getElementById("app-status-message"),
         },
-        history: {
-            list: documentRef.getElementById("history-list"),
-            empty: documentRef.getElementById("history-empty"),
-            exportButton: documentRef.getElementById("history-export-btn"),
-            importButton: documentRef.getElementById("history-import-btn"),
-            clearButton: documentRef.getElementById("history-clear-btn"),
-            importInput: documentRef.getElementById("history-import-input"),
-            backupSummary: documentRef.getElementById("history-backup-summary"),
-            backupStatus: documentRef.getElementById("history-backup-status"),
-        },
+        history: getHistoryDom(documentRef),
         stats: {
             root: documentRef.getElementById("stats-root"),
         },
-        ratings: {
-            root: documentRef.getElementById("ratings-root"),
-            seasonDialog: {
-                dialog: documentRef.getElementById("season-label-dialog"),
-                title: documentRef.getElementById("season-label-title"),
-                message: documentRef.getElementById("season-label-message"),
-                input: documentRef.getElementById("season-label-input"),
-                dateInput: documentRef.getElementById("season-start-date-input"),
-                dateHint: documentRef.getElementById("season-start-date-hint"),
-                oldestDateButton: documentRef.getElementById("season-oldest-date-btn"),
-                error: documentRef.getElementById("season-label-error"),
-                cancelButton: documentRef.getElementById("season-label-cancel"),
-                confirmButton: documentRef.getElementById("season-label-confirm"),
-            },
-        },
+        ratings: getRatingDom(documentRef),
         confirmDialog: {
             dialog: documentRef.getElementById("confirm-dialog"),
             title: documentRef.getElementById("confirm-title"),
@@ -61,6 +81,7 @@ function getAppDom(documentRef = document) {
             closeButton: documentRef.getElementById("session-summary-close"),
             exportButton: documentRef.getElementById("session-summary-export"),
         },
+        historySessionDialog: getHistorySessionDialogDom(documentRef),
     }
 }
 

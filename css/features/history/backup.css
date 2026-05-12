@@ -71,6 +71,8 @@
 .history-backup-status {
     font-size: 0.88rem;
     line-height: 1.55;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .history-backup-summary-line {

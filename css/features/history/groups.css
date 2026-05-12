@@ -1,130 +1,74 @@
+.history-night-group,
 .history-night-body,
-.history-night-session-list {
+.history-night-session-list,
+.history-night-group-info {
     display: flex;
     flex-direction: column;
 }
 
-.history-card-group > .history-card-body {
-    display: flex;
+.history-night-group {
+    gap: var(--space-md);
     padding: var(--space-md);
+    border: 1px solid color-mix(in srgb, var(--court), var(--border) 58%);
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--court-glow), transparent 58%), transparent 8rem),
+        color-mix(in srgb, var(--bg-card), var(--bg) 24%);
+}
+
+.history-night-group-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.history-night-group-info {
+    gap: 2px;
+    min-width: 0;
+}
+
+.history-night-group-date {
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.history-night-group-meta {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.history-night-body {
+    gap: var(--space-md);
+}
+
+.history-night-context {
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--bg-elevated), transparent 20%);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .history-night-session-list {
     gap: var(--space-md);
 }
 
-.history-night-context {
-    margin-bottom: var(--space-md);
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: color-mix(in srgb, var(--bg-elevated), transparent 10%);
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+.history-night-actions {
+    margin-top: 0;
 }
 
-.history-night-group-header {
-    display: flex;
-    align-items: center;
-}
-
-.history-night-group-header {
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.history-night-session {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-elevated), white 2%), var(--bg-card));
-    overflow: hidden;
-}
-
-.history-night-session-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 12px;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    background: color-mix(in srgb, var(--bg-elevated), transparent 8%);
-}
-
-.history-night-session-info {
-    min-width: 0;
-}
-
-.history-night-session-title {
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-
-.history-night-session-meta {
-    font-size: 0.76rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-}
-
-.history-night-session-chevron,
-.history-night-session-quick-actions {
-    display: flex;
-    align-items: center;
-}
-
-.history-night-session-chevron {
-    flex-shrink: 0;
-    justify-content: flex-end;
-}
-
-.history-night-session-quick-actions {
-    grid-column: 1 / -1;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.history-night-session-action {
-    white-space: nowrap;
-}
-
-.history-night-session .history-card-toggle {
-    flex-shrink: 0;
-}
-
-.history-card-body-embedded {
-    padding: var(--space-md);
-}
-
-.history-night-session .history-card-body-embedded {
-    display: none;
-}
-
-.history-night-session.expanded .history-card-body-embedded {
-    display: block;
-}
-
-.history-card-body-embedded .history-actions {
-    position: static;
-    margin-top: var(--space-md);
-    padding-bottom: 0;
-}
-
-@media (max-width: 720px) {
-    .history-night-session-header {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 10px;
-    }
-
-    .history-night-session-chevron {
-        display: none;
-    }
-
-    .history-night-session-quick-actions {
-        justify-content: stretch;
-    }
-
-    .history-night-session-action {
-        flex: 1 1 140px;
+@media (max-width: 640px) {
+    .history-night-group {
+        padding: var(--space-sm);
+        border-radius: var(--radius-md);
     }
 }

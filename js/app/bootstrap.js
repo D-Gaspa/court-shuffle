@@ -1,6 +1,7 @@
 import { createHistoryActions } from "../features/history/list/actions.js"
 import { createHistoryBackupController } from "../features/history/list/backup.js"
 import { renderHistory } from "../features/history/list/render.js"
+import { createHistorySessionDialogController } from "../features/history/list/session-dialog.js"
 import { createSessionSummaryDialogController } from "../features/history/summary/dialog.js"
 import { resolveSessionSummary } from "../features/history/summary/index.js"
 import { createRatingsAppController } from "../features/insights/ratings/app-controller.js"
@@ -38,6 +39,7 @@ const sessionSummaryDialogController = createSessionSummaryDialogController({
     appStatus,
     elements: dom.sessionSummaryDialog,
 })
+const historySessionDialogController = createHistorySessionDialogController(dom.historySessionDialog)
 
 function sortRoster() {
     state.roster.sort((a, b) => a.localeCompare(b))
@@ -124,6 +126,7 @@ refreshController = createAppRefreshController({
     historyActions,
     historyBackupController,
     historyElements: dom.history,
+    openSessionDetails: (session, sessionActions) => historySessionDialogController.show(session, sessionActions),
     renderHistory,
     renderStats,
     refreshRatings,
@@ -145,6 +148,7 @@ function init() {
     setupTabs()
     confirmDialogController.setup()
     sessionSummaryDialogController.setup()
+    historySessionDialogController.setup()
     ratingSeasonController.setupDialog()
     appStatus.bind()
     historyBackupController.setupActions()
