@@ -116,6 +116,72 @@ test("saves active tournament sessions with no night grouping", () => {
     assert.equal(JSON.parse(storage.snapshot()[STORAGE_KEY]).activeSession.night, undefined)
 })
 
+test("saves non-strict doubles tournament sessions with solo restricted teams", () => {
+    const activeSession = buildTournamentSession({
+        players: ["Ana", "Bea", "Cora"],
+        courtCount: 1,
+        tournamentConfig: {
+            format: "elimination",
+            teamSize: 2,
+            courtHandling: "queue",
+            allowNotStrictDoubles: true,
+            advanced: {
+                doublesRestrictedTeams: [["Ana", ""]],
+            },
+            seed: "solo-restriction-regression",
+        },
+    })
+    const state = {
+        roster: activeSession.players,
+        activeSession,
+        history: [],
+        archivedHistory: [],
+        ratings: null,
+        lastExportedAt: null,
+    }
+    const storage = createMemoryStorage()
+    const result = saveStateToStorage(state, storage)
+
+    assert.equal(result.ok, true)
+    assert.deepEqual(
+        JSON.parse(storage.snapshot()[STORAGE_KEY]).activeSession.tournamentConfig.advanced.doublesRestrictedTeams,
+        [["Ana", ""]],
+    )
+})
+
+test("saves non-strict doubles tournament sessions with solo locked teams", () => {
+    const activeSession = buildTournamentSession({
+        players: ["Ana", "Bea", "Cora"],
+        courtCount: 1,
+        tournamentConfig: {
+            format: "elimination",
+            teamSize: 2,
+            courtHandling: "queue",
+            allowNotStrictDoubles: true,
+            advanced: {
+                doublesLockedPairs: [["Ana", ""]],
+            },
+            seed: "solo-lock-regression",
+        },
+    })
+    const state = {
+        roster: activeSession.players,
+        activeSession,
+        history: [],
+        archivedHistory: [],
+        ratings: null,
+        lastExportedAt: null,
+    }
+    const storage = createMemoryStorage()
+    const result = saveStateToStorage(state, storage)
+
+    assert.equal(result.ok, true)
+    assert.deepEqual(
+        JSON.parse(storage.snapshot()[STORAGE_KEY]).activeSession.tournamentConfig.advanced.doublesLockedPairs,
+        [["Ana", ""]],
+    )
+})
+
 test("saves tournament session summaries without bracket pool labels", () => {
     const state = {
         roster: ["Ana", "Bea"],

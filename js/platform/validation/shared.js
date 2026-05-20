@@ -1,3 +1,4 @@
+import { cloneDoublesTeamRows } from "./advanced.js"
 import { clonePlayerNameArray, expectNullablePlayerName, expectPlayerName } from "./player.js"
 
 const SESSION_MODES = new Set(["free", "singles", "doubles", "tournament"])
@@ -105,8 +106,11 @@ function cloneAdvancedSettings(value, path) {
     const source = expectPlainObject(value, path)
     return {
         singlesOpeningMatchups: clonePairRows(source.singlesOpeningMatchups ?? [], `${path}.singlesOpeningMatchups`),
-        doublesLockedPairs: clonePairRows(source.doublesLockedPairs ?? [], `${path}.doublesLockedPairs`),
-        doublesRestrictedTeams: clonePairRows(source.doublesRestrictedTeams ?? [], `${path}.doublesRestrictedTeams`),
+        doublesLockedPairs: cloneDoublesTeamRows(source.doublesLockedPairs ?? [], `${path}.doublesLockedPairs`),
+        doublesRestrictedTeams: cloneDoublesTeamRows(
+            source.doublesRestrictedTeams ?? [],
+            `${path}.doublesRestrictedTeams`,
+        ),
         forcedSitOutPlayer: expectNullablePlayerName(source.forcedSitOutPlayer, `${path}.forcedSitOutPlayer`),
         singlesByePlayers: clonePlayerNameArray(source.singlesByePlayers ?? [], `${path}.singlesByePlayers`),
         doublesByeTeams: cloneTeamRows(source.doublesByeTeams ?? [], `${path}.doublesByeTeams`),
